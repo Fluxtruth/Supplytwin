@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Supply Chain Graph — Supply Chain Twin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080c16; --bg2: #0d1220; --bg3: #111828;
+      --border: rgba(255,255,255,0.07);
+      --text: #e0e4f0; --muted: #5a6380; --muted2: #8490b8;
+      --ok: #22c55e; --warn: #f59e0b; --crit: #ef4444;
+    }
+    html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+      display: flex; align-items: center; gap: 0.8rem;
+      padding: 0.65rem 1.4rem;
+      background: rgba(8,12,22,0.95); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo { width: 24px; height: 24px; background: linear-gradient(135deg,#4f8ef7,#a855f7); border-radius: 5px; display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:#fff;flex-shrink:0; }
+    .nav-title { font-size: .88rem; font-weight: 600; color: #c8cfe8; }
+    .nav-badge { font-size:.68rem;padding:.2rem .55rem;border-radius:4px;background:rgba(79,142,247,.12);border:1px solid rgba(79,142,247,.25);color:#7eb3ff; }
+    .nav-sep { color: var(--muted); font-size: .9rem; }
+    .nav-link { font-size:.75rem;color:var(--muted2);text-decoration:none;padding:.28rem .7rem;border:1px solid var(--border);border-radius:5px;transition:color .2s,border-color .2s; }
+    .nav-link:hover { color: var(--text); border-color: rgba(255,255,255,.18); }
+    .nav-link.active { color: #7eb3ff; border-color: rgba(79,142,247,.35); background: rgba(79,142,247,.08); }
+
+    /* ── CONTROLS ── */
+    .controls {
+      position: fixed; bottom: 1.2rem; left: 1.2rem; z-index: 300;
+      display: flex; flex-direction: column; gap: .4rem;
+    }
+    .ctrl-btn {
+      width: 32px; height: 32px; border-radius: 7px;
+      background: rgba(13,18,32,.9); border: 1px solid var(--border);
+      color: var(--muted2); font-size: .95rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .2s, color .2s;
+    }
+    .ctrl-btn:hover { border-color: rgba(255,255,255,.2); color: var(--text); }
+
+    .zoom-level {
+      position: fixed; bottom: 1.2rem; left: 5rem; z-index: 300;
+      font-size: .65rem; color: var(--muted); letter-spacing: .07em;
+      background: rgba(13,18,32,.85); padding: .3rem .6rem; border-radius: 5px;
+      border: 1px solid var(--border);
+    }
+
+    /* ── LEGEND ── */
+    .legend {
+      position: fixed; bottom: 1.2rem; right: 1.2rem; z-index: 300;
+      background: rgba(13,18,32,.9); border: 1px solid var(--border);
+      border-radius: 8px; padding: .6rem .8rem;
+      display: flex; flex-direction: column; gap: .3rem;
+    }
+    .leg-title { font-size: .58rem; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; margin-bottom: .1rem; }
+    .leg-row { display: flex; align-items: center; gap: .4rem; font-size: .65rem; color: var(--muted2); }
+    .leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .leg-line { width: 20px; height: 2px; border-radius: 1px; background: rgba(255,255,255,.2); flex-shrink: 0; }
+    .leg-line.dashed { background: repeating-linear-gradient(90deg,rgba(255,255,255,.3) 0,rgba(255,255,255,.3) 4px,transparent 4px,transparent 8px); }
+
+    /* ── GRAPH CANVAS ── */
+    #graph-wrap { position: fixed; inset: 0; top: 44px; cursor: grab; }
+    #graph-wrap.dragging { cursor: grabbing; }
+    #graph-svg { width: 100%; height: 100%; }
+
+    /* SVG elements */
+    .stage-box { cursor: pointer; }
+    .stage-box:hover .stage-bg { filter: brightness(1.15); }
+    .company-node { cursor: pointer; }
+    .company-node:hover .node-bg { filter: brightness(1.25); stroke-width: 1.5px !important; }
+    .edge-path { pointer-events: none; }
+    .edge-label { pointer-events: none; }
+
+    /* ── TOOLTIP ── */
+    #tooltip {
+      position: fixed; z-index: 900;
+      background: rgba(11,15,26,.97);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px; padding: 1rem 1.1rem;
+      min-width: 230px; max-width: 280px;
+      box-shadow: 0 12px 36px rgba(0,0,0,.6);
+      pointer-events: none; display: none;
+      font-size: .78rem; line-height: 1.5;
+    }
+    .tt-header { display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; }
+    .tt-abbr { width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: .75rem; background: rgba(255,255,255,.07); flex-shrink: 0; }
+    .tt-name { font-weight: 700; color: var(--text); }
+    .tt-stage { font-size: .68rem; color: var(--muted2); }
+    .tt-row { display: flex; justify-content: space-between; padding: .18rem 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+    .tt-row:last-child { border-bottom: none; }
+    .tt-label { color: var(--muted2); }
+    .tt-val { font-weight: 600; }
+    .tt-val.ok   { color: var(--ok); }
+    .tt-val.warn { color: var(--warn); }
+    .tt-val.crit { color: var(--crit); }
+    .tt-desc { font-size: .7rem; color: var(--muted2); margin-top: .5rem; line-height: 1.5; border-top: 1px solid rgba(255,255,255,.06); padding-top: .5rem; }
+    .tt-hint { font-size: .62rem; color: var(--muted); margin-top: .4rem; text-align: center; }
+
+    /* ── DETAIL PANEL ── */
+    #detail-panel {
+      position: fixed; right: 0; top: 44px; bottom: 0; width: 360px;
+      background: var(--bg2); border-left: 1px solid rgba(255,255,255,.09);
+      z-index: 400; overflow-y: auto;
+      transform: translateX(100%);
+      transition: transform .3s cubic-bezier(.22,1,.36,1);
+    }
+    #detail-panel.open { transform: translateX(0); }
+    .dp-close {
+      position: absolute; top: .7rem; right: .8rem;
+      background: rgba(255,255,255,.06); border: 1px solid var(--border);
+      color: var(--muted2); width: 26px; height: 26px; border-radius: 5px;
+      cursor: pointer; font-size: .8rem; display: flex; align-items: center; justify-content: center;
+    }
+    .dp-close:hover { color: var(--text); }
+    .dp-header { padding: 1.2rem 1.2rem .8rem; border-bottom: 1px solid var(--border); position: relative; }
+    .dp-phase-tag { font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: .4rem; }
+    .dp-company-name { font-size: 1.1rem; font-weight: 800; line-height: 1.2; margin-bottom: .2rem; }
+    .dp-meta { font-size: .75rem; color: var(--muted2); }
+    .dp-section { padding: .9rem 1.2rem; border-bottom: 1px solid var(--border); }
+    .dp-section-title { font-size: .6rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: .6rem; }
+    .dp-kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; }
+    .dp-kpi { background: var(--bg3); border-radius: 7px; padding: .5rem .65rem; }
+    .dp-kpi-val { font-size: .95rem; font-weight: 800; line-height: 1; margin-bottom: .15rem; }
+    .dp-kpi-val.ok   { color: var(--ok); }
+    .dp-kpi-val.warn { color: var(--warn); }
+    .dp-kpi-val.crit { color: var(--crit); }
+    .dp-kpi-label { font-size: .65rem; color: var(--muted2); }
+    .dp-desc { font-size: .78rem; color: var(--muted2); line-height: 1.65; }
+    .dp-process { font-size: .72rem; color: var(--muted2); line-height: 1.6; background: var(--bg3); border-radius: 7px; padding: .6rem .7rem; border-left: 3px solid; }
+    .dp-links { display: flex; gap: .5rem; flex-wrap: wrap; padding: .9rem 1.2rem; }
+    .dp-link {
+      flex: 1; min-width: 100px; text-align: center;
+      padding: .5rem; border-radius: 7px; font-size: .75rem; font-weight: 600;
+      text-decoration: none; transition: background .2s;
+    }
+    .dp-link.primary { background: rgba(79,142,247,.12); border: 1px solid rgba(79,142,247,.25); color: #7eb3ff; }
+    .dp-link.primary:hover { background: rgba(79,142,247,.22); }
+    .dp-link.secondary { background: rgba(255,255,255,.04); border: 1px solid var(--border); color: var(--muted2); }
+    .dp-link.secondary:hover { background: rgba(255,255,255,.08); color: var(--text); }
+    .health-pill {
+      display: inline-flex; align-items: center; gap: .3rem;
+      padding: .2rem .55rem; border-radius: 99px; font-size: .65rem; font-weight: 700;
+    }
+    .health-pill.ok   { background: rgba(34,197,94,.12);  color: var(--ok);  border:1px solid rgba(34,197,94,.25); }
+    .health-pill.warn { background: rgba(245,158,11,.12); color: var(--warn); border:1px solid rgba(245,158,11,.25); }
+    .health-pill.crit { background: rgba(239,68,68,.12);  color: var(--crit); border:1px solid rgba(239,68,68,.25); }
+    .health-pill::before { content: '●'; font-size: .45rem; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">ST</div>
+  <span class="nav-title">Supply Chain Twin</span>
+  <span class="nav-sep">›</span>
+  <span class="nav-badge">Graph-Ansicht</span>
+  <div style="margin-left:auto;display:flex;gap:.5rem">
+    <a href="supply-chain.html" class="nav-link">≡ Listen-Ansicht</a>
+    <a href="index.html" class="nav-link">← Startseite</a>
+  </div>
+</nav>
+
+<div id="graph-wrap">
+  <svg id="graph-svg">
+    <defs>
+      <marker id="arrowhead" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0,0 L10,4 L0,8 Z" fill="rgba(255,255,255,0.22)"/>
+      </marker>
+      <marker id="arrowhead-energy" viewBox="0 0 10 8" refX="1" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,4 L0,8 Z" fill="rgba(22,163,74,0.6)"/>
+      </marker>
+      <filter id="glow">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="shadow">
+        <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="rgba(0,0,0,.5)"/>
+      </filter>
+    </defs>
+    <g id="canvas"></g>
+  </svg>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="ctrl-btn" id="btn-zoom-in"  title="Zoom ein">+</button>
+  <button class="ctrl-btn" id="btn-zoom-out" title="Zoom aus">−</button>
+  <button class="ctrl-btn" id="btn-reset"    title="Ansicht zurücksetzen">⊙</button>
+</div>
+<div class="zoom-level" id="zoom-label">100%</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="leg-title">Legende</div>
+  <div class="leg-row"><div class="leg-dot" style="background:var(--ok)"></div>  Status: OK</div>
+  <div class="leg-row"><div class="leg-dot" style="background:var(--warn)"></div>Warnung</div>
+  <div class="leg-row"><div class="leg-dot" style="background:var(--crit)"></div>Kritisch</div>
+  <div class="leg-row" style="margin-top:.3rem"><div class="leg-line"></div> Materialfluss</div>
+  <div class="leg-row"><div class="leg-line dashed"></div> Energieversorgung</div>
+</div>
+
+<!-- Tooltip -->
+<div id="tooltip"></div>
+
+<!-- Detail panel -->
+<div id="detail-panel">
+  <div class="dp-close" id="dp-close">✕</div>
+  <div id="dp-content"></div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════
+   DATA
+════════════════════════════════════════════════════ */
+const H = { ok:'ok', warn:'warn', crit:'crit' };
+
+const STAGES = [
+  {
+    id:'01', icon:'⛏️', color:'#b45309', risk:7.2, riskCls:'high',
+    name:'HPQ Sand Mining', shortName:'HPQ Sand',
+    location:'Spruce Pine, NC, USA',
+    process:'SiO₂-Quarzit → Sprengung → Flotation → Trocknung → HPQ (99,9995% SiO₂)',
+    description:'Weltweit einzige kommerzielle Quelle für halbleitertaugliches HPQ. Zwei Minen auf 10 km² in Spruce Pine. Ausfall = globaler Chip-Stopp.',
+    kpis:[['Tagesoutput','~490 t','ok'],['Ø Reinheit','99.9995%','ok'],['LKW/Tag','47','ok'],['Hurrikan','FERN','ok']],
+    companies:[
+      {id:'tqc',  abbr:'TQC', name:'The Quartz Corp',    flag:'🇺🇸', share:'~50%', health:H.ok,   healthText:'Stabile Produktion',   desc:'JV Imerys+Norsk Mineral. Weltmarktführer HPQ Halbleiter.',kpis:[['Output','280 t/d','ok'],['Reinheit','99.9995%','ok'],['LKW ab','28/d','ok']]},
+      {id:'sibelco',abbr:'SBL',name:'Sibelco',           flag:'🇧🇪', share:'~40%', health:H.ok,   healthText:'Stabile Produktion',   desc:'Belgische Mineraliengruppe, Chestnut Flats Mine Spruce Pine.',kpis:[['Output','210 t/d','ok'],['Reinheit','99.998%','ok'],['LKW ab','19/d','ok']]},
+      {id:'msr',  abbr:'MSR', name:'Min. Santa Rosa',    flag:'🇧🇷', share:'~5%',  health:H.ok,   healthText:'Normalbetrieb',        desc:'Brasilien – Americas-Backup, geringere Reinheit.',kpis:[['Output','~50 t/d','ok'],['Reinheit','99.99%','ok'],['Markt','Americas','ok']]},
+    ]
+  },
+  {
+    id:'02', icon:'🔥', color:'#c2410c', risk:6.8, riskCls:'high',
+    name:'Si-Metall-Verhüttung', shortName:'Si-Metall',
+    location:'Global (NO, ES, CN, DE)',
+    process:'SiO₂ + 2C → Si + 2CO  ·  Lichtbogenofen 2.000°C  ·  ~13 MWh/t  ·  99% Si',
+    description:'Energieintensivste Stufe. China produziert ~70% des Volumens. Westliche Hersteller dominieren Halbleiterqualität.',
+    kpis:[['Preis','$1.820/t','ok'],['Auslastung','87%','ok'],['Xinjiang','ERHÖHT','warn'],['kWh/t','~13 MWh','warn']],
+    companies:[
+      {id:'ferroglobe',abbr:'FGL',name:'Ferroglobe',       flag:'🇪🇸', share:'~18%', health:H.ok,   healthText:'Normalbetrieb',        desc:'Weltgrößter westlicher Produzent, 23 Werke auf 4 Kontinenten.',kpis:[['Auslastung','82%','ok'],['Preis','$1.830/t','ok'],['Halbleiter','31%','ok']]},
+      {id:'elkem',     abbr:'ELK',name:'Elkem',             flag:'🇳🇴', share:'~16%', health:H.ok,   healthText:'Wasserkraft 94%',      desc:'Bremanger-Werk: 95% Wasserkraft, CO₂-Intensität 0.4t/t.',kpis:[['Auslastung','91%','ok'],['CO₂/t','0.4 t','ok'],['Ern.','94%','ok']]},
+      {id:'hoshine',   abbr:'HSH',name:'Hoshine Silicon',   flag:'🇨🇳', share:'~15%', health:H.crit, healthText:'UFLPA Entity List',    desc:'Xinjiang, auf US-Sanctionsliste. US-Import gesperrt.',kpis:[['UFLPA','ENTITY LIST','crit'],['US-Import','GESPERRT','crit'],['Kap.','+300kt/a','ok']]},
+      {id:'wacker-si', abbr:'WCK',name:'Wacker Chemie',     flag:'🇩🇪', share:'~12%', health:H.warn, healthText:'Marginendruck',        desc:'Vertikal integriert bis Polysilizium. Burghausen, Bayern.',kpis:[['Preis','$1.810/t','ok'],['Druck','HOCH','warn'],['Qualität','SEMI','ok']]},
+      {id:'cn-rest',   abbr:'CN+',name:'CN-Produzenten',    flag:'🇨🇳', share:'~39%', health:H.warn, healthText:'Sanktionsrisiko',      desc:'Dutzende Kleinproduzenten in Yunnan/Sichuan/Xinjiang.',kpis:[['Anteil','~39%','ok'],['Qualität','MG-Si','warn'],['Risiko','MITTEL','warn']]},
+    ]
+  },
+  {
+    id:'03', icon:'🧪', color:'#d97706', risk:7.5, riskCls:'high',
+    name:'Polysilizium', shortName:'Poly-Si',
+    location:'China 62%, Deutschland 11%',
+    process:'SiHCl₃ + H₂ → Si + 3HCl  ·  Siemens-Reaktor 1.150°C  ·  ~80 kWh/kg  ·  9N (99,9999999%)',
+    description:'China dominiert mit >60% Weltkapazität. Wacker Burghausen = einziger europäischer Großproduzent. Preisverfall 2023–25 drückt Margen.',
+    kpis:[['Spot-Preis','$8.20/kg','warn'],['Preistrend','−12% YTD','warn'],['CN-Auslastung','91%','ok'],['EU-Kapazität','11%','warn']],
+    companies:[
+      {id:'gcl',    abbr:'GCL',name:'GCL-Poly Energy',   flag:'🇨🇳', share:'~27%', health:H.warn, healthText:'Überkapazitätsdruck',  desc:'Größter Produzent weltweit, Granular Poly (18 kWh/kg).',kpis:[['Kapazität','420 kt/a','ok'],['Preis','$7.90/kg','warn'],['Marge','GEDRÜCKT','warn']]},
+      {id:'tongwei',abbr:'TWI',name:'Tongwei',            flag:'🇨🇳', share:'~21%', health:H.ok,   healthText:'Normalbetrieb',        desc:'Integriert Solar + Polysilizium. Schnell wachsend.',kpis:[['Auslastung','93%','ok'],['Preis','$8.10/kg','warn'],['Wachstum','+28%','ok']]},
+      {id:'daqo',   abbr:'DQ', name:'Daqo New Energy',   flag:'🇨🇳', share:'~14%', health:H.warn, healthText:'Preisdruck',           desc:'US-börsennotiert (NYSE: DQ). Hohe Reinheitsgrade.',kpis:[['Reinheit','11N','ok'],['Preis','$8.00/kg','warn'],['NYSE','DQ','ok']]},
+      {id:'wacker', abbr:'WCK',name:'Wacker Chemie',      flag:'🇩🇪', share:'~11%', health:H.warn, healthText:'Chinesischer Preisdruck',desc:'Einziger EU-Großproduzent. SEMI PV17. Burghausen.',kpis:[['Semicon','65%','ok'],['Auslastung','79%','warn'],['kWh/kg','45','warn']]},
+      {id:'oci',    abbr:'OCI',name:'OCI Company',         flag:'🇰🇷', share:'~7%',  health:H.ok,   healthText:'Normalbetrieb',        desc:'Malaysia-Werke für Asia-Pac Halbleiterkunden.',kpis:[['Auslastung','85%','ok'],['Qualität','EG-Poly','ok'],['Standort','Malaysia','ok']]},
+    ]
+  },
+  {
+    id:'04', icon:'💿', color:'#2563eb', risk:6.4, riskCls:'medium',
+    name:'Si-Wafer', shortName:'Wafer',
+    location:'Japan 55%, Taiwan/USA 17%, DE/SG 13%',
+    process:'Poly-Si → Czochralski (1.414°C) → Ingot → Sägen → CMP-Polieren → 300mm Wafer',
+    description:'Japanisches Duopol Shin-Etsu+SUMCO mit ~55% Marktanteil. Lieferzeit 14 Wochen. Kapazitätserweiterungen dauern 2–3 Jahre.',
+    kpis:[['Lieferzeit','14 Wo.','warn'],['Auslastung','96%','ok'],['ASP 300mm','$145','ok'],['Yen','¥152','ok']],
+    companies:[
+      {id:'shinetsu',   abbr:'SEC',name:'Shin-Etsu Chemical',flag:'🇯🇵', share:'~30%', health:H.ok,   healthText:'97% Auslastung',       desc:'Weltmarktführer, Naoetsu-Fab ist größtes Einzelwerk.',kpis:[['Auslastung','97%','ok'],['Lieferzeit','12 Wo.','warn'],['Defektrate','<0.01','ok']]},
+      {id:'sumco',      abbr:'SMC',name:'SUMCO Corporation', flag:'🇯🇵', share:'~25%', health:H.ok,   healthText:'Normalbetrieb',        desc:'Spezialist 300mm, Samsung-Hauptlieferant. Kumamoto-Erweiterung.',kpis:[['Auslastung','94%','ok'],['Lieferzeit','14 Wo.','warn'],['Kumamoto','Q3 2026','ok']]},
+      {id:'globalwafer',abbr:'GWF',name:'GlobalWafers',      flag:'🇹🇼', share:'~17%', health:H.warn, healthText:'Sherman-Ramp verzögert',desc:'Sherman TX Fab (CHIPS-Act) Ramp unter Plan.',kpis:[['Sherman','55% Ramp','warn'],['CHIPS','$340M','ok'],['Lieferzeit','16 Wo.','warn']]},
+      {id:'siltronic',  abbr:'SLT',name:'Siltronic',          flag:'🇩🇪', share:'~13%', health:H.ok,   healthText:'Normalbetrieb',        desc:'Einziger europäischer Premiumhersteller, SG-Werk startet.',kpis:[['Auslastung','89%','ok'],['SG Ramp','H2 2025','ok'],['Qualität','300mm','ok']]},
+      {id:'sksiltron',  abbr:'SKS',name:'SK Siltron CSi',     flag:'🇰🇷', share:'~8%',  health:H.ok,   healthText:'Normalbetrieb',        desc:'SK Group, US-SiC-Kapazität für AI/Automotive.',kpis:[['Auslastung','91%','ok'],['SiC-Kap.','USA','ok'],['Wachstum','+15%','ok']]},
+    ]
+  },
+  {
+    id:'05', icon:'🔬', color:'#dc2626', risk:9.1, riskCls:'critical',
+    name:'EUV-Lithographie', shortName:'EUV / Anlagen',
+    location:'Veldhoven NL (ASML), Santa Clara CA',
+    process:'EUV 13,5 nm-Photonen → Reflexionsoptik (Zeiss) → Fotoresist → Belichtung → Ätzen  ·  ermöglicht ≤3nm-Knoten',
+    description:'ASML hält 100% des EUV-Markts. Lieferzeit 18 Monate. High-NA EUV (NA 0.55) für 1,4nm-Knoten. China seit 2023 vom EUV-Zugang ausgesperrt.',
+    kpis:[['ASML Backlog','32 Einh.','warn'],['Lieferzeit','18 Mo.','crit'],['EUV Uptime','98.2%','ok'],['High-NA','7 ausgeliefert','warn']],
+    companies:[
+      {id:'asml',  abbr:'ASML',name:'ASML Holding',       flag:'🇳🇱', share:'100% EUV',health:H.warn, healthText:'18 Mo. Lieferengpass', desc:'Einziger EUV-Hersteller. High-NA NXE:5000 ab 2024.',kpis:[['Lieferzeit','18 Monate','crit'],['CN-Export','GESPERRT','crit'],['Uptime','98.2%','ok']]},
+      {id:'amat',  abbr:'AMAT',name:'Applied Materials',  flag:'🇺🇸', share:'~19% Anlagen',health:H.warn,healthText:'CN-Exportkontrolle',desc:'Größter komplementärer Anlagenlieferant weltweit.',kpis:[['Umsatz','$26.2B','ok'],['CN-Anteil','27%','warn'],['BIS-Lizenz','CCATS','warn']]},
+      {id:'lam',   abbr:'LAM', name:'Lam Research',       flag:'🇺🇸', share:'~12% Anlagen',health:H.ok,  healthText:'Normalbetrieb',       desc:'Führend Plasma-Ätzen und ALD-Abscheidung.',kpis:[['Auslastung','94%','ok'],['CN-Exp.','BEGRENZT','warn'],['Umsatz','$17.8B','ok']]},
+      {id:'tel',   abbr:'TEL', name:'Tokyo Electron',     flag:'🇯🇵', share:'~14% Anlagen',health:H.ok,  healthText:'Normalbetrieb',       desc:'Drittgrößter Anlagenlieferant. Coater/Developer.',kpis:[['Marktanteil','~14%','ok'],['JP-Yen','¥152','ok'],['Wachstum','+11%','ok']]},
+      {id:'kla',   abbr:'KLA', name:'KLA Corporation',    flag:'🇺🇸', share:'~11% Anlagen',health:H.ok,  healthText:'Normalbetrieb',       desc:'Weltführer Inspektion & Metrologie – ohne KLA kein Yield.',kpis:[['Inspektion','~55% Mkt','ok'],['Yield-Beitrag','KRITISCH','ok'],['Umsatz','$10.5B','ok']]},
+    ]
+  },
+  {
+    id:'06', icon:'🏭', color:'#7c3aed', risk:8.8, riskCls:'critical',
+    name:'Halbleiter-Foundry', shortName:'Foundry',
+    location:'Taiwan 58%, Korea 13%, USA 14%',
+    process:'Wafer → EUV-Belichtung (~100 Masken) → Ätzen → Dotierung → CMP → Test → Dice → 300mm Advanced Node',
+    description:'TSMC fertigt ~92% aller ≤5nm-Chips. Taiwan-Straße = größtes Einzelrisiko der globalen Technologielieferkette. CHIPS Act treibt Diversifizierung.',
+    kpis:[['N3 Auslastung','98%','ok'],['TW-Geopolitik','ERHÖHT','warn'],['TSMC AZ N2','67% Ramp','warn'],['Wasser TW','142 Tage','ok']],
+    companies:[
+      {id:'tsmc',    abbr:'TSM',name:'TSMC',               flag:'🇹🇼', share:'~58%', health:H.warn, healthText:'Taiwan-Geopolitik',     desc:'Größte Foundry, N3/N2. Fabs in AZ, JP, DE im Aufbau.',kpis:[['N3','98% Last.','ok'],['AZ N2','67% Ramp','warn'],['Wasser','142 Tage','ok']]},
+      {id:'samsung-f',abbr:'SSF',name:'Samsung Foundry',   flag:'🇰🇷', share:'~13%', health:H.warn, healthText:'SF3 Yield unter Plan',   desc:'SF3 (3nm GAA). Taylor TX Fab 2026. Qualcomm, Google.',kpis:[['SF3 Yield','58%','warn'],['Auslastung','82%','ok'],['Taylor','Q3 2026','warn']]},
+      {id:'intel-f', abbr:'IFS',name:'Intel Foundry',      flag:'🇺🇸', share:'~7%',  health:H.warn, healthText:'18A Ramp verzögert',    desc:'Intel 18A (RibbonFET+PowerVia). $8.5Mrd CHIPS-Act.',kpis:[['18A Status','Risk Prod.','warn'],['CHIPS','$8.5B','ok'],['AZ','71% Last.','warn']]},
+      {id:'gf',      abbr:'GF', name:'GlobalFoundries',    flag:'🇺🇸', share:'~7%',  health:H.ok,   healthText:'Normalbetrieb',        desc:'12nm+, RF/Analog, Defense. Malta NY, Dresden.',kpis:[['Knoten','12nm+','ok'],['Fokus','RF/Analog','ok'],['CHIPS','$1.5B','ok']]},
+      {id:'smic',    abbr:'SMIC',name:'SMIC',              flag:'🇨🇳', share:'~6%',  health:H.crit, healthText:'Kein EUV-Zugang',       desc:'Chinas größte Foundry, max 14nm. US-Entity-List.',kpis:[['Max Knoten','14nm','crit'],['EUV','KEIN ZUGANG','crit'],['Binnenmarkt','FOKUS','ok']]},
+    ]
+  },
+  {
+    id:'07', icon:'🧠', color:'#6d28d9', risk:8.3, riskCls:'critical',
+    name:'KI-Chip-Design', shortName:'AI Chips',
+    location:'Santa Clara CA, Mountain View CA',
+    process:'RTL-Design → Synthese → P&R → TSMC-Fertigung → CoWoS-Packaging (HBM+GPU) → Test → Ship',
+    description:'NVIDIA dominiert ~80% der AI-GPU-Nachfrage. CUDA-Ökosystem = Lock-in. Alle NVIDIA-GPUs von TSMC gefertigt. US-Exportkontrollen sperren CN-Versorgung.',
+    kpis:[['H100 Spot','$28k','warn'],['B200 Yield','71%','warn'],['Lieferzeit','8 Wo.','warn'],['Export','BIS AKTIV','warn']],
+    companies:[
+      {id:'nvidia',   abbr:'NVDA',name:'NVIDIA',            flag:'🇺🇸', share:'~80%', health:H.warn, healthText:'Export-Kontrollen',     desc:'H100/B200/GB200 NVL72. CUDA ~4M Dev. Marktkapitalisierung $3.2T.',kpis:[['Rev. Q1','$22.6B','ok'],['B200 Yield','71%','warn'],['Export CN','GESPERRT','crit']]},
+      {id:'amd-gpu',  abbr:'AMD', name:'AMD',                flag:'🇺🇸', share:'~8%',  health:H.ok,   healthText:'Wachsendes Portfolio',  desc:'MI300X (192GB HBM3). ROCm-Stack verbessert sich.',kpis:[['MI300X','verfügbar','ok'],['Rev.','$2.3B/Q','ok'],['ROCm','PyTorch OK','ok']]},
+      {id:'google-tpu',abbr:'TPU',name:'Google TPU',         flag:'🇺🇸', share:'~5%',  health:H.ok,   healthText:'Interne Kapazität OK',  desc:'TPU v5p/v6. Gemini-Training intern. GCP extern.',kpis:[['Pods','6.144 TPU','ok'],['Modell','Gemini','ok'],['Extern','GCP','ok']]},
+      {id:'aws-trnm', abbr:'TRN',name:'Amazon Trainium',     flag:'🇺🇸', share:'~3%',  health:H.ok,   healthText:'GA Trainium 2',         desc:'Trainium 2 GA Q3 2025. Anthropic-Trainingscluster.',kpis:[['Chips','Trainium 2','ok'],['Nutzer','Anthropic','ok'],['Kosten','-40% vs H100','ok']]},
+      {id:'intel-gaudi',abbr:'GDI',name:'Intel Gaudi 3',    flag:'🇺🇸', share:'~2%',  health:H.warn, healthText:'SW-Stack lückenhaft',    desc:'Gaudi 3 als NVIDIA-Alternative. SW-Ökosystem schwach.',kpis:[['SW-Stack','LÜCKENHAFT','warn'],['Yield','OK','ok'],['Akzeptanz','GERING','warn']]},
+    ]
+  },
+  {
+    id:'08', icon:'🖥️', color:'#0891b2', risk:5.4, riskCls:'medium',
+    name:'Server-Integration', shortName:'Server',
+    location:'San Jose CA, Round Rock TX, Houston TX',
+    process:'GPU-Module → Systemboard → Rack-Assembly → Liquid-Cooling → Burn-In-Test → Ship',
+    description:'GPU-Server-Markt wächst exponentiell. Supermicro dominiert als ODM. Flaschenhals: HGX B200 Module und 120-kW-Rack-Kühlung.',
+    kpis:[['HGX-Module','KNAPP','crit'],['Lieferzeit','12 Wo.','warn'],['Rack-TDP','42 kW','ok'],['Liquid-Cool','70%','ok']],
+    companies:[
+      {id:'nvidia-dgx',abbr:'DGX',name:'NVIDIA DGX/HGX',   flag:'🇺🇸', share:'~38%', health:H.warn, healthText:'HGX B200 Knapp',        desc:'GB200 NVL72: 72 GPUs/Rack, 120kW TDP. DGX B200 Referenzsystem.',kpis:[['NVL72','120kW/Rack','ok'],['HGX Modul','KNAPP','crit'],['Lieferzeit','12 Wo.','warn']]},
+      {id:'supermicro',abbr:'SMCI',name:'Super Micro',      flag:'🇺🇸', share:'~23%', health:H.warn, healthText:'HGX Warteliste 14 Wo.',  desc:'Größter ODM GPU-Server. Umsatz FY2024: $14.9Mrd.',kpis:[['Umsatz','$14.9B','ok'],['Lieferzeit','10-12 Wo.','warn'],['Liquid','70%','ok']]},
+      {id:'dell',      abbr:'DELL',name:'Dell Technologies', flag:'🇺🇸', share:'~14%', health:H.ok,   healthText:'Normalbetrieb',        desc:'PowerEdge XE9680 (8× H100/B200). Enterprise-Fokus.',kpis:[['XE9680','verfügbar','ok'],['Lieferzeit','12 Wo.','warn'],['Govt','28%','ok']]},
+      {id:'hpe',       abbr:'HPE', name:'HPE',               flag:'🇺🇸', share:'~9%',  health:H.ok,   healthText:'Normalbetrieb',        desc:'ProLiant DL380a + Cray EX Supercomputing.',kpis:[['ProLiant','ok','ok'],['Cray EX','HPC','ok'],['Lieferzeit','14 Wo.','warn']]},
+      {id:'inspur',    abbr:'INS', name:'Lenovo/Inspur',     flag:'🇨🇳', share:'~10%', health:H.crit, healthText:'Entity List',           desc:'Inspur auf US-Entity-List. APAC-Markt dominiert.',kpis:[['US-Exp.','GESPERRT','crit'],['APAC','Dominant','ok'],['Lenovo','ok','ok']]},
+    ]
+  },
+  {
+    id:'09', icon:'🏗️', color:'#0d9488', risk:5.1, riskCls:'medium',
+    name:'Hyperscale-DC', shortName:'Data Centers',
+    location:'Ashburn VA, Boydton VA, The Dalles OR',
+    process:'Server → Rack → HPC-Networking (InfiniBand/RoCE) → Kühlung → Power-Management → Betrieb',
+    description:'Hyperscaler investieren 2025–2026 >$300Mrd in KI-Infrastruktur. Engpass: GPU-Kapazität (23% frei), Netzanschluss-Wartezeit 14 Mo.',
+    kpis:[['GPU-Kap.frei','23%','crit'],['PUE','1.18','ok'],['Netz-WL','14 Mo.','warn'],['Erneuerbar','68%','ok']],
+    companies:[
+      {id:'aws',    abbr:'AWS', name:'Amazon AWS',           flag:'🇺🇸', share:'~31%', health:H.warn, healthText:'GPU fast ausgebucht',   desc:'UltraCluster 20.480 H100. us-east-1 Ashburn VA.',kpis:[['Rev.','$29.3B/Q','ok'],['H100 frei','<5%','crit'],['PUE','1.14','ok']]},
+      {id:'azure',  abbr:'MSFT',name:'Microsoft Azure',      flag:'🇺🇸', share:'~24%', health:H.crit, healthText:'ND H100 ausgebucht',    desc:'OpenAI-Exklusivpartner. Maia 100 Eigenentwicklung. $80Mrd CAPEX.',kpis:[['ND H100','AUSGEBUCHT','crit'],['OpenAI','Exklusiv','ok'],['CAPEX','$80B','ok']]},
+      {id:'gcp',    abbr:'GCP', name:'Google Cloud',         flag:'🇺🇸', share:'~12%', health:H.ok,   healthText:'TPU & GPU verfügbar',   desc:'The Dalles OR: 3 Fabs, Wasserkraft Columbia River.',kpis:[['Rev.','$12.3B/Q','ok'],['TPU v5p','begrenzt','warn'],['PUE','1.10','ok']]},
+      {id:'meta',   abbr:'META',name:'Meta',                  flag:'🇺🇸', share:'~9%',  health:H.ok,   healthText:'Internes Cluster OK',   desc:'350.000+ H100, kein externer Cloud-Verkauf. Llama-Training.',kpis:[['GPUs','350k+ H100','ok'],['Llama','Training','ok'],['PPA','100%','ok']]},
+      {id:'oracle', abbr:'OCI', name:'Oracle Cloud',          flag:'🇺🇸', share:'~5%',  health:H.ok,   healthText:'Wachsendes Portfolio',  desc:'NVIDIA-Supercluster. xAI-Vertrag. Schnell wachsend.',kpis:[['xAI','Vertrag','ok'],['GPU','verfügbar','ok'],['Wachstum','+45%','ok']]},
+    ]
+  },
+  {
+    id:'10', icon:'⚡', color:'#16a34a', risk:4.2, riskCls:'low',
+    name:'Energieinfrastruktur', shortName:'Energie',
+    location:'USA national, Nuklear-Renaissance',
+    process:'Wind/Solar/Nuklear → Strom → Hochspannung-Übertragung → Umspannwerk → DC-Einspeisung (10–420 MW)',
+    description:'KI-DC-Bedarf wächst +40%/a. Engpass: Netzanschluss-Queue (14 Mo.). Nuklear-Renaissance (TMI reaktiviert). SMR ab ~2028.',
+    kpis:[['$/kWh','$0.089','ok'],['Erneuerbar','42%','ok'],['Nuklear','94% verf.','ok'],['DC-Wachst.','+40%/a','warn']],
+    companies:[
+      {id:'nextera',      abbr:'NEE',name:'NextEra Energy',  flag:'🇺🇸', share:'~17%', health:H.ok,   healthText:'Normalbetrieb',        desc:'Weltgrößter Wind/Solar-Betreiber. 67GW sauber. PPAs AWS/Google.',kpis:[['Kapazität','67 GW','ok'],['PPA','12 GW DC','ok'],['Output','98% Plan','ok']]},
+      {id:'constellation',abbr:'CEG',name:'Constellation',   flag:'🇺🇸', share:'~13%', health:H.ok,   healthText:'TMI reaktiviert',       desc:'21 Kernreaktoren, 20GW. TMI Unit 1 wieder am Netz.',kpis:[['Nuklear','21 GW','ok'],['TMI','835 MW ✓','ok'],['CO₂','<5g/kWh','ok']]},
+      {id:'duke',         abbr:'DUK',name:'Duke Energy',      flag:'🇺🇸', share:'~10%', health:H.ok,   healthText:'Normalbetrieb',        desc:'Southeast US DC-Cluster Versorger. Gas+Erneuerbar.',kpis:[['Region','SE USA','ok'],['DC-PPAs','aktiv','ok'],['Erneuerbar','35%','ok']]},
+      {id:'aes',          abbr:'AES',name:'AES Corporation',  flag:'🇺🇸', share:'~8%',  health:H.ok,   healthText:'Storage-Fokus',         desc:'Globaler Energiekonzern. Batterie-Storage + Solar-PPA.',kpis:[['Storage','führend','ok'],['Solar-PPA','DC','ok'],['Global','30 Länder','ok']]},
+      {id:'smr-cons',     abbr:'SMR',name:'SMR-Konsortium',   flag:'🇺🇸', share:'~2%',  health:H.warn, healthText:'Vor Markteinführung',   desc:'Kairos/NuScale/X-energy. Google-PPA 500MW ab 2030.',kpis:[['Kairos','2027 Demo','warn'],['Google PPA','500MW/2030','ok'],['Preis','$0.07/kWh','ok']]},
+    ]
+  },
+];
+
+const EDGES = [
+  { from:'01', to:'02', transport:'🚛 LKW / 🚂 Rail',      detail:'HPQ-Quarz ~2.000 t/d', km:'500–8.000 km', color:'rgba(180,83,9,.5)' },
+  { from:'02', to:'03', transport:'🚢 Container / 🚛 LKW', detail:'Si-Metall ~1.200 t/d',  km:'2.000–18.000 km', color:'rgba(194,65,12,.5)' },
+  { from:'03', to:'04', transport:'✈️ Luft / 🚢 See',       detail:'Polysilizium ~300 t/d', km:'1.000–12.000 km', color:'rgba(217,119,6,.5)' },
+  { from:'04', to:'05', transport:'✈️ Luft / 🚚 LKW',       detail:'Wafer-Test & Equipment', km:'5.000–10.000 km', color:'rgba(37,99,235,.5)' },
+  { from:'05', to:'06', transport:'✈️ Schwerlast-Luft',     detail:'EUV-Anlagen ~400/Jahr', km:'8.000–12.000 km', color:'rgba(220,38,38,.5)' },
+  { from:'06', to:'07', transport:'✈️ Air Express',          detail:'Chips ~2 Mrd/Quartal',  km:'2.000–12.000 km', color:'rgba(124,58,237,.5)' },
+  { from:'07', to:'08', transport:'✈️ Luft / 🚛 LKW',       detail:'GPUs ~1 Mio./Monat',    km:'100–5.000 km', color:'rgba(109,40,217,.5)' },
+  { from:'08', to:'09', transport:'🚛 LKW / ✈️ Charter',    detail:'Server ~12.000/Monat',  km:'50–3.000 km', color:'rgba(8,145,178,.5)' },
+  { from:'10', to:'09', transport:'⚡ Stromnetz',            detail:'+40% Wachstum/Jahr',     km:'Regional Grid', color:'rgba(22,163,74,.7)', reverse:true, dashed:true },
+];
+
+/* ════════════════════════════════════════════════════
+   LAYOUT CONSTANTS
+════════════════════════════════════════════════════ */
+const BOX_W    = 200;
+const BOX_HDR  = 46;
+const NODE_H   = 26;
+const NODE_GAP = 8;
+const NODE_PAD_TOP = 12;
+const STAGE_Y  = 80;
+const PROC_Y_OFF = 24;
+const SPACING  = 296;
+const CANVAS_W = SPACING * 9 + BOX_W + 60;
+
+function stageX(idx) { return 30 + idx * SPACING + BOX_W / 2; }
+function boxHeight(stage) { return BOX_HDR + NODE_PAD_TOP + stage.companies.length * (NODE_H + NODE_GAP) + 12; }
+
+/* ════════════════════════════════════════════════════
+   SVG HELPERS
+════════════════════════════════════════════════════ */
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs={}, text='') {
+  const e = document.createElementNS(NS, tag);
+  Object.entries(attrs).forEach(([k,v]) => e.setAttribute(k,v));
+  if (text) e.textContent = text;
+  return e;
+}
+function healthColor(h) { return h==='ok'?'#22c55e':h==='warn'?'#f59e0b':'#ef4444'; }
+function riskColor(cls) { return cls==='critical'?'#ef4444':cls==='high'?'#f97316':cls==='medium'?'#f59e0b':'#22c55e'; }
+
+/* ════════════════════════════════════════════════════
+   RENDER EDGE
+════════════════════════════════════════════════════ */
+function renderEdge(canvas, edge) {
+  const fromIdx = STAGES.findIndex(s => s.id === edge.from);
+  const toIdx   = STAGES.findIndex(s => s.id === edge.to);
+  const fromStage = STAGES[fromIdx];
+  const toStage   = STAGES[toIdx];
+  const fromH = boxHeight(fromStage);
+  const toH   = boxHeight(toStage);
+
+  const x1 = stageX(fromIdx) + BOX_W/2;
+  const y1 = STAGE_Y + fromH/2;
+  let x2, y2;
+
+  if (edge.reverse) {
+    // energy: goes from stage 10 leftward to stage 09
+    x2 = stageX(toIdx) + BOX_W/2;
+    y2 = STAGE_Y + toH/2 + 30;
+    const mx = (x1 + x2) / 2;
+    const my = Math.max(y1, y2) + 50;
+    const path = `M ${x1} ${y1+30} C ${x1} ${my} ${x2} ${my} ${x2} ${y2}`;
+    const p = el('path', {
+      d: path,
+      fill:'none',
+      stroke: edge.color,
+      'stroke-width':'2',
+      'stroke-dasharray': edge.dashed ? '7 4' : 'none',
+      'marker-start':'url(#arrowhead-energy)',
+      class:'edge-path',
+    });
+    canvas.appendChild(p);
+    // label
+    const lx = (x1+x2)/2;
+    const ly = my + 16;
+    const lg = el('g', { class:'edge-label', transform:`translate(${lx},${ly})` });
+    const lb = el('rect', { x:-60, y:-13, width:120, height:26, rx:5, fill:'rgba(8,12,22,.85)', stroke:'rgba(22,163,74,.3)','stroke-width':'1' });
+    const lt = el('text', { x:0, y:1, 'text-anchor':'middle', fill:'#4ade80', 'font-size':'9', 'font-family':'Segoe UI,sans-serif', 'font-weight':'600' }, edge.transport);
+    const ld = el('text', { x:0, y:12, 'text-anchor':'middle', fill:'rgba(100,130,80,.9)', 'font-size':'8', 'font-family':'Segoe UI,sans-serif' }, edge.detail);
+    lg.append(lb,lt,ld);
+    canvas.appendChild(lg);
+    return;
+  }
+
+  x2 = stageX(toIdx) - BOX_W/2;
+  y2 = STAGE_Y + toH/2;
+  const gap = x2 - x1;
+  const cx = gap * 0.4;
+
+  const path = `M ${x1} ${y1} C ${x1+cx} ${y1} ${x2-cx} ${y2} ${x2} ${y2}`;
+  const p = el('path', {
+    d: path, fill:'none',
+    stroke: edge.color, 'stroke-width':'2',
+    'marker-end':'url(#arrowhead)',
+    class:'edge-path',
+  });
+  canvas.appendChild(p);
+
+  // label background + text
+  const lx = (x1 + x2) / 2;
+  const ly = (y1 + y2) / 2 - 26;
+  const lg = el('g', { class:'edge-label', transform:`translate(${lx},${ly})` });
+  const lb = el('rect', { x:-58,y:-13,width:116,height:28,rx:5, fill:'rgba(8,12,22,.88)', stroke:edge.color.replace(/[\d.]+\)$/,'0.35)'), 'stroke-width':'1' });
+  const lt = el('text', { x:0,y:1,'text-anchor':'middle', fill:'rgba(220,228,248,.85)','font-size':'9.5','font-family':'Segoe UI,sans-serif','font-weight':'700' }, edge.transport);
+  const ld = el('text', { x:0,y:13,'text-anchor':'middle', fill:'rgba(140,155,190,.8)','font-size':'8','font-family':'Segoe UI,sans-serif' }, edge.detail);
+  lg.append(lb,lt,ld);
+  canvas.appendChild(lg);
+
+  // km label
+  const km = el('text', { x:lx, y:ly+30, 'text-anchor':'middle', fill:'rgba(90,100,130,.7)', 'font-size':'7.5','font-family':'Segoe UI,sans-serif' }, edge.km);
+  canvas.appendChild(km);
+}
+
+/* ════════════════════════════════════════════════════
+   RENDER STAGE
+════════════════════════════════════════════════════ */
+function renderStage(canvas, stage, idx) {
+  const cx = stageX(idx);
+  const bx = cx - BOX_W/2;
+  const by = STAGE_Y;
+  const bh = boxHeight(stage);
+
+  const g = el('g', { class:'stage-box', id:`stage-${stage.id}`, 'data-phase':stage.id });
+
+  // drop shadow rect
+  g.appendChild(el('rect', { x:bx+3, y:by+3, width:BOX_W, height:bh, rx:11, fill:'rgba(0,0,0,.4)' }));
+
+  // main box
+  const box = el('rect', { x:bx, y:by, width:BOX_W, height:bh, rx:11,
+    fill:'rgba(255,255,255,.025)', stroke:stage.color, 'stroke-width':'1.2',
+    class:'stage-bg'
+  });
+  g.appendChild(box);
+
+  // header fill
+  const hdr = el('rect', { x:bx, y:by, width:BOX_W, height:BOX_HDR, rx:11,
+    fill: stage.color + '28'
+  });
+  // clip top corners only via separate rect for bottom
+  g.appendChild(hdr);
+  g.appendChild(el('rect', { x:bx, y:by+BOX_HDR-10, width:BOX_W, height:10, fill:stage.color+'28' }));
+
+  // header divider
+  g.appendChild(el('line', { x1:bx, y1:by+BOX_HDR, x2:bx+BOX_W, y2:by+BOX_HDR,
+    stroke:stage.color, 'stroke-width':'0.6', 'stroke-opacity':'0.5' }));
+
+  // stage number
+  g.appendChild(el('text', { x:bx+10, y:by+15, fill:stage.color, 'font-size':'9',
+    'font-family':'Segoe UI,sans-serif', 'font-weight':'700', 'letter-spacing':'1', opacity:'.8' }, `STUFE ${stage.id}`));
+
+  // icon + name
+  g.appendChild(el('text', { x:bx+10, y:by+32, fill:'rgba(224,228,240,.9)', 'font-size':'12.5',
+    'font-family':'Segoe UI,sans-serif', 'font-weight':'800' }, stage.icon + ' ' + stage.shortName));
+
+  // risk score
+  const rc = riskColor(stage.riskCls);
+  g.appendChild(el('text', { x:bx+BOX_W-10, y:by+32, 'text-anchor':'end',
+    fill:rc, 'font-size':'13', 'font-family':'Segoe UI,sans-serif', 'font-weight':'900' }, stage.risk.toFixed(1)));
+  g.appendChild(el('text', { x:bx+BOX_W-10, y:by+14, 'text-anchor':'end',
+    fill:rc, 'font-size':'7.5','font-family':'Segoe UI,sans-serif','font-weight':'700','letter-spacing':'.5' }, 'RISK'));
+
+  // company nodes
+  stage.companies.forEach((co, ci) => {
+    const ny = by + BOX_HDR + NODE_PAD_TOP + ci * (NODE_H + NODE_GAP);
+    const nx = bx + 10;
+    const nw = BOX_W - 20;
+
+    const ng = el('g', { class:'company-node', 'data-stage':stage.id, 'data-company':co.id,
+      cursor:'pointer' });
+
+    // node background
+    const nbg = el('rect', { x:nx, y:ny, width:nw, height:NODE_H, rx:5,
+      fill:'rgba(255,255,255,.04)', stroke:'rgba(255,255,255,.08)', 'stroke-width':'0.8',
+      class:'node-bg' });
+    ng.appendChild(nbg);
+
+    // health indicator dot
+    ng.appendChild(el('circle', { cx:nx+10, cy:ny+NODE_H/2, r:4.5,
+      fill:healthColor(co.health), filter:'url(#glow)' }));
+
+    // company abbreviation
+    ng.appendChild(el('text', { x:nx+22, y:ny+NODE_H/2+4.5, fill:'rgba(220,228,248,.9)',
+      'font-size':'11', 'font-family':'Segoe UI,sans-serif','font-weight':'800' }, co.abbr));
+
+    // flag
+    ng.appendChild(el('text', { x:nx+62, y:ny+NODE_H/2+4, fill:'rgba(255,255,255,.7)',
+      'font-size':'10' }, co.flag));
+
+    // market share
+    ng.appendChild(el('text', { x:nx+nw-6, y:ny+NODE_H/2+4.5, 'text-anchor':'end',
+      fill:stage.color, 'font-size':'9.5','font-family':'Segoe UI,sans-serif','font-weight':'700' }, co.share));
+
+    ng.addEventListener('mouseenter', (e) => showTooltip(e, stage, co));
+    ng.addEventListener('mousemove',  (e) => moveTooltip(e));
+    ng.addEventListener('mouseleave', () => hideTooltip());
+    ng.addEventListener('click', (e) => { e.stopPropagation(); showDetailPanel(stage, co); });
+    g.appendChild(ng);
+  });
+
+  // process label below box
+  const py = by + bh + PROC_Y_OFF;
+  const proc = stage.process.split('·')[0].trim().slice(0,30) + (stage.process.length>30?'…':'');
+  g.appendChild(el('text', { x:cx, y:py, 'text-anchor':'middle',
+    fill:'rgba(90,105,145,.75)', 'font-size':'8.5','font-family':'Segoe UI,sans-serif','font-style':'italic' }, proc));
+
+  // click on stage box (not company) → open detail panel for stage
+  box.addEventListener('click', () => showStagePanel(stage));
+  hdr.addEventListener('click', () => showStagePanel(stage));
+  canvas.appendChild(g);
+}
+
+/* ════════════════════════════════════════════════════
+   RENDER ALL
+════════════════════════════════════════════════════ */
+function renderGraph() {
+  const canvas = document.getElementById('canvas');
+  canvas.innerHTML = '';
+
+  // Background subtle grid
+  const defs = document.querySelector('#graph-svg defs');
+  const pat = el('pattern', { id:'grid', width:60, height:60, patternUnits:'userSpaceOnUse' });
+  const pl1 = el('path', { d:'M 60 0 L 0 0 0 60', fill:'none', stroke:'rgba(255,255,255,.025)', 'stroke-width':'1' });
+  pat.appendChild(pl1); defs.appendChild(pat);
+  canvas.appendChild(el('rect', { width:CANVAS_W, height:900, fill:'url(#grid)' }));
+
+  // render edges first (behind nodes)
+  EDGES.forEach(edge => renderEdge(canvas, edge));
+
+  // render stages
+  STAGES.forEach((stage, idx) => renderStage(canvas, stage, idx));
+}
+
+/* ════════════════════════════════════════════════════
+   TOOLTIP
+════════════════════════════════════════════════════ */
+const tooltip = document.getElementById('tooltip');
+function showTooltip(e, stage, co) {
+  const hc = healthColor(co.health);
+  const hs = co.health === 'ok' ? 'OK' : co.health === 'warn' ? 'Warnung' : 'Kritisch';
+  tooltip.innerHTML = `
+    <div class="tt-header">
+      <div class="tt-abbr" style="color:${stage.color};border:1px solid ${stage.color}33">${co.abbr}</div>
+      <div><div class="tt-name">${co.name}</div><div class="tt-stage">${co.flag} &nbsp;${stage.icon} Stufe ${stage.id}: ${stage.shortName}</div></div>
+    </div>
+    <div class="tt-row"><span class="tt-label">Marktanteil</span><span class="tt-val" style="color:${stage.color}">${co.share}</span></div>
+    <div class="tt-row"><span class="tt-label">Status</span><span class="tt-val ${co.health}" style="color:${hc}">● ${hs}</span></div>
+    <div class="tt-row"><span class="tt-label">Grund</span><span class="tt-val ${co.health}">${co.healthText}</span></div>
+    ${co.kpis.map(([l,v,s])=>`<div class="tt-row"><span class="tt-label">${l}</span><span class="tt-val ${s}">${v}</span></div>`).join('')}
+    <div class="tt-desc">${co.desc}</div>
+    <div class="tt-hint">Klick für Details →</div>`;
+  tooltip.style.display = 'block';
+  moveTooltip(e);
+}
+function moveTooltip(e) {
+  const tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let left = e.clientX + 16, top = e.clientY + 16;
+  if (left + tw > vw - 10) left = e.clientX - tw - 10;
+  if (top + th > vh - 10) top = e.clientY - th - 10;
+  tooltip.style.left = left + 'px';
+  tooltip.style.top  = top  + 'px';
+}
+function hideTooltip() { tooltip.style.display = 'none'; }
+
+/* ════════════════════════════════════════════════════
+   DETAIL PANEL
+════════════════════════════════════════════════════ */
+const panel = document.getElementById('detail-panel');
+document.getElementById('dp-close').addEventListener('click', () => panel.classList.remove('open'));
+
+function showDetailPanel(stage, co) {
+  hideTooltip();
+  const hc = healthColor(co.health);
+  const hs = co.health==='ok'?'OK':co.health==='warn'?'Warnung':'Kritisch';
+  document.getElementById('dp-content').innerHTML = `
+    <div class="dp-header" style="border-left:4px solid ${stage.color}">
+      <div class="dp-phase-tag">${stage.icon} Stufe ${stage.id} · ${stage.name}</div>
+      <div class="dp-company-name">${co.name}</div>
+      <div class="dp-meta">${co.flag} &nbsp;Marktanteil: <strong style="color:${stage.color}">${co.share}</strong></div>
+      <div style="margin-top:.5rem"><span class="health-pill ${co.health}"> ${hs}</span></div>
+      <div style="font-size:.72rem;color:var(--muted2);margin-top:.3rem">${co.healthText}</div>
+    </div>
+    <div class="dp-section">
+      <div class="dp-section-title">Live-KPIs</div>
+      <div class="dp-kpi-grid">
+        ${co.kpis.map(([l,v,s])=>`<div class="dp-kpi"><div class="dp-kpi-val ${s}">${v}</div><div class="dp-kpi-label">${l}</div></div>`).join('')}
+      </div>
+    </div>
+    <div class="dp-section">
+      <div class="dp-section-title">Beschreibung</div>
+      <div class="dp-desc">${co.desc}</div>
+    </div>
+    <div class="dp-section">
+      <div class="dp-section-title">Produktionsprozess (Stufe)</div>
+      <div class="dp-process" style="border-color:${stage.color}">${stage.process}</div>
+    </div>
+    <div class="dp-links">
+      <a href="detail.html?phase=${stage.id}" class="dp-link primary">📋 Vollständige Details</a>
+      <a href="digital-twin.html?phase=${stage.id}&company=${co.id}&name=${encodeURIComponent(co.name)}&color=${encodeURIComponent(stage.color)}" class="dp-link secondary">🛰️ Digital Twin</a>
+    </div>`;
+  panel.classList.add('open');
+}
+
+function showStagePanel(stage) {
+  hideTooltip();
+  document.getElementById('dp-content').innerHTML = `
+    <div class="dp-header" style="border-left:4px solid ${stage.color}">
+      <div class="dp-phase-tag">Stufe ${stage.id} von 10</div>
+      <div class="dp-company-name">${stage.icon} ${stage.name}</div>
+      <div class="dp-meta">${stage.location}</div>
+      <div style="margin-top:.5rem">
+        <span class="health-pill ${stage.riskCls==='critical'?'crit':stage.riskCls==='high'?'warn':stage.riskCls==='medium'?'warn':'ok'}">
+          Risiko ${stage.risk}/10
+        </span>
+      </div>
+    </div>
+    <div class="dp-section">
+      <div class="dp-section-title">Phase-KPIs</div>
+      <div class="dp-kpi-grid">
+        ${stage.kpis.map(([l,v,s])=>`<div class="dp-kpi"><div class="dp-kpi-val ${s}">${v}</div><div class="dp-kpi-label">${l}</div></div>`).join('')}
+      </div>
+    </div>
+    <div class="dp-section">
+      <div class="dp-section-title">Beschreibung</div>
+      <div class="dp-desc">${stage.description}</div>
+    </div>
+    <div class="dp-section">
+      <div class="dp-section-title">Produktionsprozess</div>
+      <div class="dp-process" style="border-color:${stage.color}">${stage.process}</div>
+    </div>
+    <div class="dp-section">
+      <div class="dp-section-title">Anbieter (${stage.companies.length})</div>
+      ${stage.companies.map(co=>`
+        <div style="display:flex;align-items:center;gap:.5rem;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer"
+             onclick="(function(){var c=window._STAGES.find(s=>s.id==='${stage.id}').companies.find(c=>c.id==='${co.id}');window._showDP(window._STAGES.find(s=>s.id==='${stage.id}'),c)})()">
+          <div style="width:7px;height:7px;border-radius:50%;background:${healthColor(co.health)};flex-shrink:0"></div>
+          <span style="font-size:.75rem;color:var(--text);font-weight:600;flex:1">${co.abbr}</span>
+          <span style="font-size:.68rem;color:var(--muted2)">${co.flag}</span>
+          <span style="font-size:.72rem;color:${stage.color};font-weight:700">${co.share}</span>
+        </div>`).join('')}
+    </div>
+    <div class="dp-links">
+      <a href="detail.html?phase=${stage.id}" class="dp-link primary">📋 Alle Details</a>
+      <a href="supply-chain.html#phase-${stage.id}" class="dp-link secondary">≡ Listen-Ansicht</a>
+    </div>`;
+  panel.classList.add('open');
+}
+
+// expose for inline onclick
+window._STAGES = STAGES;
+window._showDP = showDetailPanel;
+
+/* ════════════════════════════════════════════════════
+   PAN / ZOOM
+════════════════════════════════════════════════════ */
+const svg    = document.getElementById('graph-svg');
+const canvas = document.getElementById('canvas');
+const wrap   = document.getElementById('graph-wrap');
+
+// initial transform: fit horizontally with small padding
+let scale = 0.42, tx = 20, ty = 20;
+let dragging = false, lastX = 0, lastY = 0;
+
+function applyTransform() {
+  canvas.setAttribute('transform', `translate(${tx},${ty}) scale(${scale})`);
+  document.getElementById('zoom-label').textContent = Math.round(scale*100) + '%';
+}
+
+wrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  const rect = svg.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const factor = e.deltaY < 0 ? 1.12 : 0.89;
+  const newScale = Math.max(0.18, Math.min(2.5, scale * factor));
+  tx = mx - (mx - tx) * (newScale / scale);
+  ty = my - (my - ty) * (newScale / scale);
+  scale = newScale;
+  applyTransform();
+}, { passive:false });
+
+wrap.addEventListener('mousedown', e => {
+  if (e.target.closest('.company-node, .stage-box')) return;
+  dragging = true; lastX = e.clientX; lastY = e.clientY;
+  wrap.classList.add('dragging');
+});
+window.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  tx += e.clientX - lastX; ty += e.clientY - lastY;
+  lastX = e.clientX; lastY = e.clientY;
+  applyTransform();
+});
+window.addEventListener('mouseup', () => { dragging = false; wrap.classList.remove('dragging'); });
+
+document.getElementById('btn-zoom-in').addEventListener('click', () => {
+  scale = Math.min(2.5, scale * 1.2);
+  applyTransform();
+});
+document.getElementById('btn-zoom-out').addEventListener('click', () => {
+  scale = Math.max(0.18, scale / 1.2);
+  applyTransform();
+});
+document.getElementById('btn-reset').addEventListener('click', () => {
+  scale = 0.42; tx = 20; ty = 20; applyTransform();
+});
+
+// close panel on canvas click
+wrap.addEventListener('click', e => {
+  if (!e.target.closest('.company-node') && !e.target.closest('.stage-bg, .stage-box rect')) {
+    panel.classList.remove('open');
+  }
+});
+
+// Touch zoom/pan
+let lastTouchDist = 0;
+wrap.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) {
+    lastTouchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+  } else if (e.touches.length === 1) {
+    dragging = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+  }
+}, { passive:true });
+wrap.addEventListener('touchmove', e => {
+  if (e.touches.length === 2) {
+    const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    scale = Math.max(0.18, Math.min(2.5, scale * (dist / lastTouchDist)));
+    lastTouchDist = dist; applyTransform();
+  } else if (dragging && e.touches.length === 1) {
+    tx += e.touches[0].clientX - lastX; ty += e.touches[0].clientY - lastY;
+    lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; applyTransform();
+  }
+}, { passive:true });
+wrap.addEventListener('touchend', () => { dragging = false; });
+
+/* ── Boot ── */
+renderGraph();
+applyTransform();
+</script>
+</body>
+</html>
