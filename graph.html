@@ -151,6 +151,26 @@
     .health-pill.warn { background: rgba(245,158,11,.12); color: var(--warn); border:1px solid rgba(245,158,11,.25); }
     .health-pill.crit { background: rgba(239,68,68,.12);  color: var(--crit); border:1px solid rgba(239,68,68,.25); }
     .health-pill::before { content: '●'; font-size: .45rem; }
+
+    /* ── PARTICLES ── */
+    .particle-dot   { transition: opacity .4s; }
+    .disruption-dot { opacity: 0; transition: opacity .4s; }
+    #canvas.disruption .particle-dot  { opacity: .1; }
+    #canvas.disruption .disruption-dot { opacity: 1; }
+
+    /* ── DISRUPTION BUTTON ── */
+    .disruption-btn {
+      font-size:.68rem; padding:.22rem .65rem; border-radius:5px;
+      border:1px solid rgba(239,68,68,.3); color:rgba(239,68,68,.7);
+      cursor:pointer; font-family:inherit; background:rgba(239,68,68,.07);
+      transition: background .2s, color .2s, border-color .2s;
+    }
+    .disruption-btn:hover { background:rgba(239,68,68,.14); color:#ef4444; }
+    .disruption-btn.active {
+      background:rgba(239,68,68,.22) !important;
+      color:#ef4444 !important;
+      border-color:rgba(239,68,68,.55) !important;
+    }
   </style>
 </head>
 <body>
@@ -167,6 +187,7 @@
       <button class="vol-btn"        data-unit="monat" style="font-size:.68rem;padding:.18rem .5rem;border-radius:3px;border:none;cursor:pointer;font-family:inherit;font-weight:600;background:transparent;color:var(--muted2)">Monat</button>
       <button class="vol-btn"        data-unit="jahr"  style="font-size:.68rem;padding:.18rem .5rem;border-radius:3px;border:none;cursor:pointer;font-family:inherit;font-weight:600;background:transparent;color:var(--muted2)">Jahr</button>
     </div>
+    <button id="disruption-btn" class="disruption-btn">⚡ Störung simulieren</button>
     <a href="supply-chain.html" class="nav-link">≡ Listen-Ansicht</a>
     <a href="index.html" class="nav-link">← Startseite</a>
   </div>
@@ -187,6 +208,16 @@
       </filter>
       <filter id="shadow">
         <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="rgba(0,0,0,.5)"/>
+      </filter>
+      <filter id="particle-glow" x="-80%" y="-80%" width="260%" height="260%">
+        <feGaussianBlur stdDeviation="2.5" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="disruption-glow" x="-120%" y="-120%" width="340%" height="340%">
+        <feGaussianBlur stdDeviation="5" result="blur"/>
+        <feColorMatrix in="blur" type="matrix"
+          values="1 0 0 0 0.4  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="redblur"/>
+        <feMerge><feMergeNode in="redblur"/><feMergeNode in="SourceGraphic"/></feMerge>
       </filter>
     </defs>
     <g id="canvas"></g>
@@ -209,6 +240,7 @@
   <div class="leg-row"><div class="leg-dot" style="background:var(--crit)"></div>Kritisch</div>
   <div class="leg-row" style="margin-top:.3rem"><div class="leg-line"></div> Materialfluss</div>
   <div class="leg-row"><div class="leg-line dashed"></div> Energieversorgung</div>
+  <div class="leg-row" style="margin-top:.3rem"><div class="leg-dot" style="background:#ef4444;box-shadow:0 0 5px #ef4444"></div> Störung aktiv</div>
 </div>
 
 <!-- Tooltip -->
@@ -390,6 +422,102 @@ const EDGES = [
 ];
 
 /* ════════════════════════════════════════════════════
+   PARTICLE CONFIG
+════════════════════════════════════════════════════ */
+const DISRUPTION_EDGES = new Set(['05-06','06-07','01-02']);
+const XLINK = 'http://www.w3.org/1999/xlink';
+
+function parseVolWeight(str) {
+  const isMrd = /Mrd/i.test(str);
+  const isM   = !isMrd && /\dM\b/i.test(str);
+  const isK   = /\dk\b/i.test(str);
+  const num   = parseFloat(str.replace(/[^0-9.,]/g,'').replace('.','').replace(',','.')) || 1;
+  if (isMrd) return num * 1e9;
+  if (isM)   return num * 1e6;
+  if (isK)   return num * 1e3;
+  return num;
+}
+
+function particleTier(edge) {
+  const w = parseVolWeight(edge.vol.tag);
+  if (w >= 1e6)  return { dur: 5,  count: 4 };
+  if (w >= 5000) return { dur: 7,  count: 4 };
+  if (w >= 200)  return { dur: 10, count: 3 };
+  return               { dur: 14, count: 2 };
+}
+
+function buildParticleGroup() {
+  const g = el('g', { id:'particles' });
+  EDGES.forEach(edge => {
+    const key   = `${edge.from}-${edge.to}`;
+    const pathId = `edge-path-${key}`;
+    const { dur, count } = particleTier(edge);
+    const dotColor = edge.color.replace(/[\d.]+\)$/, '0.92)');
+    const isDisrupt = DISRUPTION_EDGES.has(key);
+
+    // normal flowing dots
+    for (let i = 0; i < count; i++) {
+      const begin = ((dur / count) * i).toFixed(2);
+      const dot = el('circle', {
+        r:'4', fill: dotColor,
+        filter:'url(#particle-glow)',
+        class:'particle-dot',
+        'pointer-events':'none',
+        'data-edge': key,
+      });
+      const anim = el('animateMotion', {
+        dur:`${dur}s`, repeatCount:'indefinite',
+        begin:`${begin}s`, rotate:'auto', calcMode:'linear',
+      });
+      const mp = document.createElementNS(NS, 'mpath');
+      mp.setAttributeNS(XLINK, 'href', `#${pathId}`);
+      anim.appendChild(mp);
+      dot.appendChild(anim);
+      g.appendChild(dot);
+    }
+
+    // disruption dots — pre-rendered, CSS-hidden until .disruption class added
+    if (isDisrupt) {
+      for (let i = 0; i < 3; i++) {
+        const begin = ((4 / 3) * i).toFixed(2);
+        const rdot = el('circle', {
+          r:'5', fill:'#ef4444',
+          filter:'url(#disruption-glow)',
+          class:'disruption-dot',
+          'pointer-events':'none',
+          'data-edge': key,
+        });
+        const ranim = el('animateMotion', {
+          dur:'4s', repeatCount:'indefinite',
+          begin:`${begin}s`, rotate:'auto', calcMode:'linear',
+        });
+        const rpulse = el('animate', {
+          attributeName:'r', values:'4;8;4', dur:'1.4s', repeatCount:'indefinite',
+        });
+        const rmp = document.createElementNS(NS, 'mpath');
+        rmp.setAttributeNS(XLINK, 'href', `#${pathId}`);
+        ranim.appendChild(rmp);
+        rdot.appendChild(ranim);
+        rdot.appendChild(rpulse);
+        g.appendChild(rdot);
+      }
+    }
+  });
+  return g;
+}
+
+function rebuildParticles() {
+  const canvas = document.getElementById('canvas');
+  const old = canvas.querySelector('#particles');
+  const fresh = buildParticleGroup();
+  if (old) canvas.replaceChild(fresh, old);
+  else {
+    const firstStage = canvas.querySelector('.stage-box');
+    firstStage ? canvas.insertBefore(fresh, firstStage) : canvas.appendChild(fresh);
+  }
+}
+
+/* ════════════════════════════════════════════════════
    LAYOUT CONSTANTS
 ════════════════════════════════════════════════════ */
 const BOX_W    = 200;
@@ -448,6 +576,7 @@ function renderEdge(canvas, edge) {
       'stroke-dasharray': edge.dashed ? '7 4' : 'none',
       'marker-start':'url(#arrowhead-energy)',
       class:'edge-path',
+      id: `edge-path-${edge.from}-${edge.to}`,
     });
     canvas.appendChild(p);
     // label
@@ -476,6 +605,7 @@ function renderEdge(canvas, edge) {
     stroke: edge.color, 'stroke-width':'2',
     'marker-end':'url(#arrowhead)',
     class:'edge-path',
+    id: `edge-path-${edge.from}-${edge.to}`,
   });
   canvas.appendChild(p);
 
@@ -602,17 +732,22 @@ function renderGraph() {
   const canvas = document.getElementById('canvas');
   canvas.innerHTML = '';
 
-  // Background subtle grid
+  // Background subtle grid (guard against duplicate pattern on re-render)
   const defs = document.querySelector('#graph-svg defs');
-  const pat = el('pattern', { id:'grid', width:60, height:60, patternUnits:'userSpaceOnUse' });
-  const pl1 = el('path', { d:'M 60 0 L 0 0 0 60', fill:'none', stroke:'rgba(255,255,255,.025)', 'stroke-width':'1' });
-  pat.appendChild(pl1); defs.appendChild(pat);
+  if (!defs.querySelector('#grid')) {
+    const pat = el('pattern', { id:'grid', width:60, height:60, patternUnits:'userSpaceOnUse' });
+    pat.appendChild(el('path', { d:'M 60 0 L 0 0 0 60', fill:'none', stroke:'rgba(255,255,255,.025)', 'stroke-width':'1' }));
+    defs.appendChild(pat);
+  }
   canvas.appendChild(el('rect', { width:CANVAS_W, height:900, fill:'url(#grid)' }));
 
-  // render edges first (behind nodes)
+  // edges (behind everything)
   EDGES.forEach(edge => renderEdge(canvas, edge));
 
-  // render stages
+  // particle layer — sits between edges and stage boxes
+  canvas.appendChild(buildParticleGroup());
+
+  // stage boxes (on top of particles)
   STAGES.forEach((stage, idx) => renderStage(canvas, stage, idx));
 }
 
@@ -831,7 +966,19 @@ document.querySelectorAll('.vol-btn').forEach(btn => {
     document.querySelectorAll('.edge-vol-text').forEach(t => {
       t.textContent = t.dataset[currentUnit];
     });
+    rebuildParticles();
   });
+});
+
+/* ── Disruption toggle ── */
+let disruptionOn = false;
+document.getElementById('disruption-btn').addEventListener('click', () => {
+  disruptionOn = !disruptionOn;
+  const canvas = document.getElementById('canvas');
+  const btn    = document.getElementById('disruption-btn');
+  canvas.classList.toggle('disruption', disruptionOn);
+  btn.classList.toggle('active', disruptionOn);
+  btn.textContent = disruptionOn ? '✕ Störung aktiv' : '⚡ Störung simulieren';
 });
 
 /* ── Boot ── */
