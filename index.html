@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Supply Chain Twin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0a0e1a;
+      color: #e8eaf0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      padding: 1.2rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: rgba(10, 14, 26, 0.85);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      z-index: 10;
+    }
+
+    header .logo-icon {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #4f8ef7, #a855f7);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    header span {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #c8cfe8;
+    }
+
+    main {
+      text-align: center;
+      padding: 2rem 1.5rem;
+      max-width: 680px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.3rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: rgba(79, 142, 247, 0.15);
+      border: 1px solid rgba(79, 142, 247, 0.4);
+      color: #7eb3ff;
+      margin-bottom: 1.8rem;
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.4rem;
+      background: linear-gradient(135deg, #ffffff 30%, #7eb3ff 70%, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    p {
+      font-size: 1.1rem;
+      line-height: 1.7;
+      color: #8a93b2;
+      margin-bottom: 2.5rem;
+    }
+
+    .cta-group {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      padding: 0.8rem 1.8rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, #4f8ef7, #a855f7);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .btn-secondary {
+      padding: 0.8rem 1.8rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      background: transparent;
+      color: #8a93b2;
+      border: 1px solid rgba(255,255,255,0.12);
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.2s, color 0.2s, transform 0.15s;
+    }
+
+    .btn-secondary:hover {
+      border-color: rgba(255,255,255,0.3);
+      color: #e8eaf0;
+      transform: translateY(-1px);
+    }
+
+    .features {
+      margin-top: 5rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1.2rem;
+      width: 100%;
+      max-width: 680px;
+    }
+
+    .feature-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      padding: 1.4rem 1.2rem;
+      text-align: left;
+    }
+
+    .feature-card .icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .feature-card h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #d0d6f0;
+      margin-bottom: 0.4rem;
+    }
+
+    .feature-card p {
+      font-size: 0.82rem;
+      color: #6470a0;
+      margin: 0;
+      line-height: 1.55;
+    }
+
+    footer {
+      margin-top: 5rem;
+      padding: 2rem;
+      font-size: 0.78rem;
+      color: #3d4460;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-icon">ST</div>
+    <span>Supply Chain Twin</span>
+  </header>
+
+  <main>
+    <div class="badge">KI-gestützte Lieferkette</div>
+    <h1>Dein digitaler Zwilling für die Lieferkette</h1>
+    <p>
+      Echtzeit-Transparenz, KI-Prognosen und intelligente Automatisierung —
+      vereint in einer Plattform für resiliente Supply Chains.
+    </p>
+    <div class="cta-group">
+      <a href="#" class="btn-primary">Demo starten</a>
+      <a href="#" class="btn-secondary">Mehr erfahren</a>
+    </div>
+  </main>
+
+  <div class="features">
+    <div class="feature-card">
+      <div class="icon">🔗</div>
+      <h3>Digitaler Zwilling</h3>
+      <p>Echtzeit-Abbild Ihrer gesamten Lieferkette auf einen Blick.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">📈</div>
+      <h3>KI-Prognosen</h3>
+      <p>Bedarfs- und Risikovorhersagen mit Machine-Learning-Modellen.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">⚡</div>
+      <h3>Automatisierung</h3>
+      <p>Manuelle Prozesse durch intelligente Workflows ersetzen.</p>
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2026 AI Supply Chain Twin &mdash; Alle Rechte vorbehalten.
+  </footer>
+
+</body>
+</html>
