@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Phase Detail — Supply Chain Twin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:    #0a0e1a;
+      --bg2:   #0f1422;
+      --bg3:   #131828;
+      --border: rgba(255,255,255,0.07);
+      --text:  #e8eaf0;
+      --muted: #6470a0;
+      --muted2:#8a93b2;
+      --risk-critical: #dc2626;
+      --risk-high:     #ea580c;
+      --risk-medium:   #ca8a04;
+      --risk-low:      #16a34a;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 1rem 2rem;
+      background: rgba(10,14,26,0.92); backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo-icon {
+      width: 26px; height: 26px;
+      background: linear-gradient(135deg, #4f8ef7, #a855f7);
+      border-radius: 6px; display: flex; align-items: center; justify-content: center;
+      font-size: 0.78rem; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+    .logo-text { font-size: 0.9rem; font-weight: 600; color: #c8cfe8; }
+    .breadcrumb { display: flex; align-items: center; gap: 0.5rem; margin-left: 1.5rem; font-size: 0.8rem; color: var(--muted); }
+    .breadcrumb a { color: var(--muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--text); }
+    .breadcrumb span { color: var(--muted2); }
+    .nav-dt-btn {
+      margin-left: auto; font-size: 0.78rem; color: #7eb3ff;
+      text-decoration: none; padding: 0.35rem 0.8rem;
+      border: 1px solid rgba(79,142,247,0.3); border-radius: 6px;
+      transition: background .2s;
+    }
+    .nav-dt-btn:hover { background: rgba(79,142,247,0.1); }
+
+    /* PHASE HERO */
+    .phase-hero {
+      border-bottom: 1px solid var(--border);
+      padding: 3rem 2rem 2rem;
+      max-width: 1100px; margin: 0 auto;
+    }
+    .phase-num-badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem; border-radius: 5px;
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+      background: rgba(255,255,255,0.06); color: var(--muted2);
+      margin-bottom: 0.8rem;
+    }
+    .phase-title-row {
+      display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .phase-icon { font-size: 2.4rem; flex-shrink: 0; }
+    .phase-title-wrap h1 {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 800; line-height: 1.15; letter-spacing: -0.02em;
+      color: var(--text);
+    }
+    .phase-title-wrap p { font-size: 0.9rem; color: var(--muted2); margin-top: 0.3rem; line-height: 1.6; }
+
+    /* Risk gauge */
+    .risk-gauge-wrap {
+      display: flex; align-items: center; gap: 1.5rem;
+      margin-top: 1.5rem; flex-wrap: wrap;
+    }
+    .risk-gauge {
+      display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+    }
+    .gauge-track {
+      width: 180px; height: 8px;
+      background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden;
+    }
+    .gauge-fill { height: 100%; border-radius: 4px; }
+    .gauge-labels {
+      display: flex; justify-content: space-between; width: 180px;
+      font-size: 0.65rem; color: var(--muted);
+    }
+    .risk-score-big {
+      font-size: 3rem; font-weight: 900; line-height: 1;
+    }
+    .risk-score-label { font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
+
+    .risk-factors {
+      flex: 1; min-width: 280px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;
+    }
+    .risk-factor {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 0.7rem;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+      font-size: 0.75rem;
+    }
+    .rf-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .rf-label { color: var(--muted2); }
+    .rf-val { margin-left: auto; font-weight: 700; font-size: 0.8rem; }
+
+    /* KPI CARDS */
+    .section-title {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 0.8rem; margin-top: 2.5rem;
+    }
+    .kpi-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+      gap: 0.8rem;
+    }
+    .kpi-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 1rem 1.1rem;
+    }
+    .kpi-card .kc-icon { font-size: 1.3rem; margin-bottom: 0.4rem; }
+    .kpi-card .kc-val {
+      font-size: 1.4rem; font-weight: 800; line-height: 1; margin-bottom: 0.2rem;
+    }
+    .kpi-card .kc-label { font-size: 0.72rem; color: var(--muted); line-height: 1.4; }
+    .kpi-card.ok   .kc-val { color: #4ade80; }
+    .kpi-card.warn .kc-val { color: #fbbf24; }
+    .kpi-card.crit .kc-val { color: #f87171; }
+
+    /* COMPANY CARDS */
+    .companies { display: flex; flex-direction: column; gap: 1.2rem; }
+    .company-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
+      overflow: hidden;
+      transition: border-color .2s;
+    }
+    .company-card:hover { border-color: rgba(255,255,255,0.14); }
+
+    .company-header {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 1.2rem 1.4rem;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    .company-header::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px; border-radius: 0;
+      background: var(--phase-color, #4f8ef7);
+    }
+    .co-avatar {
+      width: 40px; height: 40px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; font-weight: 800; flex-shrink: 0;
+      background: rgba(255,255,255,0.06);
+      color: var(--phase-color, #4f8ef7);
+      letter-spacing: -0.03em;
+    }
+    .co-meta { flex: 1; min-width: 0; }
+    .co-name { font-size: 1rem; font-weight: 700; color: var(--text); }
+    .co-sub { font-size: 0.76rem; color: var(--muted); margin-top: 0.15rem; }
+    .co-share {
+      font-size: 1.5rem; font-weight: 900; color: var(--phase-color, #4f8ef7);
+      flex-shrink: 0;
+    }
+    .co-dt-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.45rem 0.9rem; border-radius: 7px;
+      font-size: 0.75rem; font-weight: 600;
+      background: rgba(79,142,247,0.1);
+      border: 1px solid rgba(79,142,247,0.25);
+      color: #7eb3ff; text-decoration: none; flex-shrink: 0;
+      transition: background .2s;
+    }
+    .co-dt-btn:hover { background: rgba(79,142,247,0.2); }
+    .co-dt-btn .satellite-icon { font-size: 1rem; }
+
+    .company-body {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1.2rem;
+      padding: 1.2rem 1.4rem;
+    }
+    .co-desc { font-size: 0.82rem; color: var(--muted2); line-height: 1.65; }
+    .co-location { font-size: 0.73rem; color: var(--muted); margin-top: 0.4rem; }
+
+    .co-kpis {
+      display: flex; flex-direction: column; gap: 0.4rem;
+      min-width: 200px; flex-shrink: 0;
+    }
+    .co-kpi-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.35rem 0.65rem; border-radius: 6px;
+      font-size: 0.73rem;
+      background: var(--bg3);
+    }
+    .co-kpi-label { color: var(--muted); }
+    .co-kpi-val { font-weight: 700; }
+    .co-kpi-val.ok   { color: #4ade80; }
+    .co-kpi-val.warn { color: #fbbf24; }
+    .co-kpi-val.crit { color: #f87171; }
+
+    .co-alerts {
+      padding: 0 1.4rem 1.2rem;
+      display: flex; flex-direction: column; gap: 0.4rem;
+    }
+    .alert-chip {
+      display: flex; align-items: flex-start; gap: 0.5rem;
+      padding: 0.4rem 0.7rem; border-radius: 6px;
+      font-size: 0.73rem; line-height: 1.5;
+    }
+    .alert-chip.warn { background: rgba(202,138,4,0.1); border: 1px solid rgba(202,138,4,0.2); color: #fbbf24; }
+    .alert-chip.crit { background: rgba(220,38,38,0.1); border: 1px solid rgba(220,38,38,0.2); color: #f87171; }
+    .alert-chip.info { background: rgba(79,142,247,0.08); border: 1px solid rgba(79,142,247,0.18); color: #7eb3ff; }
+
+    .main-wrap { max-width: 1100px; margin: 0 auto; padding: 0 2rem 5rem; }
+
+    .monopoly-tag {
+      display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px;
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      background: rgba(220,38,38,0.18); color: #f87171;
+      border: 1px solid rgba(220,38,38,0.3); margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+
+    footer {
+      text-align: center; padding: 2rem;
+      font-size: 0.75rem; color: #2a304a;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 700px) {
+      .company-body { grid-template-columns: 1fr; }
+      .co-kpis { min-width: 0; }
+      .risk-factors { grid-template-columns: 1fr; }
+      .breadcrumb { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo-icon">ST</div>
+  <span class="logo-text">Supply Chain Twin</span>
+  <div class="breadcrumb">
+    <a href="supply-chain.html">Supply Chain</a>
+    <span>›</span>
+    <span id="nav-phase-name">Phase</span>
+  </div>
+</nav>
+
+<div class="phase-hero" id="phase-hero"></div>
+<div class="main-wrap" id="main-wrap"></div>
+
+<footer>&copy; 2026 AI Supply Chain Twin · Mock-Daten — nicht für Investitionsentscheidungen geeignet</footer>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════════════ */
+const PHASES = {
+  '01': {
+    num: '01', icon: '⛏️', color: '#b45309',
+    name: 'HPQ Sand Mining',
+    subtitle: 'High Purity Quartz · Spruce Pine, North Carolina, USA · Einzige globale Quelle für Halbleiter-HPQ',
+    risk: { score: 7.2, label: 'Hoch', cls: 'high' },
+    riskFactors: [
+      { label: 'Geograph. Konzentration', val: '9.5/10', status: 'crit' },
+      { label: 'Naturkatastrophen', val: '7.0/10', status: 'warn' },
+      { label: 'Regulierungsrisiko', val: '5.5/10', status: 'warn' },
+      { label: 'Transportinfrastruktur', val: '6.0/10', status: 'warn' },
+    ],
+    kpis: [
+      { icon: '🚛', val: '47', label: 'LKW-Abfahrten / Tag', status: 'ok' },
+      { icon: '🛣️', val: 'FREI', label: 'I-26 Highway Status', status: 'ok' },
+      { icon: '🚂', val: 'NORMAL', label: 'CSX Blue Ridge Rail', status: 'ok' },
+      { icon: '⛏️', val: '94%', label: 'Mining-Output vs. Ziel', status: 'warn' },
+      { icon: '🌀', val: 'FERN', label: 'Hurrikan-Risiko (ATL)', status: 'ok' },
+      { icon: '🧪', val: '99.9995%', label: 'Ø Reinheit (SiO₂)', status: 'ok' },
+    ],
+    description: 'Spruce Pine, NC ist geologisch einzigartig: metamorphes Gestein enthält dort außergewöhnlich reinen Quarz, der die strenge Halbleiter-Spezifikation (≥ 99,998 % SiO₂, < 1 ppm Metalverunreinigungen) erfüllt. Beide Minen liegen auf einem 10 km²-Gebiet. Ein Ausfall durch Hurrikan, Überflutung (Mitchell County liegt im Floyd-Pfad) oder regulatorischen Stopp würde binnen 4–6 Wochen die weltweite Wafer- und Quarztiegel-Produktion zum Erliegen bringen — und damit TSMC, Samsung sowie alle Solarsilizium-Hersteller.',
+    companies: [
+      {
+        id: 'tqc',
+        name: 'The Quartz Corp (TQC)',
+        abbr: 'TQC',
+        country: '🇺🇸 USA / 🇳🇴 Norwegen',
+        location: 'Spruce Pine, NC 28777 · 35.920°N 82.063°W',
+        share: '~50%',
+        desc: 'Joint Venture zwischen Imerys (🇫🇷) und Norsk Mineral (🇳🇴). Betreibt die Spruce Pine North-Mine mit der weltweit reinsten kommerziell verfügbaren HPQ-Quelle. Liefert an Shin-Etsu, SUMCO, Siltronic und direktan TSMC für Quarztriegel.',
+        monopoly: false,
+        kpis: [
+          { label: 'Tagesproduktion', val: '280 t', status: 'ok' },
+          { label: 'Ausgehende LKW', val: '28 / Tag', status: 'ok' },
+          { label: 'Lagerbestand', val: '42 Tage', status: 'ok' },
+          { label: 'Reinheit SiO₂', val: '99.9995%', status: 'ok' },
+          { label: 'Schichtbelegung', val: '3 / 3', status: 'ok' },
+          { label: 'Sprengungen diese Wo.', val: '4', status: 'ok' },
+        ],
+        alerts: [
+          { level: 'info', text: 'Routineinspektion Abbaubereich Nord geplant für 18. Mai' },
+        ],
+      },
+      {
+        id: 'sibelco',
+        name: 'Sibelco',
+        abbr: 'SBL',
+        country: '🇧🇪 Belgien (globale Ops.)',
+        location: 'Spruce Pine, NC · 35.921°N 82.061°W',
+        share: '~40%',
+        desc: 'Belgische Mineraliengruppe mit HPQ-Abbau in Spruce Pine (Chestnut Flats-Mine). Beliefert Solarwafer-Hersteller und teils Halbleiterkunden, jedoch mit leicht geringerer Spitzen-Reinheit als TQC. Über 240 Standorte in 31 Ländern.',
+        monopoly: false,
+        kpis: [
+          { label: 'Tagesproduktion', val: '210 t', status: 'ok' },
+          { label: 'Ausgehende LKW', val: '19 / Tag', status: 'ok' },
+          { label: 'Lagerbestand', val: '38 Tage', status: 'ok' },
+          { label: 'Reinheit SiO₂', val: '99.998%', status: 'ok' },
+          { label: 'I-26 Auffahrt', val: 'FREI', status: 'ok' },
+          { label: 'US-221 Zufahrt', val: 'FREI', status: 'ok' },
+        ],
+        alerts: [],
+      },
+    ],
+  },
+
+  '02': {
+    num: '02', icon: '🔥', color: '#c2410c',
+    name: 'Siliziummetall-Verhüttung',
+    subtitle: 'Lichtbogenofen-Reduktion · 99% Si · Energieintensivste Stufe der Kette',
+    risk: { score: 6.8, label: 'Hoch', cls: 'high' },
+    riskFactors: [
+      { label: 'China-Abhängigkeit', val: '7.5/10', status: 'warn' },
+      { label: 'Xinjiang-Sanktionen', val: '7.0/10', status: 'warn' },
+      { label: 'Energiepreis-Volatilität', val: '6.5/10', status: 'warn' },
+      { label: 'Transportkonzentration', val: '4.5/10', status: 'ok' },
+    ],
+    kpis: [
+      { icon: '⚡', val: '0.078', label: '$/kWh Industriestrom (Ø)', status: 'ok' },
+      { icon: '🏭', val: '87%', label: 'Globale Kapazitätsauslast.', status: 'ok' },
+      { icon: '🇨🇳', val: 'ERHÖHT', label: 'Xinjiang UFLPA-Risiko', status: 'warn' },
+      { icon: '🚢', val: 'NORMAL', label: 'Containerexporte Pazifik', status: 'ok' },
+      { icon: '💰', val: '$1,820/t', label: 'Spot-Preis Si-Metall', status: 'ok' },
+      { icon: '📦', val: '18 Tage', label: 'Ø Lagerreichweite', status: 'warn' },
+    ],
+    description: 'Siliziummetall entsteht durch Reduktion von Quarzit (SiO₂) mit Holzkohle/Koks im Lichtbogenofen bei ~2.000 °C. Der Prozess verbraucht ~12–14 MWh Strom pro Tonne — Energiekosten bestimmen die Wettbewerbsfähigkeit. China produziert ~70 % des globalen Volumens (Yunnan, Sichuan: billige Wasserkraft; Xinjiang: Kohle). Westliche Hersteller (Ferroglobe, Elkem) dominieren die Premium-/Halbleiterqualität.',
+    companies: [
+      {
+        id: 'ferroglobe',
+        name: 'Ferroglobe',
+        abbr: 'FGL',
+        country: '🇪🇸 Spanien / 🇺🇸 USA',
+        location: 'Madrid, Spain · Beverly OH, USA · 39.546°N 81.636°W',
+        share: '~18%',
+        desc: 'Weltgrößter westlicher Si-Metall-Hersteller, entstanden aus der Fusion von Globe Specialty Metals und FerroAtlántica. 23 Produktionswerke auf 4 Kontinenten. Halbleiterqualität aus Puertollano (ES) und Beverly (OH).',
+        monopoly: false,
+        kpis: [
+          { label: 'Kapazitätsauslast.', val: '82%', status: 'ok' },
+          { label: 'Spotpreis', val: '$1,830/t', status: 'ok' },
+          { label: 'Energiekosten-Anteil', val: '38%', status: 'warn' },
+          { label: 'Lager (Tage)', val: '22', status: 'ok' },
+          { label: 'Halbleiter-Anteil', val: '31%', status: 'ok' },
+          { label: 'Exportrestriktionen', val: 'KEINE', status: 'ok' },
+        ],
+        alerts: [],
+      },
+      {
+        id: 'elkem',
+        name: 'Elkem',
+        abbr: 'ELK',
+        country: '🇳🇴 Norwegen',
+        location: 'Oslo, NO · Bremanger, NO · 61.831°N 5.105°E',
+        share: '~16%',
+        desc: 'Norwegischer Integrationskonzern: Si-Metall bis Solarsilizium. Bremanger-Werk läuft zu 95 % auf Wasserkraft. Elkem Solar (ESS) ist die sauberste Si-Kette für Photovoltaik. Notiert an Oslo Børs.',
+        monopoly: false,
+        kpis: [
+          { label: 'Kapazitätsauslast.', val: '91%', status: 'ok' },
+          { label: 'CO₂-Intensität', val: '0.4t/t Si', status: 'ok' },
+          { label: 'Erneuerbar-Anteil', val: '94%', status: 'ok' },
+          { label: 'Lager (Tage)', val: '28', status: 'ok' },
+          { label: 'Exportrestriktionen', val: 'KEINE', status: 'ok' },
+          { label: 'Q1 Output', val: '52,000 t', status: 'ok' },
+        ],
+        alerts: [
+          { level: 'info', text: 'Kapazitätserweiterung Rana-Werk (+15 ktpa) geplant für Q4 2026' },
+        ],
+      },
+      {
+        id: 'hoshine',
+        name: 'Hoshine Silicon Industry',
+        abbr: 'HSH',
+        country: '🇨🇳 China (Xinjiang)',
+        location: 'Shihezi, Xinjiang, CN · 44.304°N 86.038°E',
+        share: '~15%',
+        desc: 'Chinas größter Si-Metall-Hersteller, Werke in Xinjiang mit Kohle-Direktanschluss. Seit 2021 auf der US-UFLPA-Entity-List (Zwangsarbeit-Risiko). Westliche Abnehmer müssen Lieferkettennachweise erbringen.',
+        monopoly: false,
+        kpis: [
+          { label: 'Kapazitätsauslast.', val: '95%', status: 'ok' },
+          { label: 'UFLPA-Status', val: 'ENTITY LIST', status: 'crit' },
+          { label: 'US-Exportsperre', val: 'AKTIV', status: 'crit' },
+          { label: 'EU-Lieferbarkeit', val: 'EINGESCHRÄNKT', status: 'warn' },
+          { label: 'CO₂-Intensität', val: '8.2t/t Si', status: 'crit' },
+          { label: 'Kapazität', val: '300,000 t/a', status: 'ok' },
+        ],
+        alerts: [
+          { level: 'crit', text: 'UFLPA-Entity-List-Eintrag aktiv — US-Import gesperrt seit Juni 2021' },
+          { level: 'warn', text: 'EU-Sorgfaltspflichten-VO: Risikonachweis bis Dez. 2026 erforderlich' },
+        ],
+      },
+    ],
+  },
+
+  '03': {
+    num: '03', icon: '🧪', color: '#d97706',
+    name: 'Polysilizium-Produktion',
+    subtitle: 'Siemens-Prozess · ≥ 9N Reinheit (99,9999999 % Si) · China dominiert 62%',
+    risk: { score: 7.5, label: 'Hoch', cls: 'high' },
+    riskFactors: [
+      { label: 'China-Marktanteil', val: '8.0/10', status: 'crit' },
+      { label: 'Energieabhängigkeit', val: '7.0/10', status: 'warn' },
+      { label: 'Preisvolatilität', val: '6.5/10', status: 'warn' },
+      { label: 'Westl. Alternativkap.', val: '4.0/10', status: 'ok' },
+    ],
+    kpis: [
+      { icon: '💰', val: '$8.20', label: 'Spot-Preis $/kg (Ø)', status: 'warn' },
+      { icon: '📉', val: '−12%', label: 'Preistrend YTD', status: 'warn' },
+      { icon: '🏭', val: '91%', label: 'China-Kapazitätsauslast.', status: 'ok' },
+      { icon: '⚡', val: 'OK', label: 'CN Stromkontingent Q2', status: 'ok' },
+      { icon: '🌍', val: '11%', label: 'Westlicher Marktanteil', status: 'warn' },
+      { icon: '📦', val: '14 Tage', label: 'Ø Lieferzeit EU-Abnehm.', status: 'warn' },
+    ],
+    description: 'Im Siemens-Prozess wird trichlorsilan (TCS) durch Reduktion mit H₂ bei 1.150 °C zu polykristallinem Silizium abgeschieden. Der Prozess verbraucht ~80–120 kWh/kg — 10× mehr als Si-Metall. China dominiert mit GCL, Tongwei, Daqo und TBEA über 60 % der Weltkapazität. Wacker Chemie in Burghausen (DE) ist die einzige westeuropäische Großproduktion. Preisverfall 2023–2025 hat nicht-chinesische Hersteller unter Druck gesetzt.',
+    companies: [
+      {
+        id: 'gcl',
+        name: 'GCL-Poly Energy Holdings',
+        abbr: 'GCL',
+        country: '🇨🇳 China',
+        location: 'Xuzhou, Jiangsu, CN · 34.261°N 117.185°E',
+        share: '~27%',
+        desc: 'Weltgrößter Polysilizium-Hersteller nach Volumen, börsennotiert in HK. Granular Polysilicon (FBR-Reaktor) senkt Energiebedarf auf ~18 kWh/kg. Primär Solar-Grade, wachsender Semiconductor-Grade-Anteil.',
+        monopoly: false,
+        kpis: [
+          { label: 'Jahreskapazität', val: '420,000 t', status: 'ok' },
+          { label: 'Auslastung', val: '88%', status: 'ok' },
+          { label: 'Spotpreis', val: '$7.90/kg', status: 'warn' },
+          { label: 'Semicon-Grade-Ant.', val: '12%', status: 'warn' },
+          { label: 'Energiebedarf', val: '18 kWh/kg', status: 'ok' },
+          { label: 'Lager', val: '11 Tage', status: 'warn' },
+        ],
+        alerts: [
+          { level: 'warn', text: 'Überkapazitäten drücken Marktpreise — Bruttomargen unter Druck' },
+        ],
+      },
+      {
+        id: 'wacker',
+        name: 'Wacker Chemie',
+        abbr: 'WCK',
+        country: '🇩🇪 Deutschland',
+        location: 'Burghausen, Bayern · 48.166°N 12.836°E',
+        share: '~11%',
+        desc: 'Einziger europäischer Großproduzent mit vollständiger Semiconductor-Grade-Zertifizierung (SEMI PV17). Burghausen-Werk produziert seit 1959 Polysil. Entscheidend für westliche Versorgungssicherheit.',
+        monopoly: false,
+        kpis: [
+          { label: 'Jahreskapazität', val: '95,000 t', status: 'ok' },
+          { label: 'Auslastung', val: '79%', status: 'warn' },
+          { label: 'Semicon-Grade-Ant.', val: '65%', status: 'ok' },
+          { label: 'Energiebedarf', val: '45 kWh/kg', status: 'warn' },
+          { label: 'Zertifizierungen', val: 'SEMI PV17', status: 'ok' },
+          { label: 'Preisdruck CN', val: 'HOCH', status: 'warn' },
+        ],
+        alerts: [
+          { level: 'warn', text: 'Chinesische Überkapazitäten gefährden Wacker-Margen — Investitionspause angekündigt' },
+        ],
+      },
+    ],
+  },
+
+  '04': {
+    num: '04', icon: '💿', color: '#2563eb',
+    name: 'Silizium-Wafer-Produktion',
+    subtitle: 'Czochralski-Kristallzucht · 300 mm Polierwafer · JP-Duopol ~55%',
+    risk: { score: 6.4, label: 'Mittel', cls: 'medium' },
+    riskFactors: [
+      { label: 'JP-Duopol-Konzentration', val: '7.0/10', status: 'warn' },
+      { label: 'Erdbebenrisiko (JP)', val: '6.0/10', status: 'warn' },
+      { label: 'Export-Lizenz-Risiko', val: '4.5/10', status: 'ok' },
+      { label: 'Kapazitätserweiterung', val: '3.5/10', status: 'ok' },
+    ],
+    kpis: [
+      { icon: '⏱️', val: '14 Wo.', label: '300mm Lieferzeit', status: 'warn' },
+      { icon: '🏭', val: '96%', label: 'Globale Fab-Auslastung', status: 'ok' },
+      { icon: '💴', val: '¥152', label: 'USD/JPY Kurs', status: 'ok' },
+      { icon: '📦', val: '$145', label: 'ASP 300mm Wafer', status: 'ok' },
+      { icon: '🇯🇵', val: 'OK', label: 'JP Export-Lizenzen', status: 'ok' },
+      { icon: '📈', val: '+8%', label: 'Preistrend YTD', status: 'ok' },
+    ],
+    description: 'Im Czochralski-Verfahren wird ein einkristalliner Si-Ingot aus der Schmelze gezogen (1.414 °C), dann zu Wafern gesägt und poliert. Japanische Hersteller (Shin-Etsu, SUMCO) dominieren den 300-mm-Markt mit ~55 % und setzen den technologischen Standard. Kapazitätserweiterungen dauern 2–3 Jahre (neue Reinraumfabriken). Der Markt ist oligopolistisch und zyklisch.',
+    companies: [
+      {
+        id: 'shinetsu',
+        name: 'Shin-Etsu Chemical',
+        abbr: 'SEC',
+        country: '🇯🇵 Japan',
+        location: 'Naoetsu, Niigata, JP · 37.170°N 138.249°E',
+        share: '~30%',
+        desc: 'Weltmarktführer bei Halbleiter-Wafern und PVC-Harz. Wafer-Division (SEMCO) beliefert TSMC, Samsung, SK Hynix. Naoetsu-Fab ist das größte Einzelwafer-Werk weltweit. Auch Marktführer bei Fotoresist und EUV-Pellikeln.',
+        monopoly: false,
+        kpis: [
+          { label: 'Kapazitätsauslast.', val: '97%', status: 'ok' },
+          { label: 'Ø Wafer-Ø', val: '300 mm', status: 'ok' },
+          { label: 'Lieferzeit', val: '12 Wo.', status: 'warn' },
+          { label: 'Defektrate', val: '< 0.01/cm²', status: 'ok' },
+          { label: 'Jahreskapazität', val: '~35M 300mm', status: 'ok' },
+          { label: 'TSMC-Anteil', val: '~40% Zulief.', status: 'ok' },
+        ],
+        alerts: [],
+      },
+      {
+        id: 'sumco',
+        name: 'SUMCO Corporation',
+        abbr: 'SMC',
+        country: '🇯🇵 Japan',
+        location: 'Arita, Saga, JP · 33.200°N 129.858°E',
+        share: '~25%',
+        desc: 'Spin-off von Mitsubishi Materials und Sumitomo Metal Mining. Fokus auf 300-mm-Wafer für Leading-Edge. Hauptlieferant für Samsung und Micron. Investiert in Kumamoto-Kapazität nahe TSMC Japan-Fab.',
+        monopoly: false,
+        kpis: [
+          { label: 'Kapazitätsauslast.', val: '94%', status: 'ok' },
+          { label: 'Lieferzeit', val: '14 Wo.', status: 'warn' },
+          { label: 'New Kumamoto Kap.', val: 'Q3 2026', status: 'ok' },
+          { label: 'Samsung-Anteil', val: '~35% Zulief.', status: 'ok' },
+          { label: 'Jahreskapazität', val: '~28M 300mm', status: 'ok' },
+          { label: 'R&D-Investition', val: '¥42Mrd/a', status: 'ok' },
+        ],
+        alerts: [
+          { level: 'info', text: 'Kumamoto-Werk Phase 2 (+6M Wafer/a) startet Q3 2026 — nahe TSMC Japan Fab' },
+        ],
+      },
+      {
+        id: 'globalwafers',
+        name: 'GlobalWafers',
+        abbr: 'GWF',
+        country: '🇹🇼 Taiwan / 🇺🇸 USA',
+        location: 'Sherman, TX, USA · 33.636°N -96.608°W',
+        share: '~17%',
+        desc: 'Taiwanisches Unternehmen (SunEdison-Wafer-Sparte), expandiert mit CHIPS-Act-geförderter Fab in Sherman, TX ($5 Mrd). Drittgrößter Waferhersteller, beliefert alle großen US-Foundries.',
+        monopoly: false,
+        kpis: [
+          { label: 'Kapazitätsauslast.', val: '89%', status: 'ok' },
+          { label: 'Sherman TX Ramp', val: '55%', status: 'warn' },
+          { label: 'CHIPS-Act Förderung', val: '$340M', status: 'ok' },
+          { label: 'Lieferzeit', val: '16 Wo.', status: 'warn' },
+          { label: 'Intel-Anteil', val: '~25% Zulief.', status: 'ok' },
+          { label: 'Jahreskapazität', val: '~22M 300mm', status: 'ok' },
+        ],
+        alerts: [
+          { level: 'warn', text: 'Sherman TX Fab-Ramp unter Plan — Zielerreichung verschoben auf Q1 2027' },
+        ],
+      },
+    ],
+  },
+
+  '05': {
+    num: '05', icon: '🔬', color: '#dc2626',
+    name: 'EUV-Lithographie & Chipanlagen',
+    subtitle: '13,5 nm-Wellenlänge · ≤ 5 nm-Knoten · ASML hält 100% EUV-Monopol',
+    risk: { score: 9.1, label: 'Kritisch', cls: 'critical' },
+    riskFactors: [
+      { label: 'ASML-Monopol EUV', val: '10/10', status: 'crit' },
+      { label: 'NL Exportkontroll-Risiko', val: '8.5/10', status: 'crit' },
+      { label: 'Lieferkettenbreite', val: '7.0/10', status: 'warn' },
+      { label: 'Technolog. Substituierbarkeit', val: '9.5/10', status: 'crit' },
+    ],
+    kpis: [
+      { icon: '📦', val: '32', label: 'ASML EUV Backlog (Einh.)', status: 'warn' },
+      { icon: '⏳', val: '18 Mo.', label: 'Lieferzeit EUV (ab Bestellung)', status: 'crit' },
+      { icon: '🇳🇱', val: 'GÜLTIG', label: 'NL Export-Lizenz CN', status: 'ok' },
+      { icon: '⚙️', val: '98.2%', label: 'EUV Maschinen-Uptime (TSMC)', status: 'ok' },
+      { icon: '💰', val: '$380M', label: 'Preis pro High-NA EUV', status: 'warn' },
+      { icon: '🔬', val: '1.4 nm', label: 'Roadmap Next Node (A14)', status: 'ok' },
+    ],
+    description: 'ASML\'s EUV-Maschinen (Twinscan NXE, NXE:3800E) sind das kritischste Einzelelement der globalen Halbleiterkette. Jede Maschine enthält ~100.000 Komponenten von ~800 Lieferanten aus ~3 Ländern (NL, DE, US). Die Laserlichtquelle liefert Trumpf (🇩🇪), Spiegel-Technologie kommt von Zeiss (🇩🇪). High-NA EUV (NA 0.55) ermöglicht 1,4-nm-Knoten — erste Maschinen ab 2025/26 für TSMC N14. China hat keinen Zugang zu EUV (NL-Exportsperre seit 2023).',
+    companies: [
+      {
+        id: 'asml',
+        name: 'ASML Holding',
+        abbr: 'ASML',
+        country: '🇳🇱 Niederlande',
+        location: 'Veldhoven, NL · 51.421°N 5.490°E',
+        share: '100% EUV',
+        desc: 'De-facto-Monopolist für EUV-Lithographie. Umsatz 2024: €28,3 Mrd. Kunden: TSMC (>60% Volumen), Samsung, SK Hynix, Intel. High-NA NXE:5000 (NA 0.55): erste Auslieferungen 2024. Ohne ASML kein 3 nm, 2 nm oder 1,4 nm.',
+        monopoly: true,
+        kpis: [
+          { label: 'Bestelleingang 2025', val: '€6.2 Mrd Q1', status: 'ok' },
+          { label: 'EUV Lieferzeit', val: '18 Monate', status: 'crit' },
+          { label: 'High-NA Einheiten', val: '7 ausgeliefert', status: 'warn' },
+          { label: 'Maschinen-Uptime', val: '98.2%', status: 'ok' },
+          { label: 'CN-Export-Status', val: 'GESPERRT', status: 'crit' },
+          { label: 'Mitarbeiter', val: '42,000', status: 'ok' },
+        ],
+        alerts: [
+          { level: 'crit', text: 'China-Exportsperre für EUV und DUV (≥1980i) seit Jan 2024 durch NL-Regierung' },
+          { level: 'info', text: 'High-NA EUV NXE:5000 Auslieferung an TSMC N14-Fab läuft planmäßig' },
+        ],
+      },
+      {
+        id: 'amat',
+        name: 'Applied Materials (AMAT)',
+        abbr: 'AMAT',
+        country: '🇺🇸 USA',
+        location: 'Santa Clara, CA · 37.370°N -121.963°W',
+        share: '~19% Chipanlagen',
+        desc: 'Weltgrößter Chipanlagen-Hersteller nach Umsatz (außer ASML). Liefert CVD, PVD, CMP, Ätzsysteme. Jedes Wafer durchläuft bis zu 80 AMAT-Maschinen. Umsatz 2024: $26,2 Mrd.',
+        monopoly: false,
+        kpis: [
+          { label: 'Umsatz 2024', val: '$26.2 Mrd', status: 'ok' },
+          { label: 'China-Anteil', val: '27%', status: 'warn' },
+          { label: 'Auftragsbuch', val: '12 Mo. sichtbar', status: 'ok' },
+          { label: 'Exportkontrolle', val: 'CCATS AKTIV', status: 'warn' },
+          { label: 'Marktanteil Dep.', val: '~35%', status: 'ok' },
+          { label: 'Marktanteil CMP', val: '~55%', status: 'ok' },
+        ],
+        alerts: [
+          { level: 'warn', text: 'BIS-Exportlizenzen für CN-Kunden (SMIC, CXMT) seit Okt. 2023 eingeschränkt' },
+        ],
+      },
+    ],
+  },
+
+  '06': {
+    num: '06', icon: '🏭', color: '#7c3aed',
+    name: 'Halbleiter-Foundries',
+    subtitle: 'Advanced-Node Wafer-Fabrikation · TSMC dominiert 58% · Taiwan-Geopolitik',
+    risk: { score: 8.8, label: 'Kritisch', cls: 'critical' },
+    riskFactors: [
+      { label: 'Taiwan-Geopolitik', val: '9.5/10', status: 'crit' },
+      { label: 'TSMC-Marktkonzentration', val: '9.0/10', status: 'crit' },
+      { label: 'Wasserversorgung TW', val: '6.5/10', status: 'warn' },
+      { label: 'Erdbebenrisiko TW', val: '7.0/10', status: 'warn' },
+    ],
+    kpis: [
+      { icon: '🌊', val: 'ERHÖHT', label: 'Geopolit. Taiwan-Straße', status: 'warn' },
+      { icon: '💧', val: 'NORMAL', label: 'Wasserreservoire TSMC', status: 'ok' },
+      { icon: '⚡', val: '97%', label: 'Advanced-Node Auslastung', status: 'ok' },
+      { icon: '🏗️', val: '67%', label: 'TSMC Arizona N2-Ramp', status: 'warn' },
+      { icon: '📍', val: '$3,200', label: 'ASP pro 300mm Wafer (3nm)', status: 'ok' },
+      { icon: '🌐', val: '5', label: 'Aktive TSMC-Fab-Länder', status: 'ok' },
+    ],
+    description: 'TSMC (Taiwan Semiconductor Mfg. Co.) stellt ~92 % aller weltweit benötigten Advanced-Node-Chips (≤ 5 nm) her. Ein militärischer Konflikt in der Taiwan-Straße würde innerhalb von Wochen globale AI-, Smartphone- und Automobil-Produktion stoppen. TSMC diversifiziert mit Fabs in Phoenix AZ (N4/N2), Kumamoto JP (N12/N6) und Dresden DE (N22). Dennoch bleibt Hsinchu/Tainan der Schwerpunkt bis mindestens 2030.',
+    companies: [
+      {
+        id: 'tsmc',
+        name: 'TSMC',
+        abbr: 'TSM',
+        country: '🇹🇼 Taiwan',
+        location: 'Hsinchu Science Park, TW · 24.786°N 120.997°E',
+        share: '~58%',
+        desc: 'Taiwan Semiconductor Manufacturing Company. Gegründet 1987 von Morris Chang. Einzige Quelle für N3/N2/N14. Umsatz 2024: $87 Mrd. Kunden: Apple (25%), NVIDIA (11%), AMD, Qualcomm, Broadcom. 2025: N2-Massenfertigung angelaufen.',
+        monopoly: true,
+        kpis: [
+          { label: 'Umsatz Q1 2025', val: 'NT$839 Mrd', status: 'ok' },
+          { label: 'N3 Auslastung', val: '98%', status: 'ok' },
+          { label: 'N2 Ramp (TW)', val: '85%', status: 'ok' },
+          { label: 'AZ Fab Ramp', val: '67%', status: 'warn' },
+          { label: 'Wasser-Reserve', val: '142 Tage', status: 'ok' },
+          { label: 'Stromverbrauch', val: '~8% TW Netz', status: 'warn' },
+        ],
+        alerts: [
+          { level: 'warn', text: 'PLA-Übung in der Taiwan-Straße zuletzt April 2025 — erhöhte Aufmerksamkeit' },
+          { level: 'warn', text: 'Arizona N2-Fab-Ramp hinter Plan wegen Fachkräftemangel' },
+          { level: 'info', text: 'Kumamoto JP Phase 2 (N6) läuft — JN12 ab Q2 2027 geplant' },
+        ],
+      },
+      {
+        id: 'samsung-foundry',
+        name: 'Samsung Foundry',
+        abbr: 'SSF',
+        country: '🇰🇷 Südkorea',
+        location: 'Hwaseong, Gyeonggi, KR · 37.151°N 127.029°E',
+        share: '~13%',
+        desc: 'Samsungs Pure-Play-Foundry-Division. Bietet SF3 (3nm, GAA), SF4 (4nm). Kunden: Qualcomm Snapdragon, Google Tensor, AMD. Austin TX Fab (14nm) bedient US-Regierungsprojekte. Konkurriert mit TSMC auf 3nm.',
+        monopoly: false,
+        kpis: [
+          { label: 'Kapazitätsauslast.', val: '82%', status: 'ok' },
+          { label: 'SF3 Yield', val: '58%', status: 'warn' },
+          { label: 'Austin TX Fab', val: '14nm, aktiv', status: 'ok' },
+          { label: 'Taylor TX Fab', val: 'Q3 2026 Ramp', status: 'warn' },
+          { label: 'CHIPS-Förderung', val: '$6.4 Mrd', status: 'ok' },
+          { label: 'Kundenzahl', val: '200+', status: 'ok' },
+        ],
+        alerts: [
+          { level: 'warn', text: 'SF3-Ausbeute (3nm GAA) unter TSMC N3E — Kundenmigration zu TSMC anhaltend' },
+        ],
+      },
+      {
+        id: 'intel-foundry',
+        name: 'Intel Foundry',
+        abbr: 'IFS',
+        country: '🇺🇸 USA',
+        location: 'Chandler, AZ · 33.370°N -111.894°W',
+        share: '~7%',
+        desc: 'Seit 2021 eigenständige Foundry-Division. Intel 18A-Prozess (RibbonFET + PowerVia Backside Power) gilt als konkurrenzfähig zu TSMC N2. CHIPS-Act-Förderung $8,5 Mrd für Fabs in AZ, OH, NM. Erster externer Kunde: Microsoft (18A).',
+        monopoly: false,
+        kpis: [
+          { label: 'Intel 18A Status', val: 'Risk Production', status: 'warn' },
+          { label: 'AZ Fab Auslastung', val: '71%', status: 'warn' },
+          { label: 'Ohio Fab Ramp', val: '2027 geplant', status: 'warn' },
+          { label: 'CHIPS Förderung', val: '$8.5 Mrd', status: 'ok' },
+          { label: 'Externe Kunden', val: 'Microsoft, MSFT', status: 'ok' },
+          { label: 'Gesamtinvest.', val: '$100 Mrd/5a', status: 'ok' },
+        ],
+        alerts: [
+          { level: 'warn', text: 'Intel 18A Massenproduktions-Readiness verschoben auf Q4 2025' },
+          { level: 'info', text: 'Microsoft bestätigt als erster externer Intel-18A-Kunde' },
+        ],
+      },
+    ],
+  },
+
+  '07': {
+    num: '07', icon: '🧠', color: '#6d28d9',
+    name: 'KI-Chip-Design',
+    subtitle: 'GPU / TPU / NPU-Acceleratoren · NVIDIA ~80% · CUDA-Ökosystem-Lock-in',
+    risk: { score: 8.3, label: 'Kritisch', cls: 'critical' },
+    riskFactors: [
+      { label: 'NVIDIA-Dominanz', val: '9.0/10', status: 'crit' },
+      { label: 'Export-Kontrollen USA', val: '8.0/10', status: 'crit' },
+      { label: 'HBM-Speicher-Engpass', val: '7.0/10', status: 'warn' },
+      { label: 'TSMC-Abhängigkeit', val: '8.5/10', status: 'crit' },
+    ],
+    kpis: [
+      { icon: '💵', val: '$28k', label: 'H100 Spotpreis (Sekundärmarkt)', status: 'warn' },
+      { icon: '⏳', val: '8 Wo.', label: 'H100/B200 Lieferzeit', status: 'warn' },
+      { icon: '📤', val: 'AKTIV', label: 'US-Export-Kontrollen (BIS)', status: 'warn' },
+      { icon: '🚀', val: '71%', label: 'B200 Produktions-Yield', status: 'warn' },
+      { icon: '📈', val: '+142%', label: 'NVIDIA Datacenter YoY', status: 'ok' },
+      { icon: '🔋', val: '700W', label: 'B200 TDP (Verbrauch/Chip)', status: 'warn' },
+    ],
+    description: 'NVIDIA\'s CUDA-Plattform ist de-facto-Standard für AI-Training. Der H100/H200-Engpass 2023–2024 zeigte die extreme Versorgungsvulnerabilität. Alle NVIDIA-Chips werden von TSMC auf N4/N3 gefertigt und nutzen HBM3/HBM3e von SK Hynix (primär), Samsung und Micron. US-Exportkontrollen (BIS Entity List) sperren H100, A100, H800 für China — NVIDIA reagiert mit downgegradetem H20 (erlaubt). Blackwell (B100/B200/B200 Ultra) ist seit Q1 2025 in Massenproduktion.',
+    companies: [
+      {
+        id: 'nvidia',
+        name: 'NVIDIA Corporation',
+        abbr: 'NVDA',
+        country: '🇺🇸 USA',
+        location: 'Santa Clara, CA · 37.372°N -121.964°W',
+        share: '~80%',
+        desc: 'Gegründet 1993 von Jensen Huang. Marktkapitalisierung >$3 Billionen (2025). GPU: H100, H200, B200, GB200 NVL72. Networking: NVLink, InfiniBand (Mellanox). CUDA: 4M+ Entwickler. Fabless — ausschließlich TSMC-Fertigung.',
+        monopoly: true,
+        kpis: [
+          { label: 'Datacenter Rev. Q1\'25', val: '$22.6 Mrd', status: 'ok' },
+          { label: 'H100 Lieferzeit', val: '8 Wochen', status: 'warn' },
+          { label: 'B200 Yield', val: '71%', status: 'warn' },
+          { label: 'Export-Restrikt. CN', val: 'H100/A100 gesperrt', status: 'crit' },
+          { label: 'CUDA-Entwickler', val: '4,000,000+', status: 'ok' },
+          { label: 'Marktkapitalisierung', val: '$3.2T', status: 'ok' },
+        ],
+        alerts: [
+          { level: 'warn', text: 'B200 CoWoS-L Packaging Yield bei 71% — TSMC erhöht Kapazität' },
+          { level: 'crit', text: 'BIS Rule: H100, A100, H20 ab Mai 2025 auch für Nahost gesperrt ohne Lizenz' },
+          { level: 'info', text: 'GB200 NVL72 Rack-System: Auslieferung an AWS, Azure, Google läuft' },
+        ],
+      },
+      {
+        id: 'amd',
+        name: 'AMD',
+        abbr: 'AMD',
+        country: '🇺🇸 USA',
+        location: 'Santa Clara, CA · 37.350°N -121.965°W',
+        share: '~8%',
+        desc: 'Advanced Micro Devices. MI300X (192 GB HBM3): stärkstes Inferenz-GPU 2024. MI325X, MI350 in Roadmap. ROCm-SW-Stack lückenhaft vs. CUDA. Hauptkunden: Microsoft (Azure), Meta (Llama-Inferenz), Oracle.',
+        monopoly: false,
+        kpis: [
+          { label: 'MI300X Lieferzeit', val: '10 Wochen', status: 'warn' },
+          { label: 'Datacenter Rev. Q1\'25', val: '$2.3 Mrd', status: 'ok' },
+          { label: 'ROCm Reifegrad', val: 'PyTorch OK', status: 'ok' },
+          { label: 'HBM-Kapazität', val: '192 GB (MI300X)', status: 'ok' },
+          { label: 'Export-Restrikt.', val: 'MI300X: teilweise', status: 'warn' },
+          { label: 'TSMC N5-Anteil', val: '100%', status: 'ok' },
+        ],
+        alerts: [
+          { level: 'info', text: 'MI350 (CDNA 4) für H2 2025 angekündigt — konkurriert mit NVIDIA B200' },
+        ],
+      },
+    ],
+  },
+
+  '08': {
+    num: '08', icon: '🖥️', color: '#0891b2',
+    name: 'Server- & Systemintegration',
+    subtitle: 'GPU-Cluster · HGX/NVL-Module · Networking · Liquid Cooling',
+    risk: { score: 5.4, label: 'Mittel', cls: 'medium' },
+    riskFactors: [
+      { label: 'GPU-Modul-Verfügbarkeit', val: '7.5/10', status: 'warn' },
+      { label: 'Lieferkettenbreite', val: '4.5/10', status: 'ok' },
+      { label: 'Kühlsystem-Engpass', val: '5.5/10', status: 'warn' },
+      { label: 'Qualitätskontrolle ODM', val: '4.0/10', status: 'ok' },
+    ],
+    kpis: [
+      { icon: '⏳', val: '12 Wo.', label: 'Server-Lieferzeit (GPU)', status: 'warn' },
+      { icon: '🔌', val: '42 kW', label: 'Ø Rack-Leistung', status: 'ok' },
+      { icon: '📦', val: 'KNAPP', label: 'HGX B200 Module', status: 'crit' },
+      { icon: '🌡️', val: '45°C', label: 'Ø Inlet-Temp. Datacenter', status: 'ok' },
+      { icon: '🔗', val: '400G', label: 'Ø Netzwerk-Uplink', status: 'ok' },
+      { icon: '💧', val: '60%', label: 'Liquid-Cooling-Anteil neu', status: 'ok' },
+    ],
+    description: 'GPU-Server sind komplexe Systeme: Ein DGX H100 enthält 8× H100 SXM5, 2× Intel Xeon, 640 GB RAM, 8× NVLink 900 GB/s. Der GB200 NVL72 verbindet 72 Blackwell-GPUs in einem Rack mit 120 kW TDP — Liquid Cooling ist Pflicht. Supermicro dominiert als ODM-Lieferant, NVIDIA DGX ist das Referenz-System. Flaschenhals 2024–2025: CoWoS-Packaging-Kapazität bei TSMC und HBM3-Speicher bei SK Hynix.',
+    companies: [
+      {
+        id: 'supermicro',
+        name: 'Super Micro Computer',
+        abbr: 'SMCI',
+        country: '🇺🇸 USA',
+        location: 'San Jose, CA · 37.387°N -121.944°W',
+        share: '~23%',
+        desc: 'Größter ODM für GPU-Server. "Building Block Solutions" — modulare Server für alle NVIDIA-GPUs. Direkt-Belieferung von AWS, Azure, Google. Liquid-Cooling-Vorreiter. 2024: $14,9 Mrd Umsatz (+110% YoY).',
+        monopoly: false,
+        kpis: [
+          { label: 'Umsatz FY2024', val: '$14.9 Mrd', status: 'ok' },
+          { label: 'Lieferzeit GPU-Svr', val: '10-12 Wo.', status: 'warn' },
+          { label: 'HGX B200 Inventory', val: 'KNAPP', status: 'crit' },
+          { label: 'Liquid-Cool-Anteil', val: '70%', status: 'ok' },
+          { label: 'Fertigungsstandort', val: 'San Jose + TW', status: 'ok' },
+          { label: 'Hyperscaler-Anteil', val: '65% Umsatz', status: 'ok' },
+        ],
+        alerts: [
+          { level: 'warn', text: 'HGX B200 NVL-Module weiterhin knapp — Warteliste 14 Wochen' },
+          { level: 'info', text: 'Neue Fertigung in Malaysia geplant für H2 2026 (+30% Kapazität)' },
+        ],
+      },
+      {
+        id: 'dell',
+        name: 'Dell Technologies',
+        abbr: 'DELL',
+        country: '🇺🇸 USA',
+        location: 'Round Rock, TX · 30.488°N -97.678°W',
+        share: '~14%',
+        desc: 'PowerEdge XE9680 (8× H100/B200 SXM) ist das Enterprise-Standard-GPU-System. Dell liefert mit Lifecycle Controller, OpenManage und ProSupport-Services. Hauptkunden: Unternehmensrechenzentren und Regierungsbehörden.',
+        monopoly: false,
+        kpis: [
+          { label: 'AI-Server Rev. Q4\'24', val: '$2.1 Mrd', status: 'ok' },
+          { label: 'PowerEdge Lieferzeit', val: '12-14 Wo.', status: 'warn' },
+          { label: 'XE9680 Bestand', val: 'BEGRENZT', status: 'warn' },
+          { label: 'Support-Abdeckung', val: 'Global 4h', status: 'ok' },
+          { label: 'Govt-Anteil', val: '28%', status: 'ok' },
+          { label: 'Liquid-Cool-Option', val: 'VERFÜGBAR', status: 'ok' },
+        ],
+        alerts: [],
+      },
+    ],
+  },
+
+  '09': {
+    num: '09', icon: '🏗️', color: '#0d9488',
+    name: 'Hyperscale-Rechenzentren',
+    subtitle: 'Cloud-Infrastruktur für AI-Training & Inferenz · US-Oligopol · Kapazitätsengpass',
+    risk: { score: 5.1, label: 'Mittel', cls: 'medium' },
+    riskFactors: [
+      { label: 'GPU-Kapazitätsengpass', val: '7.5/10', status: 'warn' },
+      { label: 'Stromversorgungsgrenzen', val: '7.0/10', status: 'warn' },
+      { label: 'Wasserkühlung-Verfügb.', val: '5.0/10', status: 'warn' },
+      { label: 'Geografische Diversif.', val: '3.0/10', status: 'ok' },
+    ],
+    kpis: [
+      { icon: '⚡', val: '1.18', label: 'Power Usage Effectiveness (PUE)', status: 'ok' },
+      { icon: '🔋', val: '23%', label: 'Freie GPU-Kapazität (Ø)', status: 'crit' },
+      { icon: '🏗️', val: '14 Mo.', label: 'Wartezeit Netz-Anschluss', status: 'warn' },
+      { icon: '🌱', val: '68%', label: 'Erneuerbar-Anteil Strom', status: 'ok' },
+      { icon: '💧', val: '1.2L/kWh', label: 'Wasserverbrauch (WUE)', status: 'warn' },
+      { icon: '📍', val: '$2.80', label: '$/GPU-h H100 (On-Demand)', status: 'warn' },
+    ],
+    description: 'Hyperscaler investieren 2025–2026 zusammen >$300 Mrd in KI-Infrastruktur. Der Engpass ist nicht mehr Hardware, sondern Netzanschlusskapazität (FERC-Regulierung), Kühlwasser (Dürregefährdete Regionen) und Fachkräfte. PUE (Power Usage Effectiveness) von 1.18 bedeutet 18% Overhead für Kühlung. Liquid-Cooling (Direkte Chip-Kühlung) reduziert PUE auf ~1.05. Meta und Google führen eigene Chip-Entwicklung, um von NVIDIA unabhängig zu werden.',
+    companies: [
+      {
+        id: 'aws',
+        name: 'Amazon Web Services (AWS)',
+        abbr: 'AWS',
+        country: '🇺🇸 USA',
+        location: 'Ashburn, VA (us-east-1) · 39.043°N -77.487°W',
+        share: '~31%',
+        desc: 'Weltgrößter Cloud-Anbieter. AWS UltraCluster: bis zu 20.480 H100 in einem 3200-Knoten-Cluster via EFA-Networking. Entwickelt Trainium 2 (AI Training) und Inferentia 2 (Inferenz) intern. Umsatz Q1 2025: $29,3 Mrd (+17% YoY).',
+        monopoly: false,
+        kpis: [
+          { label: 'Umsatz Q1 2025', val: '$29.3 Mrd', status: 'ok' },
+          { label: 'GPU-Instanzen', val: 'P5 (H100) < 5% frei', status: 'crit' },
+          { label: 'Regionen global', val: '34 aktiv', status: 'ok' },
+          { label: 'PUE Ø', val: '1.14', status: 'ok' },
+          { label: 'Erneuerbar 2024', val: '100% (global)', status: 'ok' },
+          { label: 'CAPEX 2025 Plan', val: '$105 Mrd', status: 'ok' },
+        ],
+        alerts: [
+          { level: 'warn', text: 'p5.48xlarge (H100×8) Warteliste: >6 Wochen in us-east-1, eu-west-1' },
+          { level: 'info', text: 'Trainium 2 UltraServer (256 Chips) GA angekündigt Q3 2025' },
+        ],
+      },
+      {
+        id: 'azure',
+        name: 'Microsoft Azure',
+        abbr: 'MSFT',
+        country: '🇺🇸 USA',
+        location: 'Boydton, VA (eastus) · 36.665°N -78.387°W',
+        share: '~24%',
+        desc: 'Azure AI Infrastructure: ND H100 v5 (8× H100), ND B200 v5. Exklusiver OpenAI-Partner; gesamte GPT-4/4o-Infrastruktur läuft auf Azure. Maia 100 (eigener AI-Chip) in Produktion. CAPEX 2025: $80 Mrd angekündigt.',
+        monopoly: false,
+        kpis: [
+          { label: 'Cloud Rev. Q3 FY25', val: '$26.8 Mrd (+21%)', status: 'ok' },
+          { label: 'ND H100 Verfügb.', val: 'AUSGEBUCHT', status: 'crit' },
+          { label: 'Maia 100 Status', val: 'Produktion aktiv', status: 'ok' },
+          { label: 'Regionen global', val: '60+', status: 'ok' },
+          { label: 'CAPEX 2025', val: '$80 Mrd', status: 'ok' },
+          { label: 'OpenAI-Exklusivität', val: 'bis 2030', status: 'ok' },
+        ],
+        alerts: [
+          { level: 'crit', text: 'ND H100 v5 Instanzen in allen Regionen vollständig ausgebucht — Q4 2025 Erweiterung' },
+        ],
+      },
+      {
+        id: 'google-cloud',
+        name: 'Google Cloud Platform',
+        abbr: 'GCP',
+        country: '🇺🇸 USA',
+        location: 'The Dalles, OR · 45.599°N -121.181°W',
+        share: '~12%',
+        desc: 'Google Cloud AI Hypercomputer mit TPU v5p und H100. The Dalles OR Campus: 3 Fabs, günstige Columbia-River-Wasserkraft. Gemini Ultra trainiert auf 6.144 TPU v5p-Pods. Umsatz Q1 2025: $12,3 Mrd.',
+        monopoly: false,
+        kpis: [
+          { label: 'Cloud Rev. Q1 2025', val: '$12.3 Mrd (+28%)', status: 'ok' },
+          { label: 'TPU v5p Verfügb.', val: 'BEGRENZT', status: 'warn' },
+          { label: 'A3 (H100) Verfügb.', val: 'VERFÜGBAR', status: 'ok' },
+          { label: 'PUE The Dalles', val: '1.10', status: 'ok' },
+          { label: 'Regionen global', val: '42', status: 'ok' },
+          { label: 'CAPEX 2025', val: '$75 Mrd', status: 'ok' },
+        ],
+        alerts: [],
+      },
+    ],
+  },
+
+  '10': {
+    num: '10', icon: '⚡', color: '#16a34a',
+    name: 'Energieinfrastruktur',
+    subtitle: 'Strom- & Kühlversorgung für AI-Datacenter · +40% Wachstum p.a. · Nuklear-Renaissance',
+    risk: { score: 4.2, label: 'Verteilt', cls: 'low' },
+    riskFactors: [
+      { label: 'Netz-Anschluss-Wartezeit', val: '7.0/10', status: 'warn' },
+      { label: 'Erneuerbar-Intermittenz', val: '5.0/10', status: 'warn' },
+      { label: 'Regulierungsrisiko FERC', val: '4.5/10', status: 'ok' },
+      { label: 'Nuklear-Verfügbarkeit', val: '3.0/10', status: 'ok' },
+    ],
+    kpis: [
+      { icon: '⚡', val: '$0.089', label: '/kWh Ø Industriestrom USA', status: 'ok' },
+      { icon: '🔆', val: '42%', label: 'Erneuerbarer Anteil US-Netz', status: 'ok' },
+      { icon: '☢️', val: '94%', label: 'Nuklear-Verfügbarkeitsfaktor', status: 'ok' },
+      { icon: '🏗️', val: '+12 GW', label: 'DC-Power in Planung (US)', status: 'ok' },
+      { icon: '📈', val: '+40%', label: 'DC-Strombedarf-Wachstum p.a.', status: 'warn' },
+      { icon: '⏳', val: '14 Mo.', label: 'Ø Wartezeit Netz-Anschluss', status: 'warn' },
+    ],
+    description: 'KI-Rechenzentren werden zum dominierenden Wachstumstreiber für Stromerzeugung. US-Hyperscaler benötigen bis 2030 zusätzlich ~50 GW — entspricht ~10 % der heutigen US-Kapazität. Bottleneck ist nicht Erzeugung, sondern Netzinfrastruktur und Grid-Interconnection-Queues (FERC). Constellation Energy reaktiviert Three Mile Island als Antwort auf Microsoft-Nachfrage. NuScale, Kairos Power (Google-PPA) und X-energy sind führende SMR-Projekte für On-Site-Versorgung.',
+    companies: [
+      {
+        id: 'nextera',
+        name: 'NextEra Energy',
+        abbr: 'NEE',
+        country: '🇺🇸 USA',
+        location: 'Juno Beach, FL · 26.896°N -80.107°W',
+        share: '~17%',
+        desc: 'Weltgrößter Betreiber von Wind- und Solarenergie (FPL + NextEra Energy Resources). Portfolio: 67 GW sauber. Größter PPA-Partner für AWS, Google, Meta, Microsoft. NYSE: NEE, Marktkapitalisierung $150+ Mrd.',
+        monopoly: false,
+        kpis: [
+          { label: 'Sauberkapazität', val: '67 GW', status: 'ok' },
+          { label: 'Umsatz 2024', val: '$24.5 Mrd', status: 'ok' },
+          { label: 'DC-PPA-Portfolio', val: '12 GW kontrahiert', status: 'ok' },
+          { label: 'Wind-Output YTD', val: '98% Plan', status: 'ok' },
+          { label: 'Solar-Output YTD', val: '101% Plan', status: 'ok' },
+          { label: 'Neue Projekte', val: '+8 GW in 2025', status: 'ok' },
+        ],
+        alerts: [],
+      },
+      {
+        id: 'constellation',
+        name: 'Constellation Energy',
+        abbr: 'CEG',
+        country: '🇺🇸 USA',
+        location: 'Baltimore, MD · TMI: 40.153°N -76.726°W',
+        share: '~13%',
+        desc: 'Größter US-Kernkraft-Betreiber (21 Reaktoren, 20+ GW). Three Mile Island Unit 1 (Crane Clean Energy Center) wird auf Grundlage eines 20-Jahres-PPA mit Microsoft reaktiviert — Neustart Q4 2024. Nuclear baseload ist für Hyperscaler attraktiv wegen 24/7-Verfügbarkeit.',
+        monopoly: false,
+        kpis: [
+          { label: 'Nuklear-Kapazität', val: '21 GW', status: 'ok' },
+          { label: 'Verfügbarkeitsfaktor', val: '93.7%', status: 'ok' },
+          { label: 'TMI Restart', val: 'Q4 2024 ✓', status: 'ok' },
+          { label: 'Microsoft-PPA', val: '20 Jahre, 835 MW', status: 'ok' },
+          { label: 'CO₂-Intensität', val: '< 5g CO₂/kWh', status: 'ok' },
+          { label: 'Umsatz 2024', val: '$23.6 Mrd', status: 'ok' },
+        ],
+        alerts: [
+          { level: 'info', text: 'Crane Clean Energy Center (ex TMI Unit 1) seit Sept. 2024 wieder am Netz — 835 MW' },
+        ],
+      },
+      {
+        id: 'smr',
+        name: 'SMR-Konsortium (NuScale / Kairos)',
+        abbr: 'SMR',
+        country: '🇺🇸 USA / 🇬🇧 GB',
+        location: 'Idaho Falls, ID · 43.530°N -112.044°W',
+        share: '~2% (entstehend)',
+        desc: 'Kleine Modulare Reaktoren (SMR) sollen On-Site Strom für Rechenzentren liefern. Kairos Power: Google-PPA für 500 MW ab 2030 (Demonstrationsreaktor 2027). NuScale VOYGR: 50–77 MW je Modul, DOE-lizenziert. X-energy: DoD-Vertrag.',
+        monopoly: false,
+        kpis: [
+          { label: 'Kairos Demo-Reaktor', val: '2027 geplant', status: 'warn' },
+          { label: 'Google-PPA Kairos', val: '500 MW ab 2030', status: 'ok' },
+          { label: 'NuScale VOYGR', val: 'DOE-Lizenz OK', status: 'ok' },
+          { label: 'X-energy (DoD)', val: 'Vertrag aktiv', status: 'ok' },
+          { label: 'Kosten/kWh Prognose', val: '$0.06-0.09', status: 'ok' },
+          { label: 'Marktverfügbarkeit', val: '~2028-2031', status: 'warn' },
+        ],
+        alerts: [
+          { level: 'info', text: 'Google unterzeichnet ersten kommerziellen SMR-PPA mit Kairos Power — 500 MW ab ~2030' },
+        ],
+      },
+    ],
+  },
+};
+
+/* ═══════════════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════════════ */
+function colorForStatus(s) {
+  return s === 'ok' ? '#4ade80' : s === 'warn' ? '#fbbf24' : '#f87171';
+}
+
+function renderDetail(phase) {
+  const d = PHASES[phase];
+  if (!d) {
+    document.getElementById('phase-hero').innerHTML = '<p style="padding:3rem;color:#f87171">Phase nicht gefunden.</p>';
+    return;
+  }
+
+  document.title = `${d.name} — Supply Chain Twin`;
+  document.getElementById('nav-phase-name').textContent = d.name;
+  document.documentElement.style.setProperty('--phase-color', d.color);
+
+  /* ── Hero ── */
+  const riskBarWidth = (d.risk.score / 10 * 100).toFixed(0);
+  const riskBarColor = d.risk.cls === 'critical' ? '#dc2626' : d.risk.cls === 'high' ? '#ea580c' : d.risk.cls === 'medium' ? '#ca8a04' : '#16a34a';
+
+  const rfHtml = d.riskFactors.map(rf => `
+    <div class="risk-factor">
+      <div class="rf-dot" style="background:${colorForStatus(rf.status)}"></div>
+      <span class="rf-label">${rf.label}</span>
+      <span class="rf-val" style="color:${colorForStatus(rf.status)}">${rf.val}</span>
+    </div>`).join('');
+
+  document.getElementById('phase-hero').innerHTML = `
+    <div class="phase-num-badge">STUFE ${d.num} VON 10</div>
+    <div class="phase-title-row">
+      <span class="phase-icon">${d.icon}</span>
+      <div class="phase-title-wrap">
+        <h1>${d.name}</h1>
+        <p>${d.subtitle}</p>
+      </div>
+    </div>
+    <div class="risk-gauge-wrap">
+      <div class="risk-gauge">
+        <div style="font-size:0.7rem;color:var(--muted);margin-bottom:0.4rem;letter-spacing:0.05em;text-transform:uppercase">Risikoindikator</div>
+        <div style="display:flex;align-items:baseline;gap:0.4rem">
+          <span class="risk-score-big" style="color:${riskBarColor}">${d.risk.score}</span>
+          <span style="font-size:1.2rem;color:var(--muted)">/10</span>
+        </div>
+        <div class="gauge-track" style="margin-top:0.5rem">
+          <div class="gauge-fill" style="width:${riskBarWidth}%;background:${riskBarColor}"></div>
+        </div>
+        <div class="gauge-labels"><span>0</span><span>5</span><span>10</span></div>
+        <div style="margin-top:0.4rem">
+          <span class="risk-badge ${d.risk.cls}" style="display:inline-flex">${d.risk.label}</span>
+        </div>
+      </div>
+      <div class="risk-factors">${rfHtml}</div>
+    </div>`;
+
+  /* ── Main ── */
+  const kpiHtml = d.kpis.map(k => `
+    <div class="kpi-card ${k.status}">
+      <div class="kc-icon">${k.icon}</div>
+      <div class="kc-val">${k.val}</div>
+      <div class="kc-label">${k.label}</div>
+    </div>`).join('');
+
+  const companiesHtml = d.companies.map(co => {
+    const kpiRows = co.kpis.map(k => `
+      <div class="co-kpi-row">
+        <span class="co-kpi-label">${k.label}</span>
+        <span class="co-kpi-val ${k.status}">${k.val}</span>
+      </div>`).join('');
+
+    const alertsHtml = co.alerts.length ? `
+      <div class="co-alerts">${co.alerts.map(a => `
+        <div class="alert-chip ${a.level}">
+          <span>${a.level === 'crit' ? '🚨' : a.level === 'warn' ? '⚠️' : 'ℹ️'}</span>
+          <span>${a.text}</span>
+        </div>`).join('')}
+      </div>` : '';
+
+    const dtUrl = `digital-twin.html?phase=${d.num}&company=${co.id}&name=${encodeURIComponent(co.name)}&lat=${co.location.split('·')[1]?.trim().split(' ')[0] || ''}&color=${encodeURIComponent(d.color)}`;
+
+    return `
+      <div class="company-card">
+        <div class="company-header">
+          <div class="co-avatar">${co.abbr}</div>
+          <div class="co-meta">
+            <div class="co-name">${co.name}${co.monopoly ? '<span class="monopoly-tag">Monopol</span>' : ''}</div>
+            <div class="co-sub">${co.country} &nbsp;·&nbsp; Marktanteil: <strong style="color:${d.color}">${co.share}</strong></div>
+          </div>
+          <div class="co-share">${co.share}</div>
+          <a href="${dtUrl}" class="co-dt-btn">
+            <span class="satellite-icon">🛰️</span> Digital Twin
+          </a>
+        </div>
+        <div class="company-body">
+          <div>
+            <div class="co-desc">${co.desc}</div>
+            <div class="co-location">📍 ${co.location}</div>
+          </div>
+          <div class="co-kpis">${kpiRows}</div>
+        </div>
+        ${alertsHtml}
+      </div>`;
+  }).join('');
+
+  document.getElementById('main-wrap').innerHTML = `
+    <div class="section-title">Übersicht KPIs</div>
+    <div class="kpi-cards">${kpiHtml}</div>
+
+    <div class="section-title" style="margin-top:3rem">Beschreibung &amp; Kontext</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.4rem 1.6rem;font-size:0.85rem;color:var(--muted2);line-height:1.75;border-left:4px solid ${d.color}">
+      ${d.description}
+    </div>
+
+    <div class="section-title" style="margin-top:3rem">Wichtigste Anbieter &amp; Digital Twins</div>
+    <div class="companies">${companiesHtml}</div>
+
+    <div style="margin-top:2rem;text-align:center">
+      <a href="supply-chain.html" style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.7rem 1.4rem;border-radius:8px;font-size:0.85rem;font-weight:600;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--muted2);text-decoration:none;transition:background .2s"
+        onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+        ← Zurück zur Supply Chain Map
+      </a>
+    </div>`;
+}
+
+/* ── Bootstrap ── */
+const phase = new URLSearchParams(window.location.search).get('phase') || '01';
+renderDetail(phase.padStart(2, '0'));
+
+/* ── Shared CSS class ── */
+const style = document.createElement('style');
+style.textContent = `.risk-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .6rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}.risk-badge::before{content:'●';font-size:.45rem}.risk-badge.critical{background:rgba(220,38,38,.15);color:#f87171;border:1px solid rgba(220,38,38,.3)}.risk-badge.high{background:rgba(234,88,12,.15);color:#fb923c;border:1px solid rgba(234,88,12,.3)}.risk-badge.medium{background:rgba(202,138,4,.15);color:#fbbf24;border:1px solid rgba(202,138,4,.3)}.risk-badge.low{background:rgba(22,163,74,.15);color:#4ade80;border:1px solid rgba(22,163,74,.3)}`;
+document.head.appendChild(style);
+</script>
+</body>
+</html>

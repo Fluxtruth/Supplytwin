@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Digital Twin — Supply Chain Twin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:    #060a12;
+      --bg2:   #0a0f1c;
+      --bg3:   #0d1424;
+      --border: rgba(255,255,255,0.07);
+      --text:  #d8dff0;
+      --muted: #4a5578;
+      --muted2:#6470a0;
+      --accent: #00e5ff;
+      --green:  #00ff88;
+      --yellow: #ffd700;
+      --red:    #ff3d3d;
+    }
+
+    html, body { height: 100%; }
+    body {
+      font-family: 'Courier New', 'Consolas', monospace;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      display: flex; align-items: center; gap: 0.8rem;
+      padding: 0.7rem 1.2rem;
+      background: rgba(6,10,18,0.95);
+      border-bottom: 1px solid rgba(0,229,255,0.15);
+      flex-shrink: 0; z-index: 200;
+    }
+    .logo-icon {
+      width: 24px; height: 24px;
+      background: linear-gradient(135deg, #4f8ef7, #a855f7);
+      border-radius: 5px; display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 700; color: #fff; flex-shrink: 0;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .nav-title {
+      font-size: 0.75rem; letter-spacing: 0.1em; color: var(--accent);
+      text-transform: uppercase;
+    }
+    .nav-sub { font-size: 0.68rem; color: var(--muted2); margin-left: 0.3rem; }
+    .nav-status {
+      margin-left: auto; display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.68rem; color: var(--green);
+    }
+    .blink { animation: blink 1.2s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    .nav-back {
+      font-size: 0.7rem; color: var(--muted2); text-decoration: none;
+      padding: 0.3rem 0.7rem; border: 1px solid var(--border); border-radius: 4px;
+      transition: color .2s;
+    }
+    .nav-back:hover { color: var(--text); }
+
+    /* ── MAIN LAYOUT ── */
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      grid-template-rows: 1fr 200px;
+      flex: 1;
+      overflow: hidden;
+      gap: 1px;
+      background: rgba(0,229,255,0.06);
+    }
+
+    /* ── SATELLITE VIEW ── */
+    .satellite-panel {
+      grid-column: 1;
+      grid-row: 1;
+      position: relative;
+      overflow: hidden;
+      background: #050d08;
+    }
+
+    /* terrain layers */
+    .terrain {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 25% 35%, rgba(20,55,15,0.9) 0%, transparent 45%),
+        radial-gradient(ellipse at 75% 65%, rgba(35,25,8,0.8) 0%, transparent 40%),
+        radial-gradient(ellipse at 50% 50%, rgba(15,40,10,0.6) 0%, transparent 65%),
+        radial-gradient(ellipse at 80% 20%, rgba(10,30,20,0.7) 0%, transparent 35%),
+        radial-gradient(ellipse at 20% 75%, rgba(25,45,15,0.6) 0%, transparent 40%),
+        #070e08;
+    }
+    .terrain.urban {
+      background:
+        radial-gradient(ellipse at 40% 40%, rgba(25,28,45,0.9) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 60%, rgba(30,25,40,0.7) 0%, transparent 40%),
+        radial-gradient(ellipse at 20% 70%, rgba(15,20,35,0.8) 0%, transparent 35%),
+        #080912;
+    }
+    .terrain.desert {
+      background:
+        radial-gradient(ellipse at 50% 50%, rgba(55,40,15,0.8) 0%, transparent 55%),
+        radial-gradient(ellipse at 25% 30%, rgba(45,35,10,0.7) 0%, transparent 40%),
+        #100c05;
+    }
+
+    /* coordinate grid */
+    .sat-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    /* finer subgrid */
+    .sat-grid::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.02) 1px, transparent 1px);
+      background-size: 15px 15px;
+    }
+
+    /* scan line */
+    .scan-line {
+      position: absolute; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(0,229,255,0.6) 40%, rgba(0,229,255,0.9) 50%, rgba(0,229,255,0.6) 60%, transparent);
+      box-shadow: 0 0 12px rgba(0,229,255,0.4);
+      animation: scan 4s linear infinite;
+      z-index: 10;
+    }
+    @keyframes scan { from { top: -2px; } to { top: 100%; } }
+
+    /* facility markers */
+    .facility {
+      position: absolute;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 4px; cursor: default;
+    }
+    .facility-ring {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 2px solid var(--facility-color, var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+      box-shadow: 0 0 12px var(--facility-color, var(--accent));
+    }
+    .facility-ring::before {
+      content: '';
+      position: absolute; inset: -6px;
+      border: 1px solid var(--facility-color, var(--accent));
+      border-radius: 50%;
+      opacity: 0.3;
+      animation: pulse-ring 2s ease-out infinite;
+    }
+    .facility-ring::after {
+      content: '';
+      position: absolute; inset: -12px;
+      border: 1px solid var(--facility-color, var(--accent));
+      border-radius: 50%;
+      opacity: 0.15;
+      animation: pulse-ring 2s ease-out 0.5s infinite;
+    }
+    @keyframes pulse-ring { 0%{transform:scale(1);opacity:.3} 100%{transform:scale(1.6);opacity:0} }
+    .facility-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--facility-color, var(--accent));
+      animation: blink 1.8s infinite;
+    }
+    .facility-label {
+      font-size: 0.6rem; letter-spacing: 0.08em;
+      color: var(--facility-color, var(--accent));
+      text-transform: uppercase; white-space: nowrap;
+      text-shadow: 0 0 8px var(--facility-color, var(--accent));
+    }
+
+    /* moving vehicles */
+    .vehicle {
+      position: absolute;
+      width: 6px; height: 6px;
+      background: var(--yellow);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--yellow);
+    }
+    .v1 { animation: truck1 8s linear infinite; }
+    .v2 { animation: truck2 11s linear infinite 2s; }
+    .v3 { animation: truck3 14s linear infinite 5s; }
+    .v4 { animation: truck4 9s linear infinite 1s; }
+
+    @keyframes truck1 {
+      0%   { top: 30%; left: 10%; }
+      25%  { top: 40%; left: 35%; }
+      50%  { top: 55%; left: 55%; }
+      75%  { top: 45%; left: 72%; }
+      100% { top: 30%; left: 10%; }
+    }
+    @keyframes truck2 {
+      0%   { top: 60%; left: 80%; }
+      33%  { top: 70%; left: 55%; }
+      66%  { top: 65%; left: 25%; }
+      100% { top: 60%; left: 80%; }
+    }
+    @keyframes truck3 {
+      0%   { top: 20%; left: 50%; }
+      50%  { top: 35%; left: 20%; }
+      100% { top: 20%; left: 50%; }
+    }
+    @keyframes truck4 {
+      0%   { top: 75%; left: 40%; }
+      50%  { top: 55%; left: 68%; }
+      100% { top: 75%; left: 40%; }
+    }
+
+    /* roads */
+    .road {
+      position: absolute;
+      background: rgba(255,220,100,0.12);
+      border: 1px solid rgba(255,220,100,0.08);
+    }
+    .road.h { height: 3px; border-radius: 1px; }
+    .road.v { width: 3px; border-radius: 1px; }
+
+    /* HUD overlays */
+    .hud-tl, .hud-tr, .hud-bl, .hud-br {
+      position: absolute; font-size: 0.6rem;
+      color: rgba(0,229,255,0.6); z-index: 20; line-height: 1.7;
+    }
+    .hud-tl { top: 10px; left: 14px; }
+    .hud-tr { top: 10px; right: 14px; text-align: right; }
+    .hud-bl { bottom: 10px; left: 14px; }
+    .hud-br { bottom: 10px; right: 14px; text-align: right; }
+
+    /* crosshair */
+    .crosshair {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px; height: 20px;
+      z-index: 15;
+    }
+    .crosshair::before, .crosshair::after {
+      content: '';
+      position: absolute;
+      background: rgba(0,229,255,0.3);
+    }
+    .crosshair::before { width: 100%; height: 1px; top: 50%; left: 0; }
+    .crosshair::after  { width: 1px; height: 100%; top: 0; left: 50%; }
+
+    /* corner brackets */
+    .corner { position: absolute; width: 16px; height: 16px; border-color: rgba(0,229,255,0.4); border-style: solid; }
+    .corner.tl { top: 8px; left: 8px; border-width: 2px 0 0 2px; }
+    .corner.tr { top: 8px; right: 8px; border-width: 2px 2px 0 0; }
+    .corner.bl { bottom: 8px; left: 8px; border-width: 0 0 2px 2px; }
+    .corner.br { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; }
+
+    /* ── SENSOR PANEL ── */
+    .sensor-panel {
+      grid-column: 2;
+      grid-row: 1 / 3;
+      background: var(--bg2);
+      border-left: 1px solid rgba(0,229,255,0.1);
+      display: flex; flex-direction: column;
+      overflow-y: auto; overflow-x: hidden;
+    }
+    .sp-header {
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg3);
+      flex-shrink: 0;
+    }
+    .sp-title {
+      font-size: 0.65rem; letter-spacing: 0.12em; color: var(--accent);
+      text-transform: uppercase; margin-bottom: 0.4rem;
+    }
+    .sp-company {
+      font-size: 0.85rem; font-weight: 700; color: var(--text);
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .sp-coords { font-size: 0.6rem; color: var(--muted2); margin-top: 0.15rem; }
+
+    .sp-section { padding: 0.8rem 1rem; border-bottom: 1px solid var(--border); }
+    .sp-section-title {
+      font-size: 0.58rem; letter-spacing: 0.12em; color: var(--muted);
+      text-transform: uppercase; margin-bottom: 0.6rem;
+    }
+
+    /* sensor row */
+    .sensor-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.3rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      font-size: 0.68rem;
+    }
+    .sensor-row:last-child { border-bottom: none; }
+    .sr-label { color: var(--muted2); flex: 1; }
+    .sr-bar-wrap { width: 50px; height: 4px; background: rgba(255,255,255,0.07); border-radius: 2px; margin: 0 0.5rem; }
+    .sr-bar { height: 100%; border-radius: 2px; }
+    .sr-val { font-weight: 700; min-width: 50px; text-align: right; font-family: 'Courier New', monospace; }
+    .sr-val.ok   { color: var(--green); }
+    .sr-val.warn { color: var(--yellow); }
+    .sr-val.crit { color: var(--red); }
+
+    /* camera mock */
+    .camera-feed {
+      position: relative;
+      width: 100%; aspect-ratio: 4/3;
+      background: #030508;
+      overflow: hidden;
+    }
+    .cam-noise {
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+      animation: noise 0.15s steps(2) infinite;
+      opacity: 0.4;
+    }
+    @keyframes noise { 0%{transform:translate(0,0)} 25%{transform:translate(-2px,1px)} 50%{transform:translate(2px,-1px)} 75%{transform:translate(-1px,2px)} 100%{transform:translate(0,0)} }
+    .cam-scene {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .cam-building {
+      position: absolute;
+      background: rgba(30,40,25,0.7);
+      border: 1px solid rgba(80,100,60,0.3);
+    }
+    .cam-overlay {
+      position: absolute; inset: 0;
+      border: 2px solid rgba(0,229,255,0.12);
+    }
+    .cam-hud {
+      position: absolute; top: 6px; left: 6px;
+      font-size: 0.5rem; color: rgba(0,229,255,0.7); line-height: 1.7;
+    }
+    .cam-rec {
+      position: absolute; top: 6px; right: 6px;
+      font-size: 0.5rem; color: var(--red);
+      display: flex; align-items: center; gap: 3px;
+    }
+    .cam-rec::before { content:'●'; animation: blink 1s infinite; }
+    .cam-crosshair {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 30px; height: 30px;
+    }
+    .cam-crosshair::before, .cam-crosshair::after {
+      content:''; position: absolute; background: rgba(0,229,255,0.25);
+    }
+    .cam-crosshair::before { width:100%; height:1px; top:50%; }
+    .cam-crosshair::after  { width:1px; height:100%; left:50%; }
+
+    /* ── ALERT FEED ── */
+    .alert-panel {
+      grid-column: 1;
+      grid-row: 2;
+      background: var(--bg3);
+      border-top: 1px solid rgba(0,229,255,0.08);
+      overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+    .alert-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.6rem; letter-spacing: 0.1em; color: var(--accent);
+      text-transform: uppercase; flex-shrink: 0;
+    }
+    .alert-count { color: var(--muted2); }
+    .alert-list { flex: 1; overflow-y: auto; padding: 0.4rem 0; }
+    .alert-entry {
+      display: flex; align-items: flex-start; gap: 0.7rem;
+      padding: 0.35rem 1rem;
+      font-size: 0.68rem; line-height: 1.5;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      animation: slide-in 0.4s ease;
+    }
+    @keyframes slide-in { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+    .alert-entry.crit { color: var(--red); }
+    .alert-entry.warn { color: var(--yellow); }
+    .alert-entry.ok   { color: var(--green); }
+    .alert-entry.info { color: #7eb3ff; }
+    .ae-time { color: var(--muted); min-width: 48px; flex-shrink: 0; font-size: 0.62rem; }
+    .ae-tag  { min-width: 14px; flex-shrink: 0; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.15); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo-icon">ST</div>
+  <span class="nav-title">Digital Twin</span>
+  <span class="nav-sub" id="nav-company-name">—</span>
+  <div class="nav-status">
+    <span class="blink">●</span> LIVE FEED AKTIV
+  </div>
+  <a href="#" id="nav-back-btn" class="nav-back">← Detail</a>
+</nav>
+
+<div class="main">
+
+  <!-- SATELLITE VIEW -->
+  <div class="satellite-panel" id="sat-panel">
+    <div class="terrain" id="terrain-bg"></div>
+    <div class="sat-grid"></div>
+
+    <!-- roads -->
+    <div class="road h" style="top:45%;left:5%;width:90%"></div>
+    <div class="road h" style="top:65%;left:15%;width:65%"></div>
+    <div class="road v" style="left:35%;top:10%;height:75%"></div>
+    <div class="road v" style="left:62%;top:20%;height:60%"></div>
+
+    <!-- vehicles -->
+    <div class="vehicle v1"></div>
+    <div class="vehicle v2"></div>
+    <div class="vehicle v3"></div>
+    <div class="vehicle v4"></div>
+
+    <!-- primary facility -->
+    <div class="facility" style="top:38%;left:32%;transform:translate(-50%,-50%)" id="facility-primary">
+      <div class="facility-ring" style="--facility-color:#00e5ff">
+        <div class="facility-dot"></div>
+      </div>
+      <div class="facility-label" id="facility-label-primary">MAIN FACILITY</div>
+    </div>
+
+    <!-- secondary markers -->
+    <div class="facility" style="top:58%;left:62%;transform:translate(-50%,-50%)">
+      <div class="facility-ring" style="--facility-color:#00ff88;width:20px;height:20px">
+        <div class="facility-dot" style="width:5px;height:5px;background:var(--green)"></div>
+      </div>
+      <div class="facility-label" style="color:var(--green);font-size:0.5rem">LOGISTICS HUB</div>
+    </div>
+    <div class="facility" style="top:28%;left:68%;transform:translate(-50%,-50%)">
+      <div class="facility-ring" style="--facility-color:#ffd700;width:20px;height:20px">
+        <div class="facility-dot" style="width:5px;height:5px;background:var(--yellow)"></div>
+      </div>
+      <div class="facility-label" style="color:var(--yellow);font-size:0.5rem">POWER SUB</div>
+    </div>
+    <div class="facility" style="top:72%;left:24%;transform:translate(-50%,-50%)">
+      <div class="facility-ring" style="--facility-color:#a855f7;width:20px;height:20px">
+        <div class="facility-dot" style="width:5px;height:5px;background:#a855f7"></div>
+      </div>
+      <div class="facility-label" style="color:#a855f7;font-size:0.5rem">WATER INTAKE</div>
+    </div>
+
+    <div class="scan-line"></div>
+    <div class="crosshair"></div>
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+
+    <!-- HUD -->
+    <div class="hud-tl" id="hud-coords">
+      LAT: 35.920°N<br>
+      LNG: 82.063°W<br>
+      ALT: 520 m
+    </div>
+    <div class="hud-tr">
+      ZOOM: ×8<br>
+      RES: 50 cm/px<br>
+      <span id="hud-time">--:--:-- UTC</span>
+    </div>
+    <div class="hud-bl">
+      SAT: SENTINEL-2<br>
+      ORBIT: 786 km<br>
+      PASS: 09:42 UTC
+    </div>
+    <div class="hud-br">
+      AREA: 4.2 km²<br>
+      CLOUD: 3%<br>
+      BAND: RGB+NIR
+    </div>
+  </div>
+
+  <!-- SENSOR PANEL -->
+  <div class="sensor-panel">
+    <div class="sp-header">
+      <div class="sp-title">🛰️ Satellite Digital Twin</div>
+      <div class="sp-company" id="sp-company-name">Loading…</div>
+      <div class="sp-coords" id="sp-coords">—</div>
+    </div>
+
+    <!-- Live camera mock -->
+    <div class="sp-section" style="padding:0.8rem 1rem 0.5rem">
+      <div class="sp-section-title">Live-Kamera (Mock)</div>
+      <div class="camera-feed">
+        <div class="cam-noise"></div>
+        <div class="cam-scene">
+          <!-- building silhouettes -->
+          <div class="cam-building" style="bottom:0;left:10%;width:20%;height:45%"></div>
+          <div class="cam-building" style="bottom:0;left:33%;width:28%;height:60%"></div>
+          <div class="cam-building" style="bottom:0;left:64%;width:15%;height:35%"></div>
+          <div class="cam-building" style="bottom:0;left:82%;width:10%;height:50%"></div>
+          <!-- ground plane -->
+          <div style="position:absolute;bottom:0;left:0;right:0;height:18%;background:rgba(20,30,15,0.6)"></div>
+        </div>
+        <div class="cam-overlay"></div>
+        <div class="cam-hud" id="cam-hud">
+          CAM-01 MAIN GATE<br>
+          2026-05-14 <span id="cam-time">--:--:--</span>
+        </div>
+        <div class="cam-rec">REC</div>
+        <div class="cam-crosshair"></div>
+      </div>
+    </div>
+
+    <!-- Operational KPIs -->
+    <div class="sp-section" id="op-kpis">
+      <div class="sp-section-title">Betrieb &amp; Output</div>
+      <!-- filled by JS -->
+    </div>
+
+    <!-- Transport KPIs -->
+    <div class="sp-section" id="transport-kpis">
+      <div class="sp-section-title">Transport &amp; Logistik</div>
+    </div>
+
+    <!-- Environmental -->
+    <div class="sp-section" id="env-kpis">
+      <div class="sp-section-title">Umwelt &amp; Infrastruktur</div>
+    </div>
+
+    <!-- Risk -->
+    <div class="sp-section" id="risk-kpis">
+      <div class="sp-section-title">Risikolage</div>
+    </div>
+  </div>
+
+  <!-- ALERT FEED -->
+  <div class="alert-panel">
+    <div class="alert-header">
+      <span>▶ Event-Log · Echtzeit-Feed</span>
+      <span class="alert-count" id="alert-count">0 Events</span>
+    </div>
+    <div class="alert-list" id="alert-list"></div>
+  </div>
+
+</div>
+
+<script>
+/* ── URL params ── */
+const params = new URLSearchParams(window.location.search);
+const phaseId  = params.get('phase') || '01';
+const companyId = params.get('company') || 'tqc';
+const companyName = decodeURIComponent(params.get('name') || 'The Quartz Corp');
+const accentColor = decodeURIComponent(params.get('color') || '#00e5ff');
+
+/* ── Phase-specific config ── */
+const PHASE_CONFIG = {
+  '01': {
+    terrain: 'forest',
+    coordLabel: '35.920°N 82.063°W · ALT: 520 m',
+    satCoords: 'LAT: 35.920°N\nLNG: 82.063°W\nALT: 520 m',
+    satellite: 'SENTINEL-2',
+    alt: '786 km',
+    band: 'RGB+NIR',
+    camLabel: 'CAM-01 MINE ENTRANCE',
+    op:        [ ['Tagesproduktion',    '280 t',     0.72, 'ok'],   ['Output vs. Ziel',   '94%',       0.94, 'warn'], ['Schichtbelegung',   '3 / 3',     1.0,  'ok'],   ['Sprengungen/Wo.',   '4',         0.4,  'ok'],   ['Reinheit SiO₂',    '99.9995%',  1.0,  'ok'], ],
+    transport: [ ['LKW-Abfahrten/Tag',  '47',        0.78, 'ok'],   ['I-26 Status',       'FREI',      1.0,  'ok'],   ['US-221 Zufahrt',    'FREI',      1.0,  'ok'],   ['CSX Blue Ridge',    'NORMAL',    1.0,  'ok'],   ['Lagerbestand',      '42 Tage',   0.7,  'ok'], ],
+    env:       [ ['Windgeschw.',        '12 km/h',   0.2,  'ok'],   ['Niederschlag',      '2 mm',      0.1,  'ok'],   ['Hurrikan-Status',   'FERN',      0.05, 'ok'],   ['Wasserstand Toe',   'NORMAL',    0.5,  'ok'],   ['Lärmpegel',         '68 dB',     0.57, 'warn'], ],
+    risk:      [ ['Geopolit. Risiko',   '7.2/10',    0.72, 'warn'], ['Versorg.-Risiko',   '9.5/10',    0.95, 'crit'], ['Transporthindernisse', 'KEINE', 0.0, 'ok'],  ['Natur-Event',       'KEINES',    0.0,  'ok'], ],
+  },
+  '02': {
+    terrain: 'industrial',
+    coordLabel: '39.546°N 81.636°W · ALT: 185 m',
+    satCoords: 'LAT: 39.546°N\nLNG: 81.636°W\nALT: 185 m',
+    satellite: 'LANDSAT-9',
+    alt: '705 km',
+    band: 'SWIR+TIR',
+    camLabel: 'CAM-02 SMELTER FLOOR',
+    op:        [ ['Ofen-Auslastung',    '87%',       0.87, 'ok'],   ['Temp. Schmelze',    '2.040°C',   1.0,  'ok'],   ['Si-Qualität',       '99.1% Si',  0.99, 'ok'],   ['Output heute',      '1.240 t',   0.83, 'ok'],   ['Stromverbrauch',    '12.8 MWh/t',0.64, 'warn'], ],
+    transport: [ ['LKW eingehend/Tag',  '32',        0.53, 'ok'],   ['LKW ausgehend/Tag', '28',        0.47, 'ok'],   ['Bahn-Status',       'NORMAL',    1.0,  'ok'],   ['Hafen-Route',       'NORMAL',    1.0,  'ok'],   ['Export-Lizenz',     'GÜLTIG',    1.0,  'ok'], ],
+    env:       [ ['Emissionen SO₂',     '12 mg/m³',  0.4,  'ok'],   ['Staub PM10',        '28 μg/m³',  0.56, 'warn'], ['Kühlwasser-Temp.',  '18°C',      0.36, 'ok'],   ['Energiepreis',      '$0.078/kWh',0.39, 'ok'],   ['Stromquelle',       '72% Ern.',  0.72, 'ok'], ],
+    risk:      [ ['Geopolit. Risiko',   '6.8/10',    0.68, 'warn'], ['Xinjiang-Risiko',   'ERHÖHT',    0.7,  'warn'], ['Energieausfall',    'NIEDRIG',   0.15, 'ok'],   ['Streik-Risiko',     'KEINES',    0.0,  'ok'], ],
+  },
+  '03': {
+    terrain: 'industrial',
+    coordLabel: '34.261°N 117.185°E · ALT: 45 m',
+    satCoords: 'LAT: 34.261°N\nLNG: 117.185°E\nALT: 45 m',
+    satellite: 'GAOFEN-7',
+    alt: '505 km',
+    band: 'RGB+NIR',
+    camLabel: 'CAM-03 SIEMENS REACTOR',
+    op:        [ ['Reaktor-Auslast.',   '91%',       0.91, 'ok'],   ['Reinheit (9N)',     '99.9999999%',1.0, 'ok'],   ['Prod./Tag',         '1.150 t',   0.91, 'ok'],   ['Spotpreis',         '$8.20/kg',  0.41, 'warn'], ['Energiebedarf',     '45 kWh/kg', 0.56, 'warn'], ],
+    transport: [ ['LKW ausgehend/Tag',  '18',        0.3,  'ok'],   ['Bahn-Status',       'NORMAL',    1.0,  'ok'],   ['Container-Port',    'NORMAL',    1.0,  'ok'],   ['Lieferzeit EU',     '14 Tage',   0.7,  'warn'], ['Lagerbestand',      '11 Tage',   0.37, 'warn'], ],
+    env:       [ ['TCS-Emissionen',     'NORMAL',    0.3,  'ok'],   ['H₂-Recycling',      '95%',       0.95, 'ok'],   ['Wasserverbrauch',   '3.2 m³/t',  0.32, 'ok'],   ['Stromquelle',       '61% Kohle', 0.61, 'crit'], ['HCl-Recycling',     '98%',       0.98, 'ok'], ],
+    risk:      [ ['Geopolit. Risiko',   '7.5/10',    0.75, 'warn'], ['Preisdruck',        'HOCH',      0.8,  'warn'], ['Energiekontingent', 'NORMAL',    0.4,  'ok'],   ['Sanktions-Risiko',  'GERING',    0.2,  'ok'], ],
+  },
+  '04': {
+    terrain: 'urban',
+    coordLabel: '37.170°N 138.249°E · ALT: 6 m',
+    satCoords: 'LAT: 37.170°N\nLNG: 138.249°E\nALT: 6 m',
+    satellite: 'ALOS-3',
+    alt: '669 km',
+    band: 'RGB+SWIR',
+    camLabel: 'CAM-04 CRYSTAL GROWING',
+    op:        [ ['Fab-Auslastung',     '97%',       0.97, 'ok'],   ['300mm Ingot/Tag',   '24',        0.8,  'ok'],   ['Defektrate',        '<0.01/cm²', 0.01, 'ok'],   ['Ingot-Reinheit',    '11N',       1.0,  'ok'],   ['Energie/Wafer',     '4.2 kWh',   0.42, 'ok'], ],
+    transport: [ ['Lieferzeit',         '12 Wochen', 0.85, 'warn'], ['Schiff-Status',     'NORMAL',    1.0,  'ok'],   ['Zoll Japan→TW',     'FREI',      1.0,  'ok'],   ['TSMC-Bestellung',   'BESTÄTIGT', 1.0,  'ok'],   ['Lager (Wo.)',       '8',         0.53, 'ok'], ],
+    env:       [ ['Reinraum-Partikel',  '<1/m³',     0.01, 'ok'],   ['Reinraum-Klasse',   'ISO 4',     1.0,  'ok'],   ['Erdbeben-Alarm',    'KEINER',    0.0,  'ok'],   ['Stromquelle',       '88% Ern.',  0.88, 'ok'],   ['Wasserrecycling',   '94%',       0.94, 'ok'], ],
+    risk:      [ ['Geopolit. Risiko',   '6.4/10',    0.64, 'warn'], ['Erdbeben-Risiko',   '6.0/10',    0.6,  'warn'], ['Export-Lizenz JP',  'GÜLTIG',    0.0,  'ok'],   ['Preisdruck',        'GERING',    0.2,  'ok'], ],
+  },
+  '05': {
+    terrain: 'urban',
+    coordLabel: '51.421°N 5.490°E · ALT: 23 m',
+    satCoords: 'LAT: 51.421°N\nLNG: 5.490°E\nALT: 23 m',
+    satellite: 'PLEIADES-1A',
+    alt: '694 km',
+    band: 'RGB+SWIR',
+    camLabel: 'CAM-05 CLEAN ROOM ENTRY',
+    op:        [ ['EUV Maschinen',      '42 im Feld', 0.84, 'ok'],  ['Uptime',            '98.2%',     0.98, 'ok'],   ['Backlog',           '32 Einh.',  0.64, 'warn'], ['Lieferzeit',        '18 Monate', 0.9,  'crit'], ['High-NA ausgeliefert','7',       0.14, 'warn'], ],
+    transport: [ ['Spedition Luft',     'AKTIV',     1.0,  'ok'],   ['Lieferkomponenten', 'PLANMÄSS.', 1.0,  'ok'],   ['Zeiss-Spiegel',     'QS BESTANDEN',1.0,'ok'],  ['Trumpf-Laser',      'QS BESTANDEN',1.0,'ok'],  ['Export-Dok.',       'GÜLTIG',    1.0,  'ok'], ],
+    env:       [ ['Reinraum-Partikel',  'ISO 1',     0.0,  'ok'],   ['Erschütterungen',   '<0.1 μm',   0.01, 'ok'],   ['Temperaturstabil.', '±0.01°C',   0.01, 'ok'],   ['Stromausfälle',     'KEINE',     0.0,  'ok'],   ['NL Export-Status',  'GÜLTIG',    0.0,  'ok'], ],
+    risk:      [ ['Geopolit. Risiko',   '9.1/10',    0.91, 'crit'], ['NL Exportkontrolle','AKTIV (CN)',0.85, 'crit'], ['Technol.-Monopol',  '10/10',     1.0,  'crit'], ['Lieferketten-Breite','7.0/10',   0.7,  'warn'], ],
+  },
+  '06': {
+    terrain: 'urban',
+    coordLabel: '24.786°N 120.997°E · ALT: 75 m',
+    satCoords: 'LAT: 24.786°N\nLNG: 120.997°E\nALT: 75 m',
+    satellite: 'FORMOSAT-7',
+    alt: '520 km',
+    band: 'RGB+TIR',
+    camLabel: 'CAM-06 FAB ENTRANCE',
+    op:        [ ['N3 Auslastung',      '98%',       0.98, 'ok'],   ['N2 Ramp TW',        '85%',       0.85, 'ok'],   ['N2 Ramp AZ',        '67%',       0.67, 'warn'], ['ASP 300mm Wafer',   '$3,200',    1.0,  'ok'],   ['Takt: Wafer/Monat', '130.000',   1.0,  'ok'], ],
+    transport: [ ['LKW-Abfahrten/Tag',  '280',       0.93, 'ok'],   ['Luftfracht',        'AKTIV',     1.0,  'ok'],   ['Seefrachtrouten',   'NORMAL',    1.0,  'ok'],   ['AZ Shipment',       'PLANMÄSS.', 1.0,  'ok'],   ['Lieferzeit Kunden', '8-12 Wo.',  0.5,  'warn'], ],
+    env:       [ ['Wasser-Reserve',     '142 Tage',  0.78, 'ok'],   ['Strom TW-Netz',     '~8%',       0.8,  'warn'], ['Erdbebenalarm',     'KEINER',    0.0,  'ok'],   ['Taifun-Status',     'FERN',      0.05, 'ok'],   ['Geopolit. Alarm',   'ERHÖHT',    0.6,  'warn'], ],
+    risk:      [ ['Taiwan-Geopolit.',   '9.5/10',    0.95, 'crit'], ['Wasserrisiko',      '6.5/10',    0.65, 'warn'], ['Erdbebenrisiko',    '7.0/10',    0.7,  'warn'], ['Konzentration',     '9.0/10',    0.9,  'crit'], ],
+  },
+  '07': {
+    terrain: 'urban',
+    coordLabel: '37.372°N -121.964°W · ALT: 21 m',
+    satCoords: 'LAT: 37.372°N\nLNG: -121.964°W\nALT: 21 m',
+    satellite: 'WORLDVIEW-3',
+    alt: '617 km',
+    band: 'RGB+SWIR',
+    camLabel: 'CAM-07 HQ CAMPUS',
+    op:        [ ['Datacenter Rev./Q',  '$22.6 Mrd', 1.0,  'ok'],   ['B200 Yield',        '71%',       0.71, 'warn'], ['H100 Lieferzeit',   '8 Wochen',  0.5,  'warn'], ['CUDA-Entwickler',   '4.0 Mio',   1.0,  'ok'],   ['Marktkapitalis.',   '$3.2T',     1.0,  'ok'], ],
+    transport: [ ['Auslieferungen/Tag', '~1.200 GPUs',0.6, 'warn'], ['Luftfracht SJC',    'AKTIV',     1.0,  'ok'],   ['Export-Lizenz',     'EINGESCHRÄNKT',0.5,'warn'],['TSMC Bestellung',   'GESICHERT', 1.0,  'ok'],   ['HBM3 Versorgung',   'ANGESPANNT',0.65,'warn'], ],
+    env:       [ ['Büro-PUE',           '1.12',      0.56, 'ok'],   ['Solar-Anteil Campus','40%',      0.4,  'ok'],   ['Erdbeben-Alarm',    'KEINER',    0.0,  'ok'],   ['Stromausfälle',     'KEINE',     0.0,  'ok'],   ['BIS-Compliance',    'AKTIV',     0.7,  'warn'], ],
+    risk:      [ ['Geopolit. Risiko',   '8.3/10',    0.83, 'crit'], ['Export-Kontrolle',  '8.0/10',    0.8,  'crit'], ['TSMC-Abhängigkeit', '8.5/10',    0.85, 'crit'], ['HBM-Engpass',       '7.0/10',    0.7,  'warn'], ],
+  },
+  '08': {
+    terrain: 'urban',
+    coordLabel: '37.387°N -121.944°W · ALT: 15 m',
+    satCoords: 'LAT: 37.387°N\nLNG: -121.944°W\nALT: 15 m',
+    satellite: 'WORLDVIEW-2',
+    alt: '770 km',
+    band: 'RGB+NIR',
+    camLabel: 'CAM-08 WAREHOUSE FLOOR',
+    op:        [ ['GPU-Server/Mo. out', '~12.000',   0.8,  'ok'],   ['HGX-Module Lager',  'KNAPP',     0.15, 'crit'], ['Rack-Leistung Ø',   '42 kW',     0.7,  'ok'],   ['Liquid-Cool-Ant.',  '70%',       0.7,  'ok'],   ['Lieferzeit Ø',      '10-12 Wo.', 0.55, 'warn'], ],
+    transport: [ ['LKW ausgehend/Tag',  '85',        0.71, 'ok'],   ['Luftfracht',        'AKTIV',     1.0,  'ok'],   ['Seefrachtoptionen', 'NORMAL',    1.0,  'ok'],   ['GPU-Eingang/Wo.',   '~4.800',    0.6,  'warn'], ['Rücksendequote',    '0.8%',      0.16, 'ok'], ],
+    env:       [ ['Hallen-Temp.',       '22°C',      0.44, 'ok'],   ['Reinheit Montage',  'ISO 7',     0.5,  'ok'],   ['Qualitätsrate',     '99.2%',     0.99, 'ok'],   ['Energiebedarf/Srv.','1.8 kWh',  0.36, 'ok'],   ['Strom-Erneuerbar',  '55%',       0.55, 'ok'], ],
+    risk:      [ ['GPU-Engpass',        '7.5/10',    0.75, 'warn'], ['Lieferkettenrisiko','4.5/10',    0.45, 'ok'],   ['Kühlengpass',       '5.5/10',    0.55, 'warn'], ['QS-Risiko',         '4.0/10',    0.4,  'ok'], ],
+  },
+  '09': {
+    terrain: 'desert',
+    coordLabel: '39.043°N -77.487°W · ALT: 82 m',
+    satCoords: 'LAT: 39.043°N\nLNG: -77.487°W\nALT: 82 m',
+    satellite: 'MAXAR-WV3',
+    alt: '617 km',
+    band: 'RGB+SWIR',
+    camLabel: 'CAM-09 DC EXTERIOR',
+    op:        [ ['PUE',               '1.18',       0.59, 'ok'],   ['GPU-Auslastung',    '77%',       0.77, 'ok'],   ['GPU-Kap. verfügbar','23%',       0.23, 'crit'], ['Netz-Kapazität',    '420 MW',    0.84, 'ok'],   ['Latenz P50',        '1.2 ms',    0.24, 'ok'], ],
+    transport: [ ['Glasfaser-Status',   'AKTIV',     1.0,  'ok'],   ['Strom-Einspeisung', '98.5%',     0.99, 'ok'],   ['Kühlung Status',    'NORMAL',    1.0,  'ok'],   ['Netz-Anschluss',    '14 Mo. WL', 0.7,  'warn'], ['Notstrom-Tests',    'BESTANDEN', 1.0,  'ok'], ],
+    env:       [ ['Außentemperatur',    '18°C',      0.36, 'ok'],   ['WUE (Wasser)',      '1.20 L/kWh',0.6,  'warn'], ['Erneuerbar-Anteil', '68%',       0.68, 'ok'],   ['CO₂-Intensität',    '82g/kWh',   0.41, 'ok'],   ['Wasserreserve',     '90 Tage',   0.75, 'ok'], ],
+    risk:      [ ['Kapazitätsengpass',  '7.5/10',    0.75, 'warn'], ['Stromversorgung',   '7.0/10',    0.7,  'warn'], ['Kühlrisiko',        '5.0/10',    0.5,  'warn'], ['Cyberangriff-Risk.','4.0/10',   0.4,  'ok'], ],
+  },
+  '10': {
+    terrain: 'desert',
+    coordLabel: '26.896°N -80.107°W · ALT: 5 m',
+    satCoords: 'LAT: 26.896°N\nLNG: -80.107°W\nALT: 5 m',
+    satellite: 'LANDSAT-9',
+    alt: '705 km',
+    band: 'RGB+TIR',
+    camLabel: 'CAM-10 GENERATION SITE',
+    op:        [ ['Wind-Output',        '98% Plan',  0.98, 'ok'],   ['Solar-Output',      '101% Plan', 1.01, 'ok'],   ['Nuklear-Verfügb.',  '94%',       0.94, 'ok'],   ['Grid-Einspeisung',  '18.4 GW',   0.92, 'ok'],   ['Strom-Preis Spot',  '$0.089/kWh',0.45, 'ok'], ],
+    transport: [ ['Stromnetz-Status',   'STABIL',    1.0,  'ok'],   ['Leitungsauslast.',  '72%',       0.72, 'ok'],   ['Netz-Anschluss WL', '14 Monate', 0.7,  'warn'], ['Reserve-Kapazität', '18%',       0.36, 'ok'],   ['Netzfrequenz',      '60.00 Hz',  0.6,  'ok'], ],
+    env:       [ ['Wind-Geschw.',       '14 m/s',    0.47, 'ok'],   ['Solar-Einstrahlung','820 W/m²',  0.82, 'ok'],   ['Nuklear-Temp.',     'NORMAL',    0.3,  'ok'],   ['CO₂-Intensität',    '38g/kWh',   0.19, 'ok'],   ['Sturmrisiko',       'GERING',    0.1,  'ok'], ],
+    risk:      [ ['Netzrisiko',         '4.2/10',    0.42, 'ok'],   ['Intermittenz',      '5.0/10',    0.5,  'warn'], ['Regulierungsrisiko','4.5/10',    0.45, 'ok'],   ['Nuklear-Verfügb.',  '3.0/10',    0.3,  'ok'], ],
+  },
+};
+
+/* ── Alert templates per phase ── */
+const ALERT_TEMPLATES = {
+  '01': [
+    ['ok',   'Tagesziel Output erreicht — 280 t HPQ verarbeitet'],
+    ['ok',   'LKW #A-47 abgefahren in Richtung Charlotte, NC'],
+    ['warn', 'Wind-Messung Abbaubereich: 38 km/h — im Normbereich'],
+    ['ok',   'Reinheits-QS Charge #2241 — 99.9995% bestanden'],
+    ['ok',   'CSX Blue Ridge: planmäßiger Betrieb'],
+    ['info', 'I-26 Exit 13: kein Stau laut NCDOT-Feed'],
+  ],
+  '02': [
+    ['ok',   'Ofen 3 läuft stabil — Temperatur 2.042°C'],
+    ['warn', 'Energiepreis-Spike: +12% gegenüber Vorwoche'],
+    ['ok',   'Charge #8821 abgeschlossen — Qualität 99.1% Si'],
+    ['info', 'Schichtübergabe 06:00 — keine Auffälligkeiten'],
+    ['warn', 'UFLPA-Monitoringbericht Q1 2026 fällig in 14 Tagen'],
+  ],
+  '03': [
+    ['warn', 'Polysilizium-Spotpreis gefallen auf $8.10/kg'],
+    ['ok',   'Reaktor 2: 9N-Qualität bestätigt — Charge #5542'],
+    ['info', 'Wacker Burghausen: Serviceintervall Reaktor 4 geplant'],
+    ['warn', 'GCL-Poly meldet Überkapazität — Margendruck erwartet'],
+    ['ok',   'OCI Malaysia: Export nach Korea planmäßig'],
+  ],
+  '04': [
+    ['ok',   'Czochralski-Zug #C-88 abgeschlossen — 300mm, 11N'],
+    ['ok',   'TSMC-Lieferung bestätigt: 42.000 Wafer KW21'],
+    ['info', 'SUMCO Kumamoto-Fab: Ramp Phase 2 läuft planmäßig'],
+    ['warn', 'Lieferzeit gestiegen auf 14 Wochen — Kapazität voll'],
+    ['ok',   'Reinraumpartikel ISO 4 — Tagesmessung bestanden'],
+  ],
+  '05': [
+    ['crit', 'ASML NXE:3800E: Auslieferung #42 verzögert um 3 Wochen'],
+    ['info', 'High-NA NXE:5000 Einheit #7: TSMC N14 Acceptance abgeschlossen'],
+    ['warn', 'China NXE-Export-Anfrage erneut abgelehnt durch NL-Reg.'],
+    ['ok',   'EUV Uptime global: 98.2% — Ziel 98% erreicht'],
+    ['info', 'ASML Q1 Order Intake: €6.2 Mrd — über Erwartungen'],
+  ],
+  '06': [
+    ['crit', 'PLA-Übung Taiwan-Straße gemeldet — Risikoindikator erhöht'],
+    ['warn', 'TSMC Arizona N2-Ramp: 67% — Zielerreichung Sept. 2025 fraglich'],
+    ['ok',   'TSMC N3E Takt: 130.000 Wafer/Monat — Rekord'],
+    ['info', 'Samsung Taylor TX: Zulassungen für CHIPS-Förderung eingereicht'],
+    ['ok',   'Wasserreservoire Hsinchu: 142 Tage Reserve — NORMAL'],
+  ],
+  '07': [
+    ['crit', 'BIS Export Rule: H20 für Nahost gesperrt ab 15. Mai 2026'],
+    ['warn', 'B200 CoWoS-L Yield bei 71% — Kapazitätsengpass TSMC'],
+    ['ok',   'NVIDIA GB200 NVL72: erste Auslieferung an AWS abgeschlossen'],
+    ['info', 'AMD MI350 angekündigt für H2 2025 — CDNA4-Architektur'],
+    ['warn', 'H100 Spotpreis Sekundärmarkt: $28.000 — elevated'],
+  ],
+  '08': [
+    ['crit', 'HGX B200 Module: Warteliste 14 Wochen — kritisch knapp'],
+    ['warn', 'Supermicro: Lieferzeit GPU-Server gestiegen auf 12 Wochen'],
+    ['ok',   'Dell XE9680 Batch #221: Qualitätsprüfung bestanden'],
+    ['info', 'HPE Cray EX: Auslieferung an NREL abgeschlossen'],
+    ['ok',   'Liquid-Cooling-Einbaurate neue Racks: 70%'],
+  ],
+  '09': [
+    ['crit', 'p5.48xlarge (H100×8) us-east-1: 0% Kapazität verfügbar'],
+    ['warn', 'Netzanschluss-Antrag VA: Warteliste jetzt 14 Monate'],
+    ['ok',   'PUE Ashburn Campus: 1.14 — unter Zielvorgabe 1.20'],
+    ['info', 'AWS Trainium 2 UltraServer GA: Q3 2025 geplant'],
+    ['ok',   'Erneuerbar-Anteil Ashburn: 68% — PPA-Deckung ausreichend'],
+  ],
+  '10': [
+    ['ok',   'NextEra Wind-Parks: 98% Plan-Output heute'],
+    ['info', 'Constellation TMI Unit 1: stabile 835 MW — planmäßig'],
+    ['warn', 'Netzanschluss-Queue PJM: 14 Monate Wartezeit'],
+    ['ok',   'Google-Kairos PPA 500 MW: Vertrag unterzeichnet'],
+    ['ok',   'Strom-Spot ERCOT: $0.089/kWh — im Normalbereich'],
+  ],
+};
+
+/* ── Helpers ── */
+function renderSensorSection(containerId, rows) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.querySelector('.sp-section-title').textContent = el.querySelector('.sp-section-title').textContent;
+  const existing = el.querySelectorAll('.sensor-row');
+  existing.forEach(e => e.remove());
+  rows.forEach(([label, val, pct, status]) => {
+    const barColor = status === 'ok' ? '#00ff88' : status === 'warn' ? '#ffd700' : '#ff3d3d';
+    const row = document.createElement('div');
+    row.className = 'sensor-row';
+    row.innerHTML = `
+      <span class="sr-label">${label}</span>
+      <div class="sr-bar-wrap"><div class="sr-bar" style="width:${Math.min(pct*100,100).toFixed(0)}%;background:${barColor}"></div></div>
+      <span class="sr-val ${status}">${val}</span>`;
+    el.appendChild(row);
+  });
+}
+
+function formatTime() {
+  const now = new Date();
+  return now.toUTCString().split(' ')[4] + ' UTC';
+}
+
+function addAlert(list, alerts, idx) {
+  const [lvl, msg] = alerts[idx % alerts.length];
+  const now = new Date();
+  const t = now.toTimeString().split(' ')[0];
+  const entry = document.createElement('div');
+  entry.className = `alert-entry ${lvl}`;
+  entry.innerHTML = `<span class="ae-time">${t}</span><span class="ae-tag">${lvl==='crit'?'🚨':lvl==='warn'?'⚠️':lvl==='ok'?'✅':'ℹ️'}</span><span>${msg}</span>`;
+  list.prepend(entry);
+  // trim to 20
+  while (list.children.length > 20) list.removeChild(list.lastChild);
+  document.getElementById('alert-count').textContent = `${list.children.length} Events`;
+}
+
+/* ── Init ── */
+const cfg = PHASE_CONFIG[phaseId] || PHASE_CONFIG['01'];
+const alerts = ALERT_TEMPLATES[phaseId] || ALERT_TEMPLATES['01'];
+
+// nav / header
+document.getElementById('nav-company-name').textContent = `· ${companyName}`;
+document.getElementById('sp-company-name').textContent = companyName;
+document.getElementById('sp-coords').textContent = `📍 ${cfg.coordLabel}`;
+document.getElementById('cam-hud').innerHTML = `${cfg.camLabel}<br>2026-05-14 <span id="cam-time">--:--:--</span>`;
+document.getElementById('facility-label-primary').textContent = companyName.toUpperCase().slice(0,18);
+
+// back btn
+const backUrl = `detail.html?phase=${phaseId}`;
+document.getElementById('nav-back-btn').href = backUrl;
+
+// HUD coords from config
+const hudEl = document.getElementById('hud-coords');
+if (hudEl) {
+  const parts = cfg.satCoords.split('\n');
+  hudEl.innerHTML = parts.join('<br>');
+}
+
+// terrain
+const terrainEl = document.getElementById('terrain-bg');
+if (cfg.terrain === 'urban') terrainEl.classList.add('urban');
+else if (cfg.terrain === 'desert') terrainEl.classList.add('desert');
+
+// accent color from phase
+document.documentElement.style.setProperty('--accent', accentColor || '#00e5ff');
+document.getElementById('facility-primary').querySelector('.facility-ring').style.setProperty('--facility-color', accentColor || '#00e5ff');
+document.getElementById('facility-primary').querySelector('.facility-dot').style.background = accentColor || '#00e5ff';
+document.getElementById('facility-primary').querySelector('.facility-label').style.color = accentColor || '#00e5ff';
+
+// sensor sections
+renderSensorSection('op-kpis',        cfg.op);
+renderSensorSection('transport-kpis', cfg.transport);
+renderSensorSection('env-kpis',       cfg.env);
+renderSensorSection('risk-kpis',      cfg.risk);
+
+// seed alert log
+const alertList = document.getElementById('alert-list');
+alerts.forEach((_, i) => addAlert(alertList, alerts, i));
+
+// live clock
+setInterval(() => {
+  const t = formatTime();
+  const hudTime = document.getElementById('hud-time');
+  if (hudTime) hudTime.textContent = t;
+  const camTime = document.getElementById('cam-time');
+  if (camTime) camTime.textContent = new Date().toTimeString().split(' ')[0];
+}, 1000);
+
+// rolling alerts every ~7s
+let alertIdx = alerts.length;
+setInterval(() => {
+  addAlert(alertList, alerts, alertIdx++);
+}, 7000 + Math.random() * 5000);
+
+// jitter one sensor value every 4s for realism
+const jitterTargets = [
+  { id: 'op-kpis', rows: cfg.op },
+  { id: 'transport-kpis', rows: cfg.transport },
+];
+setInterval(() => {
+  const t = jitterTargets[Math.floor(Math.random() * jitterTargets.length)];
+  renderSensorSection(t.id, t.rows);
+}, 4000);
+</script>
+</body>
+</html>

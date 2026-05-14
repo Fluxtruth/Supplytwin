@@ -8,24 +8,22 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:       #0a0e1a;
-      --bg2:      #0f1422;
-      --border:   rgba(255,255,255,0.07);
-      --text:     #e8eaf0;
-      --muted:    #6470a0;
-      --muted2:   #8a93b2;
-
-      --c-sand:     #b45309;
-      --c-si:       #c2410c;
-      --c-poly:     #d97706;
-      --c-wafer:    #2563eb;
-      --c-euv:      #dc2626;
-      --c-foundry:  #7c3aed;
-      --c-chip:     #6d28d9;
-      --c-server:   #0891b2;
-      --c-dc:       #0d9488;
-      --c-energy:   #16a34a;
-
+      --bg:      #0a0e1a;
+      --bg2:     #0f1422;
+      --border:  rgba(255,255,255,0.07);
+      --text:    #e8eaf0;
+      --muted:   #6470a0;
+      --muted2:  #8a93b2;
+      --c-sand:    #b45309;
+      --c-si:      #c2410c;
+      --c-poly:    #d97706;
+      --c-wafer:   #2563eb;
+      --c-euv:     #dc2626;
+      --c-foundry: #7c3aed;
+      --c-chip:    #6d28d9;
+      --c-server:  #0891b2;
+      --c-dc:      #0d9488;
+      --c-energy:  #16a34a;
       --risk-critical: #dc2626;
       --risk-high:     #ea580c;
       --risk-medium:   #ca8a04;
@@ -38,19 +36,14 @@
       font-family: 'Segoe UI', system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
-      min-height: 100vh;
     }
 
     /* ── NAV ── */
     nav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; gap: 0.6rem;
       padding: 1rem 2rem;
-      background: rgba(10,14,26,0.9);
+      background: rgba(10,14,26,0.92);
       backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--border);
     }
@@ -63,32 +56,24 @@
     }
     nav .logo-text { font-size: 0.9rem; font-weight: 600; color: #c8cfe8; }
     nav .nav-back {
-      margin-left: auto;
-      font-size: 0.8rem; color: var(--muted);
-      text-decoration: none;
-      padding: 0.35rem 0.8rem;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      transition: color 0.2s, border-color 0.2s;
+      margin-left: auto; font-size: 0.8rem; color: var(--muted);
+      text-decoration: none; padding: 0.35rem 0.8rem;
+      border: 1px solid var(--border); border-radius: 6px;
+      transition: color .2s, border-color .2s;
     }
     nav .nav-back:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
 
     /* ── HERO ── */
     .hero {
-      text-align: center;
-      padding: 5rem 1.5rem 3rem;
-      max-width: 780px;
-      margin: 0 auto;
+      text-align: center; padding: 5rem 1.5rem 3rem;
+      max-width: 780px; margin: 0 auto;
     }
     .hero .badge {
-      display: inline-block;
-      padding: 0.3rem 0.9rem;
-      border-radius: 999px;
-      font-size: 0.72rem; font-weight: 600;
+      display: inline-block; padding: 0.3rem 0.9rem;
+      border-radius: 999px; font-size: 0.72rem; font-weight: 600;
       letter-spacing: 0.07em; text-transform: uppercase;
       background: rgba(79,142,247,0.12);
-      border: 1px solid rgba(79,142,247,0.35);
-      color: #7eb3ff;
+      border: 1px solid rgba(79,142,247,0.35); color: #7eb3ff;
       margin-bottom: 1.4rem;
     }
     .hero h1 {
@@ -96,67 +81,46 @@
       font-weight: 800; line-height: 1.15; letter-spacing: -0.02em;
       background: linear-gradient(135deg, #fff 30%, #7eb3ff 65%, #c084fc);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 1rem;
+      background-clip: text; margin-bottom: 1rem;
     }
-    .hero p {
-      color: var(--muted2); font-size: 1.05rem; line-height: 1.7;
-      margin-bottom: 2.5rem;
-    }
+    .hero p { color: var(--muted2); font-size: 1.05rem; line-height: 1.7; margin-bottom: 2.5rem; }
 
-    /* ── STATS ROW ── */
+    /* ── STATS ── */
     .stats {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 1rem;
-      max-width: 900px;
-      margin: 0 auto 4rem;
-      padding: 0 1.5rem;
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 1rem; max-width: 900px; margin: 0 auto 3rem; padding: 0 1.5rem;
     }
     .stat-card {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.1rem 1.6rem;
-      flex: 1 1 180px;
-      max-width: 230px;
-      text-align: center;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.1rem 1.6rem;
+      flex: 1 1 180px; max-width: 230px; text-align: center;
     }
-    .stat-card .stat-val {
-      font-size: 1.8rem; font-weight: 800; line-height: 1;
-      margin-bottom: 0.3rem;
-    }
-    .stat-card .stat-label {
-      font-size: 0.75rem; color: var(--muted); line-height: 1.4;
-    }
-    .stat-card.red  .stat-val { color: var(--risk-critical); }
-    .stat-card.ora  .stat-val { color: var(--risk-high); }
+    .stat-card .stat-val { font-size: 1.8rem; font-weight: 800; line-height: 1; margin-bottom: 0.3rem; }
+    .stat-card .stat-label { font-size: 0.75rem; color: var(--muted); line-height: 1.4; }
+    .stat-card.red .stat-val  { color: var(--risk-critical); }
+    .stat-card.ora .stat-val  { color: var(--risk-high); }
     .stat-card.blue .stat-val { color: #4f8ef7; }
-    .stat-card.grn  .stat-val { color: var(--risk-low); }
+    .stat-card.grn .stat-val  { color: var(--risk-low); }
+
+    /* ── LEGEND ── */
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 1rem 2rem;
+      justify-content: center; padding: 1.5rem 2rem; margin-bottom: 3rem;
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    }
+    .legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(--muted); }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
 
     /* ── CHAIN ── */
-    .chain {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 0 1.5rem 6rem;
-    }
+    .chain { max-width: 980px; margin: 0 auto; padding: 0 1.5rem 6rem; }
 
-    /* connector between layers */
     .connector {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 0 auto;
-      gap: 0;
-      height: 52px;
-      position: relative;
+      display: flex; flex-direction: column; align-items: center;
+      height: 52px; position: relative;
     }
     .connector::before {
-      content: '';
-      width: 2px;
-      flex: 1;
-      background: linear-gradient(to bottom, var(--border), var(--border));
+      content: ''; width: 2px; flex: 1;
+      background: var(--border);
     }
     .connector .arrow-down {
       width: 0; height: 0;
@@ -165,157 +129,112 @@
       border-top: 9px solid rgba(255,255,255,0.12);
     }
 
-    /* layer section */
-    .layer {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
+    /* ── LAYER (clickable) ── */
+    a.layer {
+      display: block; text-decoration: none; color: inherit;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    a.layer:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+      border-color: var(--layer-color);
     }
 
     .layer-header {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
+      display: flex; align-items: flex-start; gap: 1rem;
       padding: 1.3rem 1.6rem;
       border-bottom: 1px solid var(--border);
       position: relative;
     }
     .layer-header::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 4px;
-      border-radius: 0;
+      content: ''; position: absolute;
+      left: 0; top: 0; bottom: 0; width: 4px;
       background: var(--layer-color, #4f8ef7);
     }
 
-    .layer-num {
-      font-size: 0.7rem; font-weight: 700;
-      letter-spacing: 0.08em; color: var(--muted);
-      min-width: 24px;
+    .layer-num { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; color: var(--muted); min-width: 24px; padding-top: 0.1rem; }
+    .layer-icon { font-size: 1.4rem; flex-shrink: 0; }
+
+    .layer-title-wrap { flex: 1; min-width: 0; }
+    .layer-title-wrap h2 { font-size: 1rem; font-weight: 700; color: var(--text); }
+    .layer-title-wrap > p { font-size: 0.78rem; color: var(--muted); margin-top: 0.15rem; }
+
+    /* KPI chips */
+    .kpi-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.7rem; }
+    .kpi {
+      display: inline-block; padding: 0.22rem 0.6rem;
+      border-radius: 5px; font-size: 0.7rem; font-weight: 600;
+      white-space: nowrap; line-height: 1.4;
     }
-    .layer-icon {
-      font-size: 1.4rem; flex-shrink: 0;
+    .kpi.ok   { background: rgba(22,163,74,0.14);  color: #4ade80; border: 1px solid rgba(22,163,74,0.22); }
+    .kpi.warn { background: rgba(202,138,4,0.14);  color: #fbbf24; border: 1px solid rgba(202,138,4,0.22); }
+    .kpi.crit { background: rgba(220,38,38,0.14);  color: #f87171; border: 1px solid rgba(220,38,38,0.22); }
+
+    /* Risk block */
+    .risk-block {
+      display: flex; flex-direction: column; align-items: flex-end;
+      gap: 0.35rem; flex-shrink: 0; padding-right: 1.5rem;
     }
-    .layer-title-wrap { flex: 1; }
-    .layer-title-wrap h2 {
-      font-size: 1rem; font-weight: 700; color: var(--text);
-    }
-    .layer-title-wrap p {
-      font-size: 0.78rem; color: var(--muted); margin-top: 0.15rem;
-    }
+    .risk-num { font-size: 2rem; font-weight: 900; line-height: 1; }
+    .risk-block.critical .risk-num { color: var(--risk-critical); }
+    .risk-block.high     .risk-num { color: var(--risk-high); }
+    .risk-block.medium   .risk-num { color: var(--risk-medium); }
+    .risk-block.low      .risk-num { color: var(--risk-low); }
 
     .risk-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      padding: 0.25rem 0.65rem;
-      border-radius: 999px;
-      font-size: 0.68rem; font-weight: 700;
-      letter-spacing: 0.05em; text-transform: uppercase;
-      white-space: nowrap;
-      flex-shrink: 0;
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.22rem 0.6rem; border-radius: 999px;
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap;
     }
-    .risk-badge::before { content: '●'; font-size: 0.5rem; }
+    .risk-badge::before { content: '●'; font-size: 0.45rem; }
     .risk-badge.critical { background: rgba(220,38,38,0.15); color: #f87171; border: 1px solid rgba(220,38,38,0.3); }
     .risk-badge.high     { background: rgba(234,88,12,0.15);  color: #fb923c; border: 1px solid rgba(234,88,12,0.3); }
     .risk-badge.medium   { background: rgba(202,138,4,0.15);  color: #fbbf24; border: 1px solid rgba(202,138,4,0.3); }
     .risk-badge.low      { background: rgba(22,163,74,0.15);  color: #4ade80; border: 1px solid rgba(22,163,74,0.3); }
 
-    /* supplier grid */
+    /* Supplier grid */
     .supplier-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-      gap: 1px;
-      background: var(--border);
+      gap: 1px; background: var(--border);
     }
-
     .supplier-card {
-      background: var(--bg2);
-      padding: 1.1rem 1.2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      transition: background 0.15s;
+      background: var(--bg2); padding: 1.1rem 1.2rem;
+      display: flex; flex-direction: column; gap: 0.5rem;
+      transition: background .15s;
     }
-    .supplier-card:hover { background: rgba(255,255,255,0.025); }
-
-    .supplier-top {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 0.5rem;
-    }
-    .supplier-name {
-      font-size: 0.85rem; font-weight: 700; color: var(--text);
-      line-height: 1.3;
-    }
-    .supplier-share {
-      font-size: 1rem; font-weight: 800; color: var(--layer-color, #4f8ef7);
-      white-space: nowrap; flex-shrink: 0;
-    }
-
-    .supplier-country {
-      font-size: 0.72rem; color: var(--muted);
-    }
-
-    .share-bar {
-      height: 3px;
-      border-radius: 2px;
-      background: rgba(255,255,255,0.07);
-      overflow: hidden;
-    }
-    .share-bar-fill {
-      height: 100%;
-      border-radius: 2px;
-      background: var(--layer-color, #4f8ef7);
-      opacity: 0.7;
-    }
-
-    .supplier-desc {
-      font-size: 0.73rem;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-
+    a.layer:hover .supplier-card { background: rgba(255,255,255,0.02); }
+    .supplier-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
+    .supplier-name { font-size: 0.85rem; font-weight: 700; color: var(--text); line-height: 1.3; }
+    .supplier-share { font-size: 1rem; font-weight: 800; color: var(--layer-color, #4f8ef7); white-space: nowrap; flex-shrink: 0; }
+    .supplier-country { font-size: 0.72rem; color: var(--muted); }
+    .share-bar { height: 3px; border-radius: 2px; background: rgba(255,255,255,0.07); overflow: hidden; }
+    .share-bar-fill { height: 100%; border-radius: 2px; background: var(--layer-color, #4f8ef7); opacity: 0.7; }
+    .supplier-desc { font-size: 0.73rem; color: var(--muted); line-height: 1.5; }
     .monopoly-tag {
-      display: inline-block;
-      padding: 0.15rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.62rem; font-weight: 700;
-      letter-spacing: 0.06em; text-transform: uppercase;
-      background: rgba(220,38,38,0.2);
-      color: #f87171;
-      border: 1px solid rgba(220,38,38,0.35);
-      width: fit-content;
+      display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px;
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      background: rgba(220,38,38,0.2); color: #f87171;
+      border: 1px solid rgba(220,38,38,0.35); width: fit-content;
     }
 
-    /* ── LEGEND ── */
-    .legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem 2rem;
-      justify-content: center;
-      padding: 1.5rem 2rem;
-      margin-bottom: 3rem;
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-    .legend-item {
-      display: flex; align-items: center; gap: 0.4rem;
+    /* Layer footer CTA */
+    .layer-cta {
+      padding: 0.65rem 1.6rem;
       font-size: 0.75rem; color: var(--muted);
+      border-top: 1px solid var(--border);
+      text-align: right;
+      transition: color .2s;
     }
-    .legend-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-    }
+    a.layer:hover .layer-cta { color: var(--layer-color); }
 
     /* ── FOOTER ── */
     footer {
-      text-align: center;
-      padding: 2rem;
-      font-size: 0.75rem;
-      color: #2a304a;
+      text-align: center; padding: 2rem;
+      font-size: 0.75rem; color: #2a304a;
       border-top: 1px solid var(--border);
     }
 
@@ -323,6 +242,8 @@
       .supplier-grid { grid-template-columns: 1fr 1fr; }
       .stats { flex-direction: column; align-items: center; }
       .stat-card { max-width: 100%; width: 100%; }
+      .risk-block { padding-right: 0.5rem; }
+      .risk-num { font-size: 1.5rem; }
     }
   </style>
 </head>
@@ -334,17 +255,12 @@
   <a href="index.html" class="nav-back">← Startseite</a>
 </nav>
 
-<!-- HERO -->
 <div class="hero">
   <div class="badge">Supply Chain Map · Mock Data</div>
   <h1>Von HPQ-Sand bis zur KI-Infrastruktur</h1>
-  <p>
-    10 Stufen. Von Quarz-Bergbau in Spruce Pine, North Carolina,
-    über Halbleiter-Fertigung bis zu Hyperscale-Rechenzentren und Energieinfrastruktur.
-  </p>
+  <p>10 Stufen. Live-KPIs, Risikoindikator und Digital Twins je Anlage. Klick auf eine Stufe für Details.</p>
 </div>
 
-<!-- STATS -->
 <div class="stats">
   <div class="stat-card red">
     <div class="stat-val">3</div>
@@ -352,7 +268,7 @@
   </div>
   <div class="stat-card ora">
     <div class="stat-val">4</div>
-    <div class="stat-label">Stufen mit hoher<br>geographischer Konzentration</div>
+    <div class="stat-label">Stufen mit hoher<br>geograph. Konzentration</div>
   </div>
   <div class="stat-card blue">
     <div class="stat-val">10</div>
@@ -360,11 +276,10 @@
   </div>
   <div class="stat-card grn">
     <div class="stat-val">8+</div>
-    <div class="stat-label">Schlüssel&shy;länder in der<br>globalen Lieferkette</div>
+    <div class="stat-label">Schlüsselländer in<br>der globalen Kette</div>
   </div>
 </div>
 
-<!-- LEGEND -->
 <div class="legend">
   <div class="legend-item"><div class="legend-dot" style="background:var(--risk-critical)"></div> Kritisch — Monopol/Duopol</div>
   <div class="legend-item"><div class="legend-dot" style="background:var(--risk-high)"></div> Hoch — stark konzentriert</div>
@@ -372,626 +287,579 @@
   <div class="legend-item"><div class="legend-dot" style="background:var(--risk-low)"></div> Verteilt — mehrere Anbieter</div>
 </div>
 
-<!-- CHAIN -->
 <div class="chain">
 
-  <!-- ═══ LAYER 1: HPQ SAND ═══ -->
-  <div class="layer" style="--layer-color: var(--c-sand)">
+  <!-- ═══ 01 HPQ SAND ═══ -->
+  <a href="detail.html?phase=01" class="layer" style="--layer-color: var(--c-sand)">
     <div class="layer-header">
       <span class="layer-num">01</span>
       <span class="layer-icon">⛏️</span>
       <div class="layer-title-wrap">
         <h2>HPQ Sand Mining</h2>
-        <p>High Purity Quartz · Spruce Pine, North Carolina, USA</p>
+        <p>Spruce Pine, North Carolina · Einzige globale Quelle für Halbleiter-HPQ</p>
+        <div class="kpi-row">
+          <span class="kpi ok">🚛 47 LKW/Tag</span>
+          <span class="kpi ok">🛣️ I-26: FREI</span>
+          <span class="kpi warn">⛏️ Output: 94%</span>
+          <span class="kpi ok">🌀 Hurrikan: FERN</span>
+        </div>
       </div>
-      <span class="risk-badge high">Hoch</span>
+      <div class="risk-block high">
+        <span class="risk-num">7.2</span>
+        <span class="risk-badge high">Hoch</span>
+      </div>
     </div>
     <div class="supplier-grid">
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">The Quartz Corp</div>
-          <div class="supplier-share">~50%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">The Quartz Corp</div><div class="supplier-share">~50%</div></div>
         <div class="supplier-country">🇺🇸 USA / 🇳🇴 Norwegen (Imerys + Norsk Mineral JV)</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:50%"></div></div>
         <div class="supplier-desc">Weltmarktführer bei Halbleiter-HPQ, 99,9995 % Reinheit, einzige Spruce-Pine-Mine in dieser Klasse.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Sibelco</div>
-          <div class="supplier-share">~40%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Sibelco</div><div class="supplier-share">~40%</div></div>
         <div class="supplier-country">🇧🇪 Belgien (global ops)</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:40%"></div></div>
         <div class="supplier-desc">Zweiter Hauptakteur in Spruce Pine, beliefert Solar- und Halbleiterkunden weltweit.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Mineração Santa Rosa</div>
-          <div class="supplier-share">~5%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Mineração Santa Rosa</div><div class="supplier-share">~5%</div></div>
         <div class="supplier-country">🇧🇷 Brasilien</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:5%"></div></div>
         <div class="supplier-desc">Aufstrebender Anbieter für Americas-Märkte, geringere Reinheitsgrade.</div>
       </div>
       <div class="supplier-card" style="background: rgba(180,83,9,0.06)">
-        <div class="supplier-top">
-          <div class="supplier-name" style="color: #fb923c">⚠ Geopolitisches Risiko</div>
-        </div>
-        <div class="supplier-desc" style="color: var(--muted2); font-size: 0.75rem; line-height: 1.6; margin-top: 0.3rem;">
-          Spruce Pine ist die einzige bekannte Quelle für halbleitertaugliches HPQ in der erforderlichen Menge und Reinheit. Ein Ausfall (Hurrikan, Regulierung) würde globale Chipproduktion stoppen.
+        <div class="supplier-top"><div class="supplier-name" style="color:#fb923c">⚠ Geopolitisches Risiko</div></div>
+        <div class="supplier-desc" style="color:var(--muted2); font-size:0.75rem; line-height:1.6; margin-top:0.3rem">
+          Spruce Pine ist die einzige HPQ-Quelle in Halbleiterqualität. Hurrikan, Überschwemmung oder regulatorisches Eingreifen würden globale Chipproduktion innerhalb von Wochen stoppen.
         </div>
       </div>
     </div>
-  </div>
+    <div class="layer-cta">Alle Anbieter, KPI-Details &amp; Digital Twins →</div>
+  </a>
 
   <div class="connector"><div class="arrow-down"></div></div>
 
-  <!-- ═══ LAYER 2: SILICON METAL ═══ -->
-  <div class="layer" style="--layer-color: var(--c-si)">
+  <!-- ═══ 02 SILICON METAL ═══ -->
+  <a href="detail.html?phase=02" class="layer" style="--layer-color: var(--c-si)">
     <div class="layer-header">
       <span class="layer-num">02</span>
       <span class="layer-icon">🔥</span>
       <div class="layer-title-wrap">
         <h2>Siliziummetall-Verhüttung</h2>
-        <p>Reduktion von SiO₂ zu metallurgischem Silizium (99 % Si)</p>
+        <p>Reduktion von SiO₂ → 99 % Si · Energieintensive Lichtbogenöfen</p>
+        <div class="kpi-row">
+          <span class="kpi ok">⚡ 0.078 $/kWh</span>
+          <span class="kpi ok">🏭 87% Auslastung</span>
+          <span class="kpi warn">🇨🇳 Xinjiang-Risiko: ERHÖHT</span>
+          <span class="kpi ok">🚢 Exporte: NORMAL</span>
+        </div>
       </div>
-      <span class="risk-badge high">Hoch</span>
+      <div class="risk-block high">
+        <span class="risk-num">6.8</span>
+        <span class="risk-badge high">Hoch</span>
+      </div>
     </div>
     <div class="supplier-grid">
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Hoshine Silicon</div>
-          <div class="supplier-share">~15%</div>
-        </div>
-        <div class="supplier-country">🇨🇳 China (Xinjiang)</div>
-        <div class="share-bar"><div class="share-bar-fill" style="width:15%"></div></div>
-        <div class="supplier-desc">Chinas größter Siliziummetall-Hersteller, kontrovers wegen Xinjiang-Standort, Sanktionsrisiko.</div>
-      </div>
-      <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Ferroglobe</div>
-          <div class="supplier-share">~18%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Ferroglobe</div><div class="supplier-share">~18%</div></div>
         <div class="supplier-country">🇪🇸 Spanien / 🇺🇸 USA</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:18%"></div></div>
         <div class="supplier-desc">Weltgrößter westlicher Siliziummetall-Produzent, Werke in Europa und Nordamerika.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Elkem</div>
-          <div class="supplier-share">~16%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Elkem</div><div class="supplier-share">~16%</div></div>
         <div class="supplier-country">🇳🇴 Norwegen</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:16%"></div></div>
         <div class="supplier-desc">Integrierter Hersteller von Siliziummetall und Speziallegierungen, Fokus auf grüne Energie.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Wacker Chemie</div>
-          <div class="supplier-share">~12%</div>
-        </div>
-        <div class="supplier-country">🇩🇪 Deutschland</div>
-        <div class="share-bar"><div class="share-bar-fill" style="width:12%"></div></div>
-        <div class="supplier-desc">Vertikal integriert vom Siliziummetall bis zum Polysilizium, Premiumqualität.</div>
+        <div class="supplier-top"><div class="supplier-name">Hoshine Silicon</div><div class="supplier-share">~15%</div></div>
+        <div class="supplier-country">🇨🇳 China (Xinjiang)</div>
+        <div class="share-bar"><div class="share-bar-fill" style="width:15%"></div></div>
+        <div class="supplier-desc">Chinas größter Si-Hersteller, Xinjiang-Standort unter US-Sanktionsdruck (UFLPA).</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Chin. Produzenten (Rest)</div>
-          <div class="supplier-share">~39%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Wacker Chemie</div><div class="supplier-share">~12%</div></div>
+        <div class="supplier-country">🇩🇪 Deutschland</div>
+        <div class="share-bar"><div class="share-bar-fill" style="width:12%"></div></div>
+        <div class="supplier-desc">Vertikal integriert vom Siliziummetall bis zum Polysilizium, Premiumqualität aus Bayern.</div>
+      </div>
+      <div class="supplier-card">
+        <div class="supplier-top"><div class="supplier-name">CN-Produzenten (Rest)</div><div class="supplier-share">~39%</div></div>
         <div class="supplier-country">🇨🇳 China</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:39%"></div></div>
-        <div class="supplier-desc">Dutzende kleinere chinesische Hütten dominieren Volumen, aber nicht Halbleiterqualität.</div>
+        <div class="supplier-desc">Dutzende kleinere chinesische Hütten dominieren Volumen, meist jedoch nicht Halbleiterqualität.</div>
       </div>
     </div>
-  </div>
+    <div class="layer-cta">Alle Anbieter, KPI-Details &amp; Digital Twins →</div>
+  </a>
 
   <div class="connector"><div class="arrow-down"></div></div>
 
-  <!-- ═══ LAYER 3: POLYSILICON ═══ -->
-  <div class="layer" style="--layer-color: var(--c-poly)">
+  <!-- ═══ 03 POLYSILICON ═══ -->
+  <a href="detail.html?phase=03" class="layer" style="--layer-color: var(--c-poly)">
     <div class="layer-header">
       <span class="layer-num">03</span>
       <span class="layer-icon">🧪</span>
       <div class="layer-title-wrap">
         <h2>Polysilizium-Produktion</h2>
-        <p>Aufreinigung zu EG-/SEG-Polysilizium via Siemens-Prozess (≥ 99,9999999 % Si)</p>
+        <p>Siemens-Prozess · ≥ 99,9999999 % Reinheit (9N) · China-Dominanz</p>
+        <div class="kpi-row">
+          <span class="kpi warn">💰 Spot: 8.20 $/kg</span>
+          <span class="kpi ok">🏭 China: 91% Kap.</span>
+          <span class="kpi ok">⚡ Stromkontingent: OK</span>
+          <span class="kpi warn">📉 Preistrend: fallend</span>
+        </div>
       </div>
-      <span class="risk-badge high">Hoch</span>
+      <div class="risk-block high">
+        <span class="risk-num">7.5</span>
+        <span class="risk-badge high">Hoch</span>
+      </div>
     </div>
     <div class="supplier-grid">
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">GCL-Poly Energy</div>
-          <div class="supplier-share">~27%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">GCL-Poly Energy</div><div class="supplier-share">~27%</div></div>
         <div class="supplier-country">🇨🇳 China</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:27%"></div></div>
         <div class="supplier-desc">Weltgrößter Polysilizium-Hersteller nach Volumen, primär Solar, zunehmend Halbleitergüte.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Tongwei</div>
-          <div class="supplier-share">~21%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Tongwei</div><div class="supplier-share">~21%</div></div>
         <div class="supplier-country">🇨🇳 China</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:21%"></div></div>
-        <div class="supplier-desc">Schnell wachsender Polysilizium-Spezialist mit integrierten Solar-Downstream-Aktivitäten.</div>
+        <div class="supplier-desc">Schnell wachsender Spezialist mit integrierten Solar-Downstream-Aktivitäten.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Daqo New Energy</div>
-          <div class="supplier-share">~14%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Daqo New Energy</div><div class="supplier-share">~14%</div></div>
         <div class="supplier-country">🇨🇳 China (NYSE: DQ)</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:14%"></div></div>
-        <div class="supplier-desc">US-börsennotierter chinesischer Polysilizium-Spezialist, hohe Reinheitsgrade.</div>
+        <div class="supplier-desc">US-börsennotierter Spezialist, hohe Reinheitsgrade, Sanktionsrisiko begrenzt.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Wacker Chemie</div>
-          <div class="supplier-share">~11%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Wacker Chemie</div><div class="supplier-share">~11%</div></div>
         <div class="supplier-country">🇩🇪 Deutschland</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:11%"></div></div>
-        <div class="supplier-desc">Einziger europäischer Großproduzent mit Semiconductor-Grade-Zertifizierung, Burghausen-Werk.</div>
+        <div class="supplier-desc">Einziger europäischer Großproduzent mit Semiconductor-Grade-Zertifizierung, Burghausen.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">OCI Company</div>
-          <div class="supplier-share">~7%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">OCI Company</div><div class="supplier-share">~7%</div></div>
         <div class="supplier-country">🇰🇷 Südkorea / 🇲🇾 Malaysia</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:7%"></div></div>
-        <div class="supplier-desc">Polysilizium-Produzent mit Fokus auf asiatische Halbleiterkunden, Werke in Malaysia.</div>
+        <div class="supplier-desc">Polysilizium-Produzent für asiatische Halbleiterkunden, Werke in Malaysia.</div>
       </div>
     </div>
-  </div>
+    <div class="layer-cta">Alle Anbieter, KPI-Details &amp; Digital Twins →</div>
+  </a>
 
   <div class="connector"><div class="arrow-down"></div></div>
 
-  <!-- ═══ LAYER 4: SILICON WAFERS ═══ -->
-  <div class="layer" style="--layer-color: var(--c-wafer)">
+  <!-- ═══ 04 WAFERS ═══ -->
+  <a href="detail.html?phase=04" class="layer" style="--layer-color: var(--c-wafer)">
     <div class="layer-header">
       <span class="layer-num">04</span>
       <span class="layer-icon">💿</span>
       <div class="layer-title-wrap">
         <h2>Silizium-Wafer-Produktion</h2>
-        <p>Czochralski-Kristallzucht, Ingot-Ziehen, Sägen, Polieren (300 mm)</p>
+        <p>Czochralski-Kristallzucht · 300 mm Polierwafer · JP-Duopol</p>
+        <div class="kpi-row">
+          <span class="kpi warn">⏱️ Lieferzeit: 14 Wo.</span>
+          <span class="kpi ok">🏭 96% Fab-Auslastung</span>
+          <span class="kpi ok">💴 Yen: ¥152</span>
+          <span class="kpi ok">🇯🇵 Export-Lizenz: OK</span>
+        </div>
       </div>
-      <span class="risk-badge high">Hoch — JP-Duopol</span>
+      <div class="risk-block medium">
+        <span class="risk-num">6.4</span>
+        <span class="risk-badge medium">Mittel</span>
+      </div>
     </div>
     <div class="supplier-grid">
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Shin-Etsu Chemical</div>
-          <div class="supplier-share">~30%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Shin-Etsu Chemical</div><div class="supplier-share">~30%</div></div>
         <div class="supplier-country">🇯🇵 Japan</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:30%"></div></div>
-        <div class="supplier-desc">Weltmarktführer bei Halbleiter-Wafern, liefert TSMC und alle großen Foundries.</div>
+        <div class="supplier-desc">Globaler Marktführer bei Halbleiter-Wafern, liefert TSMC und alle großen Foundries.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">SUMCO Corporation</div>
-          <div class="supplier-share">~25%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">SUMCO Corporation</div><div class="supplier-share">~25%</div></div>
         <div class="supplier-country">🇯🇵 Japan</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:25%"></div></div>
-        <div class="supplier-desc">Zweiter japanischer Marktführer, spezialisiert auf 300-mm-Wafer für Leading-Edge-Knoten.</div>
+        <div class="supplier-desc">Spezialisiert auf 300-mm-Wafer für Leading-Edge-Knoten, Samsung-Hauptlieferant.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">GlobalWafers</div>
-          <div class="supplier-share">~17%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">GlobalWafers</div><div class="supplier-share">~17%</div></div>
         <div class="supplier-country">🇹🇼 Taiwan / 🇺🇸 USA</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:17%"></div></div>
-        <div class="supplier-desc">Drittgrößter Waferhersteller, expandiert mit US-Fab (Sherman, Texas) für CHIPS-Act-Kunden.</div>
+        <div class="supplier-desc">Expandiert mit US-Fab (Sherman, TX) für CHIPS-Act-Foundry-Kunden.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Siltronic</div>
-          <div class="supplier-share">~13%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Siltronic</div><div class="supplier-share">~13%</div></div>
         <div class="supplier-country">🇩🇪 Deutschland / 🇸🇬 Singapur</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:13%"></div></div>
-        <div class="supplier-desc">Wacker-Tochter, einziger europäischer Premium-Waferhersteller, Werk in Singapur im Bau.</div>
+        <div class="supplier-desc">Einziger europäischer Premium-Waferhersteller, Werk in Singapur im Hochlauf.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">SK Siltron CSi</div>
-          <div class="supplier-share">~8%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">SK Siltron CSi</div><div class="supplier-share">~8%</div></div>
         <div class="supplier-country">🇰🇷 Südkorea / 🇺🇸 USA</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:8%"></div></div>
-        <div class="supplier-desc">SK-Group-Tochter, wächst durch US-SiC-Wafer-Kapazität für Automobil und AI-Chips.</div>
+        <div class="supplier-desc">SK-Group-Tochter, wächst durch US-SiC-Wafer-Kapazität für Automotive und AI.</div>
       </div>
     </div>
-  </div>
+    <div class="layer-cta">Alle Anbieter, KPI-Details &amp; Digital Twins →</div>
+  </a>
 
   <div class="connector"><div class="arrow-down"></div></div>
 
-  <!-- ═══ LAYER 5: EUV / EQUIPMENT ═══ -->
-  <div class="layer" style="--layer-color: var(--c-euv)">
+  <!-- ═══ 05 EUV ═══ -->
+  <a href="detail.html?phase=05" class="layer" style="--layer-color: var(--c-euv)">
     <div class="layer-header">
       <span class="layer-num">05</span>
       <span class="layer-icon">🔬</span>
       <div class="layer-title-wrap">
-        <h2>EUV-Lithographie & Chipanlagen</h2>
-        <p>Extreme Ultraviolet Lithography (13,5 nm) für ≤ 5-nm-Knoten</p>
+        <h2>EUV-Lithographie &amp; Chipanlagen</h2>
+        <p>13,5 nm-Wellenlänge · ≤ 5 nm-Knoten · ASML-Weltmonopol</p>
+        <div class="kpi-row">
+          <span class="kpi warn">📦 Backlog: 32 Einh.</span>
+          <span class="kpi crit">⏳ Lieferzeit: 18 Mo.</span>
+          <span class="kpi ok">🇳🇱 Export-Lizenz: OK</span>
+          <span class="kpi ok">⚙️ Uptime: 98.2%</span>
+        </div>
       </div>
-      <span class="risk-badge critical">Kritisch — Monopol</span>
+      <div class="risk-block critical">
+        <span class="risk-num">9.1</span>
+        <span class="risk-badge critical">Kritisch</span>
+      </div>
     </div>
     <div class="supplier-grid">
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">ASML</div>
-          <div class="supplier-share">100%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">ASML</div><div class="supplier-share">100%</div></div>
         <div class="supplier-country">🇳🇱 Niederlande</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:100%"></div></div>
         <div class="monopoly-tag">Welt-Monopol EUV</div>
-        <div class="supplier-desc">Einziger Hersteller von EUV- und High-NA-EUV-Maschinen. Ohne ASML kein 3 nm, 2 nm oder 1,4 nm.</div>
+        <div class="supplier-desc">Einziger Hersteller von EUV- und High-NA-EUV-Maschinen. Ohne ASML kein 3 nm oder kleiner.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Applied Materials</div>
-          <div class="supplier-share">~19%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Applied Materials</div><div class="supplier-share">~19%</div></div>
         <div class="supplier-country">🇺🇸 USA</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:19%"></div></div>
-        <div class="supplier-desc">Größter Anbieter von Wafer-Fertigungsanlagen (Ätzen, Abscheidung, CMP) nach ASML.</div>
+        <div class="supplier-desc">Größter Anbieter ergänzender Wafer-Prozessanlagen (Ätzen, Abscheidung, CMP).</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Lam Research</div>
-          <div class="supplier-share">~12%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Lam Research</div><div class="supplier-share">~12%</div></div>
         <div class="supplier-country">🇺🇸 USA</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:12%"></div></div>
-        <div class="supplier-desc">Führend bei Plasma-Ätzsystemen und ALD-Abscheidung für Speicher und Logik.</div>
+        <div class="supplier-desc">Führend bei Plasma-Ätzsystemen und ALD-Abscheidung für Speicher und Logik-ICs.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Tokyo Electron (TEL)</div>
-          <div class="supplier-share">~14%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Tokyo Electron</div><div class="supplier-share">~14%</div></div>
         <div class="supplier-country">🇯🇵 Japan</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:14%"></div></div>
-        <div class="supplier-desc">Drittgrößter Anlagenlieferant weltweit, Coater/Developer für Photolithographie.</div>
+        <div class="supplier-desc">Drittgrößter Anlagenlieferant weltweit, Coater/Developer für die Photolithographie.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">KLA Corporation</div>
-          <div class="supplier-share">~11%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">KLA Corporation</div><div class="supplier-share">~11%</div></div>
         <div class="supplier-country">🇺🇸 USA</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:11%"></div></div>
-        <div class="supplier-desc">Weltführer bei Inspektions- und Metrologie-Anlagen — ohne KLA keine Prozessqualität.</div>
+        <div class="supplier-desc">Weltführer bei Wafer-Inspektion und Prozesskontrolle — ohne KLA keine Ausbeute.</div>
       </div>
     </div>
-  </div>
+    <div class="layer-cta">Alle Anbieter, KPI-Details &amp; Digital Twins →</div>
+  </a>
 
   <div class="connector"><div class="arrow-down"></div></div>
 
-  <!-- ═══ LAYER 6: FOUNDRIES ═══ -->
-  <div class="layer" style="--layer-color: var(--c-foundry)">
+  <!-- ═══ 06 FOUNDRIES ═══ -->
+  <a href="detail.html?phase=06" class="layer" style="--layer-color: var(--c-foundry)">
     <div class="layer-header">
       <span class="layer-num">06</span>
       <span class="layer-icon">🏭</span>
       <div class="layer-title-wrap">
         <h2>Halbleiter-Foundries</h2>
-        <p>Wafer-Fabrikation für externe Chip-Designer (Pure-Play + IDM Foundry)</p>
+        <p>Advanced Node Wafer-Fabrikation · TSMC-Dominanz · Taiwan-Risiko</p>
+        <div class="kpi-row">
+          <span class="kpi warn">🌊 Taiwan-Straße: ERHÖHT</span>
+          <span class="kpi ok">💧 Wasser TSMC: NORMAL</span>
+          <span class="kpi ok">⚡ 97% Auslastung</span>
+          <span class="kpi warn">🏗️ AZ N2-Ramp: 67%</span>
+        </div>
       </div>
-      <span class="risk-badge critical">Kritisch — Taiwan-Risiko</span>
+      <div class="risk-block critical">
+        <span class="risk-num">8.8</span>
+        <span class="risk-badge critical">Kritisch</span>
+      </div>
     </div>
     <div class="supplier-grid">
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">TSMC</div>
-          <div class="supplier-share">~58%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">TSMC</div><div class="supplier-share">~58%</div></div>
         <div class="supplier-country">🇹🇼 Taiwan (+ 🇺🇸 🇯🇵 🇩🇪)</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:58%"></div></div>
         <div class="monopoly-tag">Advanced-Node-Monopol</div>
-        <div class="supplier-desc">Fertigt 3 nm (N3), 2 nm (N2) und in Kürze 1,4 nm (A14). Einzige Quelle für NVIDIA H100/B200.</div>
+        <div class="supplier-desc">Fertigt 3 nm (N3), 2 nm (N2). Einzige Quelle für NVIDIA H100/B200 und Apple M-Chips.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Samsung Foundry</div>
-          <div class="supplier-share">~13%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Samsung Foundry</div><div class="supplier-share">~13%</div></div>
         <div class="supplier-country">🇰🇷 Südkorea / 🇺🇸 USA</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:13%"></div></div>
-        <div class="supplier-desc">Bietet 3GAE/4nm-Knoten, produziert u.a. Qualcomm-Snapdragon- und Google-Tensor-Chips.</div>
+        <div class="supplier-desc">Bietet 3GAE/4-nm-Knoten, produziert Qualcomm- und Google-Tensor-Chips.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Intel Foundry</div>
-          <div class="supplier-share">~7%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Intel Foundry</div><div class="supplier-share">~7%</div></div>
         <div class="supplier-country">🇺🇸 USA</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:7%"></div></div>
-        <div class="supplier-desc">Intel 18A-Prozess in Entwicklung, US-CHIPS-Act-geförderter Aufbau externer Kundenfertigung.</div>
+        <div class="supplier-desc">Intel 18A-Prozess in Entwicklung, CHIPS-Act-geförderter Aufbau externer Kundenfertigung.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">GlobalFoundries</div>
-          <div class="supplier-share">~7%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">GlobalFoundries</div><div class="supplier-share">~7%</div></div>
         <div class="supplier-country">🇺🇸 USA / 🇩🇪 DE / 🇸🇬 SG</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:7%"></div></div>
         <div class="supplier-desc">Spezialisiert auf 12-nm-plus, RF/Analog und sicherheitsrelevante Chips (Automotive, Defense).</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">SMIC</div>
-          <div class="supplier-share">~6%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">SMIC</div><div class="supplier-share">~6%</div></div>
         <div class="supplier-country">🇨🇳 China</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:6%"></div></div>
         <div class="supplier-desc">Chinas größte Foundry, auf 14 nm+ begrenzt (kein EUV-Zugang), deckt Binnenmarktbedarf.</div>
       </div>
     </div>
-  </div>
+    <div class="layer-cta">Alle Anbieter, KPI-Details &amp; Digital Twins →</div>
+  </a>
 
   <div class="connector"><div class="arrow-down"></div></div>
 
-  <!-- ═══ LAYER 7: AI CHIPS ═══ -->
-  <div class="layer" style="--layer-color: var(--c-chip)">
+  <!-- ═══ 07 AI CHIPS ═══ -->
+  <a href="detail.html?phase=07" class="layer" style="--layer-color: var(--c-chip)">
     <div class="layer-header">
       <span class="layer-num">07</span>
       <span class="layer-icon">🧠</span>
       <div class="layer-title-wrap">
         <h2>KI-Chip-Design</h2>
-        <p>GPU / TPU / NPU-Acceleratoren für Training und Inferenz</p>
+        <p>GPU / TPU / NPU-Acceleratoren · NVIDIA-Dominanz · CUDA-Lock-in</p>
+        <div class="kpi-row">
+          <span class="kpi warn">💵 H100 Spot: $28k</span>
+          <span class="kpi warn">⏳ Lieferzeit: 8 Wo.</span>
+          <span class="kpi warn">📤 Export-Kontrolle: AKTIV</span>
+          <span class="kpi warn">🚀 B200 Yield: 71%</span>
+        </div>
       </div>
-      <span class="risk-badge critical">Kritisch — NVIDIA-Dominanz</span>
+      <div class="risk-block critical">
+        <span class="risk-num">8.3</span>
+        <span class="risk-badge critical">Kritisch</span>
+      </div>
     </div>
     <div class="supplier-grid">
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">NVIDIA</div>
-          <div class="supplier-share">~80%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">NVIDIA</div><div class="supplier-share">~80%</div></div>
         <div class="supplier-country">🇺🇸 USA (TSMC-gefertigt)</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:80%"></div></div>
         <div class="monopoly-tag">De-facto-Standard</div>
-        <div class="supplier-desc">H100, H200, B200, GB200 NVL72. CUDA-Ökosystem bindet Kunden, ~80 % Data-Center-GPU-Anteil.</div>
+        <div class="supplier-desc">H100, H200, B200, GB200 NVL72. CUDA-Ökosystem bindet Kunden; ~80 % Data-Center-GPU-Markt.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">AMD</div>
-          <div class="supplier-share">~8%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">AMD</div><div class="supplier-share">~8%</div></div>
         <div class="supplier-country">🇺🇸 USA (TSMC-gefertigt)</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:8%"></div></div>
-        <div class="supplier-desc">MI300X, MI325X — Herausforderer, wächst bei Inferenz-Workloads, ROCm-Software lückenhaft.</div>
+        <div class="supplier-desc">MI300X, MI325X — Herausforderer mit wachsendem Inferenz-Marktanteil, ROCm lückenhaft.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Google (TPU v5/v6)</div>
-          <div class="supplier-share">~5%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Google (TPU v5/v6)</div><div class="supplier-share">~5%</div></div>
         <div class="supplier-country">🇺🇸 USA</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:5%"></div></div>
-        <div class="supplier-desc">Tensor Processing Units für interne Gemini-Training-Workloads; begrenzt extern verfügbar.</div>
+        <div class="supplier-desc">Tensor Processing Units für interne Gemini-Training-Workloads; extern über GCP verfügbar.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Amazon Trainium 2</div>
-          <div class="supplier-share">~3%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Amazon Trainium 2</div><div class="supplier-share">~3%</div></div>
         <div class="supplier-country">🇺🇸 USA</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:3%"></div></div>
-        <div class="supplier-desc">AWS-eigener KI-Chip für Cost-optimiertes Training, Anthropic nutzt Trainium-Cluster.</div>
+        <div class="supplier-desc">AWS-eigener KI-Chip für kostenoptimiertes Training; Anthropic nutzt Trainium-Cluster.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Intel Gaudi 3</div>
-          <div class="supplier-share">~2%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Intel Gaudi 3</div><div class="supplier-share">~2%</div></div>
         <div class="supplier-country">🇺🇸 USA / 🇮🇱 Israel</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:2%"></div></div>
-        <div class="supplier-desc">Gaudi-3-Plattform als NVIDIA-Alternative; geringere Akzeptanz durch schwächeres Software-Stack.</div>
+        <div class="supplier-desc">Gaudi-3-Plattform als NVIDIA-Alternative; geringere Akzeptanz durch schwaches SW-Stack.</div>
       </div>
     </div>
-  </div>
+    <div class="layer-cta">Alle Anbieter, KPI-Details &amp; Digital Twins →</div>
+  </a>
 
   <div class="connector"><div class="arrow-down"></div></div>
 
-  <!-- ═══ LAYER 8: SERVERS ═══ -->
-  <div class="layer" style="--layer-color: var(--c-server)">
+  <!-- ═══ 08 SERVERS ═══ -->
+  <a href="detail.html?phase=08" class="layer" style="--layer-color: var(--c-server)">
     <div class="layer-header">
       <span class="layer-num">08</span>
       <span class="layer-icon">🖥️</span>
       <div class="layer-title-wrap">
-        <h2>Server- & Systemintegration</h2>
-        <p>GPU-Cluster-Server, Netzwerk-Switches, HGX/NVL-Module</p>
+        <h2>Server- &amp; Systemintegration</h2>
+        <p>GPU-Cluster-Server · HGX/NVL-Module · Networking · Kühlsysteme</p>
+        <div class="kpi-row">
+          <span class="kpi warn">⏳ Lieferzeit: 12 Wo.</span>
+          <span class="kpi ok">🔌 42 kW/Rack avg</span>
+          <span class="kpi crit">📦 HGX-Module: KNAPP</span>
+          <span class="kpi ok">🏭 94% Auslastung</span>
+        </div>
       </div>
-      <span class="risk-badge medium">Mittel</span>
+      <div class="risk-block medium">
+        <span class="risk-num">5.4</span>
+        <span class="risk-badge medium">Mittel</span>
+      </div>
     </div>
     <div class="supplier-grid">
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">NVIDIA DGX / HGX</div>
-          <div class="supplier-share">~38%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">NVIDIA DGX / HGX</div><div class="supplier-share">~38%</div></div>
         <div class="supplier-country">🇺🇸 USA</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:38%"></div></div>
-        <div class="supplier-desc">DGX H100/B200 — integrierte AI-Server, GB200 NVL72 mit 72 Blackwell-GPUs pro Rack.</div>
+        <div class="supplier-desc">DGX H100/B200 und GB200 NVL72 — integrierte AI-Server mit 72 Blackwell-GPUs pro Rack.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Supermicro</div>
-          <div class="supplier-share">~23%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Supermicro</div><div class="supplier-share">~23%</div></div>
         <div class="supplier-country">🇺🇸 USA</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:23%"></div></div>
         <div class="supplier-desc">Größter ODM für GPU-Server, liefert direkt an Hyperscaler, schnellste Time-to-Market.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Dell Technologies</div>
-          <div class="supplier-share">~14%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Dell Technologies</div><div class="supplier-share">~14%</div></div>
         <div class="supplier-country">🇺🇸 USA</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:14%"></div></div>
-        <div class="supplier-desc">PowerEdge XE9680 mit 8× H100/B200, Enterprise-Support-Fokus.</div>
+        <div class="supplier-desc">PowerEdge XE9680 mit 8× H100/B200, Enterprise-Support und Services-Fokus.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">HPE</div>
-          <div class="supplier-share">~9%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">HPE</div><div class="supplier-share">~9%</div></div>
         <div class="supplier-country">🇺🇸 USA</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:9%"></div></div>
         <div class="supplier-desc">ProLiant DL380a Gen11 und Cray-basierte HPC/AI-Supercomputing-Systeme.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Lenovo / Inspur</div>
-          <div class="supplier-share">~10%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Lenovo / Inspur</div><div class="supplier-share">~10%</div></div>
         <div class="supplier-country">🇨🇳 China / 🌏 APAC</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:10%"></div></div>
-        <div class="supplier-desc">Dominiert APAC-Markt, Inspur erhält wegen US-Exportkontrollen zunehmend Beschränkungen.</div>
+        <div class="supplier-desc">Dominiert APAC-Markt; Inspur steht auf US-Entity-List mit wachsenden Exportbeschränkungen.</div>
       </div>
     </div>
-  </div>
+    <div class="layer-cta">Alle Anbieter, KPI-Details &amp; Digital Twins →</div>
+  </a>
 
   <div class="connector"><div class="arrow-down"></div></div>
 
-  <!-- ═══ LAYER 9: DATA CENTERS ═══ -->
-  <div class="layer" style="--layer-color: var(--c-dc)">
+  <!-- ═══ 09 DATA CENTERS ═══ -->
+  <a href="detail.html?phase=09" class="layer" style="--layer-color: var(--c-dc)">
     <div class="layer-header">
       <span class="layer-num">09</span>
       <span class="layer-icon">🏗️</span>
       <div class="layer-title-wrap">
         <h2>Hyperscale-Rechenzentren</h2>
-        <p>Cloud-Infrastruktur für KI-Training, Inferenz und Plattformdienste</p>
+        <p>Cloud-Infrastruktur für KI-Training &amp; Inferenz · US-Oligopol</p>
+        <div class="kpi-row">
+          <span class="kpi ok">⚡ PUE: 1.18</span>
+          <span class="kpi crit">🔋 GPU-Kap. frei: 23%</span>
+          <span class="kpi warn">🏗️ Netzanschluss: 14 Mo.</span>
+          <span class="kpi ok">🌱 Erneuerbar: 68%</span>
+        </div>
       </div>
-      <span class="risk-badge medium">Mittel — US-Oligopol</span>
+      <div class="risk-block medium">
+        <span class="risk-num">5.1</span>
+        <span class="risk-badge medium">Mittel</span>
+      </div>
     </div>
     <div class="supplier-grid">
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Amazon AWS</div>
-          <div class="supplier-share">~31%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Amazon AWS</div><div class="supplier-share">~31%</div></div>
         <div class="supplier-country">🇺🇸 USA (global)</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:31%"></div></div>
         <div class="supplier-desc">Größter Cloud-Anbieter, betreibt UltraClusters mit 20.000+ H100, entwickelt Trainium/Inferentia.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Microsoft Azure</div>
-          <div class="supplier-share">~24%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Microsoft Azure</div><div class="supplier-share">~24%</div></div>
         <div class="supplier-country">🇺🇸 USA (global)</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:24%"></div></div>
         <div class="supplier-desc">OpenAI-Exklusivpartner, betreibt größte kommerzielle GPT-Infrastruktur, Maia-Eigenentwicklung.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Google Cloud / GCP</div>
-          <div class="supplier-share">~12%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Google Cloud</div><div class="supplier-share">~12%</div></div>
         <div class="supplier-country">🇺🇸 USA (global)</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:12%"></div></div>
-        <div class="supplier-desc">TPU-Pods und GPU-Clusters; Gemini-Modelle trainiert auf proprietären TPU v5p-Infrastrukturen.</div>
+        <div class="supplier-desc">TPU-Pods und GPU-Cluster; Gemini-Modelle trainiert auf proprietären TPU v5p-Infrastrukturen.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Meta</div>
-          <div class="supplier-share">~9%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Meta</div><div class="supplier-share">~9%</div></div>
         <div class="supplier-country">🇺🇸 USA</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:9%"></div></div>
-        <div class="supplier-desc">Betreibt eines der weltgrößten privaten GPU-Cluster (350.000+ H100), trainiert Llama-Modelle.</div>
+        <div class="supplier-desc">Privates GPU-Cluster mit 350.000+ H100 für Llama-Training; kein externer Cloud-Verkauf.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Oracle Cloud (OCI)</div>
-          <div class="supplier-share">~5%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Oracle Cloud (OCI)</div><div class="supplier-share">~5%</div></div>
         <div class="supplier-country">🇺🇸 USA</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:5%"></div></div>
-        <div class="supplier-desc">NVIDIA-Supercluster-Partner, Verträge mit xAI und anderen AI-Labs, schnell wachsendes Segment.</div>
+        <div class="supplier-desc">NVIDIA-Supercluster-Partner, Verträge mit xAI, schnell wachsendes GPU-Cloud-Segment.</div>
       </div>
     </div>
-  </div>
+    <div class="layer-cta">Alle Anbieter, KPI-Details &amp; Digital Twins →</div>
+  </a>
 
   <div class="connector"><div class="arrow-down"></div></div>
 
-  <!-- ═══ LAYER 10: ENERGY ═══ -->
-  <div class="layer" style="--layer-color: var(--c-energy)">
+  <!-- ═══ 10 ENERGY ═══ -->
+  <a href="detail.html?phase=10" class="layer" style="--layer-color: var(--c-energy)">
     <div class="layer-header">
       <span class="layer-num">10</span>
       <span class="layer-icon">⚡</span>
       <div class="layer-title-wrap">
         <h2>Energieinfrastruktur</h2>
-        <p>Strom- und Kühlversorgung für Rechenzentren — wachsender Engpass</p>
+        <p>Strom- &amp; Kühlversorgung · Wachstum +40% p.a. · Nuklear-Renaissance</p>
+        <div class="kpi-row">
+          <span class="kpi ok">⚡ 0.089 $/kWh</span>
+          <span class="kpi ok">🔆 Erneuerbar: 42%</span>
+          <span class="kpi ok">☢️ Nuklear verfügb.: 94%</span>
+          <span class="kpi ok">🏗️ +12 GW geplant</span>
+        </div>
       </div>
-      <span class="risk-badge low">Verteilt</span>
+      <div class="risk-block medium">
+        <span class="risk-num">4.2</span>
+        <span class="risk-badge low">Verteilt</span>
+      </div>
     </div>
     <div class="supplier-grid">
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">NextEra Energy</div>
-          <div class="supplier-share">~17%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">NextEra Energy</div><div class="supplier-share">~17%</div></div>
         <div class="supplier-country">🇺🇸 USA</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:17%"></div></div>
         <div class="supplier-desc">Weltgrößter Betreiber von Wind- und Solarparks, liefert PPA-Strom an AWS, Google, Meta.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Constellation Energy</div>
-          <div class="supplier-share">~13%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Constellation Energy</div><div class="supplier-share">~13%</div></div>
         <div class="supplier-country">🇺🇸 USA</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:13%"></div></div>
-        <div class="supplier-desc">Größter US-Kernkraft-Betreiber (21 Reaktoren), reaktiviert Three Mile Island für Microsoft/AI.</div>
+        <div class="supplier-desc">Größter US-Kernkraft-Betreiber (21 Reaktoren); reaktiviert Three Mile Island für Microsoft-AI.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">Duke Energy</div>
-          <div class="supplier-share">~10%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">Duke Energy</div><div class="supplier-share">~10%</div></div>
         <div class="supplier-country">🇺🇸 USA (Southeast)</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:10%"></div></div>
         <div class="supplier-desc">Versorgt Data-Center-Cluster in North Carolina / Virginia, Erneuerbare + Gas-Peaker-Mix.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">AES Corporation</div>
-          <div class="supplier-share">~8%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">AES Corporation</div><div class="supplier-share">~8%</div></div>
         <div class="supplier-country">🇺🇸 USA (global)</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:8%"></div></div>
-        <div class="supplier-desc">Global diversifizierter Energiekonzern, Fokus auf Batterie-Storage und Solar-PPAs für Hyperscaler.</div>
+        <div class="supplier-desc">Diversifizierter Energiekonzern, Fokus auf Batterie-Storage und Solar-PPAs für Hyperscaler.</div>
       </div>
       <div class="supplier-card">
-        <div class="supplier-top">
-          <div class="supplier-name">SMR-Konsortium</div>
-          <div class="supplier-share">~2%</div>
-        </div>
+        <div class="supplier-top"><div class="supplier-name">SMR-Konsortium</div><div class="supplier-share">~2%</div></div>
         <div class="supplier-country">🇺🇸 USA / 🇬🇧 GB / 🇫🇷 FR</div>
         <div class="share-bar"><div class="share-bar-fill" style="width:2%"></div></div>
-        <div class="supplier-desc">Kleine Modulare Reaktoren (NuScale, Kairos, X-energy) als dedizierte On-Site-DC-Stromquelle ab ~2028.</div>
+        <div class="supplier-desc">Kleine Modulare Reaktoren (NuScale, Kairos, X-energy) als On-Site-DC-Stromquelle ab ~2028.</div>
       </div>
     </div>
-  </div>
+    <div class="layer-cta">Alle Anbieter, KPI-Details &amp; Digital Twins →</div>
+  </a>
 
 </div><!-- /chain -->
 
 <footer>
   &copy; 2026 AI Supply Chain Twin &nbsp;·&nbsp;
   Daten: Branchenberichte, Firmenangaben, TrendForce, SEMI, SIA &nbsp;·&nbsp;
-  <strong>Mock-Daten — nicht für Investitionsentscheidungen geeignet</strong>
+  <strong>Mock-Daten</strong>
 </footer>
 
 </body>
