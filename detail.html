@@ -242,6 +242,180 @@
       .risk-factors { grid-template-columns: 1fr; }
       .breadcrumb { display: none; }
     }
+
+    /* ── DIGITAL TWIN TILES ── */
+    .twins-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+    .twin-tile {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color .2s;
+    }
+    .twin-tile:hover { border-color: rgba(255,255,255,.13); }
+    .twin-tile-head {
+      display: flex; align-items: center; gap: .6rem;
+      padding: .75rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .twin-tile-icon { font-size: 1.1rem; flex-shrink: 0; }
+    .twin-tile-name { font-size: .8rem; font-weight: 700; color: var(--text); flex: 1; }
+    .twin-mode-badge {
+      font-size: .58rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+      padding: .15rem .45rem; border-radius: 4px;
+    }
+    .twin-mode-badge.mock { background: rgba(245,158,11,.12); color: #fbbf24; border: 1px solid rgba(245,158,11,.25); }
+    .twin-mode-badge.live { background: rgba(34,197,94,.12);  color: #4ade80; border: 1px solid rgba(34,197,94,.25); }
+    .twin-tile-viz { padding: .75rem 1rem; min-height: 90px; }
+    .twin-tile-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .5rem 1rem;
+      background: rgba(255,255,255,.02);
+      border-top: 1px solid var(--border);
+      font-size: .65rem; color: var(--muted);
+    }
+    .twin-data-needed {
+      padding: .5rem 1rem .75rem;
+      font-size: .68rem; color: var(--muted);
+      line-height: 1.55;
+    }
+    .twin-data-tag {
+      display: inline-block; margin: .15rem .15rem 0 0;
+      padding: .1rem .45rem; border-radius: 4px;
+      font-size: .6rem; background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08); color: var(--muted2);
+    }
+
+    /* Gauge viz */
+    .gauge-viz { display: flex; align-items: center; gap: 1rem; }
+    .gauge-svg { flex-shrink: 0; }
+    .gauge-side { display: flex; flex-direction: column; gap: .2rem; }
+    .gauge-val { font-size: 1.3rem; font-weight: 800; line-height: 1; }
+    .gauge-lbl { font-size: .65rem; color: var(--muted); }
+
+    /* Sparkline viz */
+    .spark-wrap { width: 100%; }
+    .spark-head { display: flex; justify-content: space-between; font-size: .65rem; color: var(--muted); margin-bottom: .3rem; }
+    .spark-val { font-size: 1rem; font-weight: 800; }
+    .spark-svg { width: 100%; display: block; }
+
+    /* Bars viz */
+    .bars-viz { display: flex; flex-direction: column; gap: .35rem; }
+    .bar-row { display: flex; align-items: center; gap: .5rem; font-size: .67rem; }
+    .bar-label { width: 110px; color: var(--muted2); flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bar-track { flex: 1; height: 6px; background: rgba(255,255,255,.07); border-radius: 3px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 3px; }
+    .bar-val { width: 55px; text-align: right; color: var(--muted2); flex-shrink: 0; }
+
+    /* Heatmap viz */
+    .heatmap-viz { display: flex; flex-direction: column; gap: .25rem; }
+    .heatmap-row { display: flex; gap: 3px; align-items: center; }
+    .heatmap-label { font-size: .6rem; color: var(--muted); width: 60px; flex-shrink: 0; }
+    .hm-cell { flex: 1; height: 14px; border-radius: 2px; }
+
+    /* Status-grid viz */
+    .status-grid-viz { display: flex; flex-wrap: wrap; gap: .3rem; }
+    .sg-item {
+      display: flex; align-items: center; gap: .3rem;
+      padding: .25rem .5rem; border-radius: 5px;
+      font-size: .65rem; font-weight: 600;
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
+    }
+    .sg-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── CONNECTORS ── */
+    .connectors-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: .8rem;
+    }
+    .connector-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 10px; padding: .9rem 1rem;
+      display: flex; flex-direction: column; gap: .5rem;
+      transition: border-color .2s;
+    }
+    .connector-card:hover { border-color: rgba(255,255,255,.13); }
+    .connector-head { display: flex; align-items: center; gap: .55rem; }
+    .connector-icon { font-size: 1rem; flex-shrink: 0; }
+    .connector-name { font-size: .78rem; font-weight: 700; color: var(--text); flex: 1; }
+    .connector-type { font-size: .6rem; color: var(--muted); letter-spacing: .05em; }
+    .connector-status-row { display: flex; align-items: center; justify-content: space-between; }
+    .conn-status-badge {
+      font-size: .6rem; font-weight: 700; padding: .15rem .45rem; border-radius: 4px;
+      letter-spacing: .06em; text-transform: uppercase;
+    }
+    .conn-status-badge.connected   { background:rgba(34,197,94,.12); color:#4ade80; border:1px solid rgba(34,197,94,.25); }
+    .conn-status-badge.simulation  { background:rgba(245,158,11,.12); color:#fbbf24; border:1px solid rgba(245,158,11,.25); }
+    .toggle-wrap { display: flex; align-items: center; gap: .4rem; }
+    .toggle-lbl { font-size: .62rem; color: var(--muted); }
+    .toggle-switch { position: relative; width: 32px; height: 18px; cursor: pointer; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-track {
+      position: absolute; inset: 0; border-radius: 9px;
+      background: rgba(255,255,255,.1); transition: background .25s;
+    }
+    .toggle-thumb {
+      position: absolute; top: 3px; left: 3px;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #fff; transition: transform .25s, background .25s;
+    }
+    .toggle-switch input:checked ~ .toggle-track { background: #16a34a; }
+    .toggle-switch input:checked ~ .toggle-thumb { transform: translateX(14px); background: #fff; }
+    .conn-endpoint { font-size: .62rem; color: var(--muted); word-break: break-all; }
+    .conn-configure-btn {
+      align-self: flex-start;
+      font-size: .65rem; padding: .25rem .65rem; border-radius: 5px;
+      background: rgba(79,142,247,.08); border: 1px solid rgba(79,142,247,.2);
+      color: #7eb3ff; cursor: pointer; font-family: inherit;
+      transition: background .2s;
+    }
+    .conn-configure-btn:hover { background: rgba(79,142,247,.18); }
+
+    /* ── CONFIG MODAL ── */
+    .config-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.6);
+      z-index: 1000; display: none; align-items: center; justify-content: center;
+    }
+    .config-overlay.open { display: flex; }
+    .config-modal {
+      background: #0f1422; border: 1px solid rgba(255,255,255,.1);
+      border-radius: 14px; padding: 1.6rem; width: 400px; max-width: calc(100vw - 2rem);
+      box-shadow: 0 24px 64px rgba(0,0,0,.6);
+    }
+    .config-modal h3 { font-size: .95rem; font-weight: 800; margin-bottom: 1rem; }
+    .cfg-field { margin-bottom: .9rem; }
+    .cfg-label { font-size: .68rem; color: var(--muted); letter-spacing: .05em; text-transform: uppercase; margin-bottom: .35rem; display: block; }
+    .cfg-input, .cfg-select {
+      width: 100%; padding: .5rem .7rem; border-radius: 7px;
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+      color: var(--text); font-size: .8rem; font-family: inherit;
+    }
+    .cfg-input:focus, .cfg-select:focus { outline: none; border-color: rgba(79,142,247,.5); }
+    .cfg-input.masked { font-family: monospace; letter-spacing: .15em; }
+    .cfg-btns { display: flex; gap: .5rem; margin-top: 1.2rem; }
+    .cfg-btn-test {
+      flex: 1; padding: .5rem; border-radius: 7px;
+      background: rgba(79,142,247,.1); border: 1px solid rgba(79,142,247,.25);
+      color: #7eb3ff; cursor: pointer; font-size: .78rem; font-weight: 600; font-family: inherit;
+    }
+    .cfg-btn-save {
+      flex: 1; padding: .5rem; border-radius: 7px;
+      background: linear-gradient(135deg,#4f8ef7,#a855f7); border: none;
+      color: #fff; cursor: pointer; font-size: .78rem; font-weight: 600; font-family: inherit;
+    }
+    .cfg-btn-cancel {
+      padding: .5rem .9rem; border-radius: 7px;
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+      color: var(--muted2); cursor: pointer; font-size: .78rem; font-family: inherit;
+    }
+    .cfg-test-result { font-size: .7rem; margin-top: .5rem; min-height: 1rem; }
+    .cfg-test-result.ok   { color: #4ade80; }
+    .cfg-test-result.fail { color: #f87171; }
   </style>
 </head>
 <body>
@@ -260,6 +434,47 @@
 <div class="main-wrap" id="main-wrap"></div>
 
 <footer>&copy; 2026 AI Supply Chain Twin · Mock-Daten — nicht für Investitionsentscheidungen geeignet</footer>
+
+<div class="config-overlay" id="cfg-overlay">
+  <div class="config-modal">
+    <h3 id="cfg-title">🔌 Connector konfigurieren</h3>
+    <div class="cfg-field">
+      <label class="cfg-label">Endpoint URL</label>
+      <input class="cfg-input" id="cfg-url" type="text" placeholder="https://api.example.com/v1/stream" />
+    </div>
+    <div class="cfg-field">
+      <label class="cfg-label">Auth-Typ</label>
+      <select class="cfg-select" id="cfg-auth">
+        <option>API Key (Header)</option>
+        <option>Bearer Token</option>
+        <option>Basic Auth</option>
+        <option>OAuth 2.0 Client Credentials</option>
+        <option>OPC-UA Certificate</option>
+        <option>MQTT Username / Password</option>
+      </select>
+    </div>
+    <div class="cfg-field">
+      <label class="cfg-label">API Key / Secret</label>
+      <input class="cfg-input masked" id="cfg-key" type="password" placeholder="••••••••••••••••••••••••" />
+    </div>
+    <div class="cfg-field">
+      <label class="cfg-label">Polling-Intervall</label>
+      <select class="cfg-select" id="cfg-interval">
+        <option>Echtzeit (WebSocket / MQTT)</option>
+        <option>5 Sekunden</option>
+        <option>30 Sekunden</option>
+        <option>1 Minute</option>
+        <option>5 Minuten</option>
+      </select>
+    </div>
+    <div class="cfg-test-result" id="cfg-test-result"></div>
+    <div class="cfg-btns">
+      <button class="cfg-btn-cancel" id="cfg-cancel">Abbrechen</button>
+      <button class="cfg-btn-test"   id="cfg-test">Verbindung testen</button>
+      <button class="cfg-btn-save"   id="cfg-save">Speichern &amp; aktivieren</button>
+    </div>
+  </div>
+</div>
 
 <script>
 /* ═══════════════════════════════════════════════════
@@ -1030,6 +1245,384 @@ const PHASES = {
 };
 
 /* ═══════════════════════════════════════════════════
+   DIGITAL TWIN TILES  (4 per phase)
+   viz types: gauge | sparkline | bars | heatmap | status
+═══════════════════════════════════════════════════ */
+const TWINS = {
+  '01': [
+    { id:'mine-ops',  icon:'🛰️', name:'Mine Operations Monitor', viz:'gauge',
+      gaugeVal:72, gaugePct:.72, gaugeColor:'#b45309', gaugeLabel:'Tages-Output', gaugeUnit:'94%',
+      footer:'Sentinel-2 · Update 15 min', data:['SCADA-Telemetrie (OPC-UA)','Förderbandwaagen','GPS Fahrzeugortung','Wetterstation Mine'] },
+    { id:'transport', icon:'🚛', name:'Transportlogistik', viz:'bars',
+      bars:[['I-26 Auslastung','68%',.68,'#22c55e'],['LKW on Route','47',47/60,'#22c55e'],['Lager TQC','42d',.84,'#22c55e'],['Lager SBL','38d',.76,'#22c55e']],
+      barColor:'#b45309', footer:'NCDOT · GPS-Feed · Live',
+      data:['NCDOT Traffic API','GPS/Telematics MQTT','Lager-WMS REST','CSX Rail API'] },
+    { id:'qualitaet', icon:'🧪', name:'Qualitätslabor HPQ', viz:'gauge',
+      gaugeVal:99.9995, gaugePct:.97, gaugeColor:'#22c55e', gaugeLabel:'SiO₂-Reinheit', gaugeUnit:'99.9995%',
+      footer:'LIMS · Batch-Update 2h', data:['Labor-LIMS REST','ICP-MS Gerätedaten','Partikelzähler OPC-UA','Zertifikats-PDF-Parser'] },
+    { id:'klima',     icon:'🌩️', name:'Klimarisiko Monitor', viz:'status',
+      statuses:[['Hurrikan ATL','FERN','ok'],['I-26 Flood','KEIN','ok'],['Waldbrand','GERING','ok'],['Erdbeben','INAKTIV','ok'],['NOAA Sturm','FERN','ok'],['Strg. Mitchell Co.','OK','ok']],
+      footer:'NOAA API · NWS Alerts · Live', data:['NOAA Weather API','NWS Alert Feed','USGS Seismic REST','Satellite Flood Detect'] },
+  ],
+  '02': [
+    { id:'furnace',   icon:'🔥', name:'Lichtbogenofen Monitor', viz:'gauge',
+      gaugeVal:87, gaugePct:.87, gaugeColor:'#c2410c', gaugeLabel:'Auslastung Global', gaugeUnit:'87%',
+      footer:'SCADA-OPC-UA · 30s', data:['Ofensteuerung OPC-UA','Energiezähler M-Bus','Temperatur-Sensoren','Emissionsüberwachung'] },
+    { id:'energie',   icon:'⚡', name:'Energieverbrauch', viz:'sparkline',
+      sparkVals:[12.1,12.8,13.2,12.6,13.1,13.4,12.9,13.0], sparkColor:'#f59e0b',
+      sparkLabel:'kWh/kg Si', sparkCurrent:'13.0', footer:'Smart Meter · 5min',
+      data:['Smart Meter API (M-Bus)','Spot-Preis REST (EEX)','Lastprognose ML-Modell','CO₂-Intensitäts-API'] },
+    { id:'supply-risk', icon:'⚠️', name:'Supply Risk Tracker', viz:'status',
+      statuses:[['Ferroglobe','OK','ok'],['Elkem','OK','ok'],['Wacker','DRUCK','warn'],['Hoshine UFLPA','AKTIV','crit'],['CN-Produzenten','RISIKO','warn'],['Transportwege','OK','ok']],
+      footer:'Risiko-Engine · 1h Update', data:['Sanktionslisten-API','Lieferanten-Portal REST','Frachtbörsen-API','News-Sentiment ML'] },
+    { id:'emissionen', icon:'🌿', name:'Emissions-Monitor', viz:'sparkline',
+      sparkVals:[4.2,4.0,3.8,3.9,4.1,3.7,3.6,3.8], sparkColor:'#22c55e',
+      sparkLabel:'t CO₂/t Si (Ø)', sparkCurrent:'3.8', footer:'EU-ETS · Batch täglich',
+      data:['EU-ETS Registry API','CBAM-Reporting REST','Emissionsscanner Kamin','ESG-Reporting Platform'] },
+  ],
+  '03': [
+    { id:'reaktor',   icon:'🧪', name:'Siemens-Reaktor Monitor', viz:'gauge',
+      gaugeVal:91, gaugePct:.91, gaugeColor:'#d97706', gaugeLabel:'Reaktorauslastung', gaugeUnit:'91%',
+      footer:'SCADA · 30s Update', data:['Siemens-SCADA OPC-UA','TCS-Durchfluss Sensoren','H₂-Drucksensoren','Reinheitsanalysator inline'] },
+    { id:'reinheit',  icon:'🔬', name:'Reinheitskontrolle 9N', viz:'heatmap',
+      hmCols:['Batch A','Batch B','Batch C','Batch D'],
+      hmRows:[['B','Fe',.05,.05,.08,.03],['B','Al',.12,.09,.11,.07],['B','Ca',.04,.03,.06,.04],['B','Ni',.02,.02,.03,.02]],
+      footer:'ICP-MS · Batch-Update 6h', data:['ICP-MS Instrument API','LIMS REST','Kundenzertifikate PDF','SEMI PV17 Prüfprotokoll'] },
+    { id:'marktpreis', icon:'💰', name:'Polysilizium Marktpreis', viz:'sparkline',
+      sparkVals:[10.1,9.4,8.9,8.7,8.4,8.2,8.0,8.2], sparkColor:'#fbbf24',
+      sparkLabel:'USD/kg (Spot)', sparkCurrent:'$8.20', footer:'SMM · Infolink · täglich',
+      data:['SMM Preis-API','Infolink Poly-Tracker','Bloomberg Terminal REST','Spot-Price Aggregator'] },
+    { id:'energie3',  icon:'⚡', name:'Energieverbrauch Poly', viz:'bars',
+      bars:[['Siemens-Reaktor','80 kWh/kg',.67,'#d97706'],['CVD-Anlage','12 kWh/kg',.1,'#d97706'],['Destillation','8 kWh/kg',.067,'#d97706'],['Utilities','5 kWh/kg',.042,'#d97706']],
+      barColor:'#d97706', footer:'Energiezähler · 5min',
+      data:['Lastgangzähler M-Bus','Stromlieferant-API','Wärmerückgewinnung SCADA','CO₂-Rechner intern'] },
+  ],
+  '04': [
+    { id:'crystal',   icon:'💎', name:'Czochralski Kristallzucht', viz:'gauge',
+      gaugeVal:96, gaugePct:.96, gaugeColor:'#2563eb', gaugeLabel:'Fab-Auslastung', gaugeUnit:'96%',
+      footer:'MES · 1min Update', data:['Fab MES REST (300mm)','Kristallzucht-SCADA','Temperatur OPC-UA','Ingot-Datenbank SQL'] },
+    { id:'defektmap', icon:'🗺️', name:'Wafer Defektkarte', viz:'heatmap',
+      hmCols:['Die R1','Die R2','Die R3','Die R4'],
+      hmRows:[['Z1','R1',.05,.08,.03,.06],['Z2','R2',.04,.11,.07,.04],['Z3','R3',.08,.06,.04,.09],['Z4','R4',.03,.05,.10,.05]],
+      footer:'KLA Wafer Inspector · Batch', data:['KLA WaferSight REST','AMAT SEMVision API','LIMS Yield DB','Statistical Process Control'] },
+    { id:'yield',     icon:'📊', name:'Yield Analytics', viz:'sparkline',
+      sparkVals:[94.1,93.8,94.5,95.1,94.8,95.3,96.0,96.2], sparkColor:'#2563eb',
+      sparkLabel:'Prime Yield % (300mm)', sparkCurrent:'96.2%', footer:'MES · Schicht-Update',
+      data:['Fab-MES Yield REST','KLA Defect Map API','SPC Engine WebSocket','EDA Metrodata SQL'] },
+    { id:'liefertrack', icon:'📦', name:'Liefertracking', viz:'status',
+      statuses:[['Shin-Etsu Lieferzeit','12 Wo.','warn'],['SUMCO Status','OK','ok'],['GlobalWafers','16 Wo.','warn'],['Siltronic','OK','ok'],['Bestand TQC','42d','ok'],['Expressversand','AKTIV','ok']],
+      footer:'Lieferanten-Portal · täglich', data:['EDI X12 Lieferanten','Spediteur-Tracking REST','Zoll-API (CBP)','Lager-WMS WebSocket'] },
+  ],
+  '05': [
+    { id:'asml-uptime', icon:'🔬', name:'ASML EUV Uptime', viz:'gauge',
+      gaugeVal:98.2, gaugePct:.982, gaugeColor:'#dc2626', gaugeLabel:'Maschinen-Uptime', gaugeUnit:'98.2%',
+      footer:'ASML LINK · Echtzeit', data:['ASML LINK (Hersteller-API)','Preventive Maint. CMMS','Ersatzteil-ERP SAP','Uptime-Datenbank SQL'] },
+    { id:'reinraum',  icon:'🏭', name:'Reinraum-Monitoring', viz:'heatmap',
+      hmCols:['Bay A','Bay B','Bay C','Bay D'],
+      hmRows:[['F','Partikel',.02,.03,.01,.04],['F','Temp °C',.45,.47,.44,.46],['F','Feuchte',.35,.38,.33,.36],['F','Druck Pa',.92,.91,.93,.90]],
+      footer:'BMS SCADA · 10s', data:['HVAC-BMS OPC-UA','Partikelzähler REST','Vibrations-Sensoren','Reinraum-SCADA Siemens'] },
+    { id:'masken',    icon:'🎭', name:'Masken-Shop Status', viz:'status',
+      statuses:[['Zeiss Optik','OK','ok'],['Photoresist Shin-Etsu','OK','ok'],['Pellicle Supply','KNAPP','warn'],['Maskenherstellung','18 Mo. Lead','crit'],['Reticle Inventory','OK','ok'],['EUV-Spiegel','OK','ok']],
+      footer:'ERP SAP · 1h Update', data:['Masken-ERP SAP REST','Lieferanten-EDI','Pellicle-Tracking RFID','Zeiss Servicedaten API'] },
+    { id:'wartung',   icon:'🔧', name:'Wartungsplanung', viz:'bars',
+      bars:[['ASML Preventive','Q3 2026',.15,'#dc2626'],['TEL Coater PM','aktuell',.9,'#22c55e'],['AMAT CVD PM','2 Wo.',.75,'#f59e0b'],['KLA Inspektor PM','OK',.85,'#22c55e']],
+      barColor:'#dc2626', footer:'CMMS Maximo · täglich',
+      data:['IBM Maximo CMMS REST','ASML Predictive Maint.','SAP PM Modul','Ersatzteil-Lager RFID'] },
+  ],
+  '06': [
+    { id:'fab-wip',   icon:'🏭', name:'Fab WIP (Work-in-Progress)', viz:'heatmap',
+      hmCols:['N3','N2','N4/5','N7/N12'],
+      hmRows:[['L','TSMC',.98,.85,.92,.75],['L','Samsung',.82,.6,.7,.55],['L','Intel IFS',.71,.0,.65,.55],['L','GF',.0,.0,.0,.85]],
+      footer:'Foundry Portal · Schicht', data:['TSMC Fab Portal REST','FAB MES WebSocket','OEE-Dashboard API','EDI Kundenbestellung'] },
+    { id:'geopolit',  icon:'🌐', name:'Geopolit. Risiko Taiwan', viz:'gauge',
+      gaugeVal:8.8, gaugePct:.88, gaugeColor:'#ef4444', gaugeLabel:'Risiko-Score', gaugeUnit:'8.8/10',
+      footer:'Risk-Engine · 6h Update', data:['Risk-Intelligence API (Moody\'s)','PLA-Aktivitäts-Feed','Wirtschaftssanktions-API','Nachrichten-Sentiment NLP'] },
+    { id:'spc',       icon:'📉', name:'Statistical Process Control', viz:'sparkline',
+      sparkVals:[.32,.28,.31,.27,.29,.26,.28,.25], sparkColor:'#7c3aed',
+      sparkLabel:'Defektrate ppm (N3)', sparkCurrent:'0.25 ppm', footer:'SPC-System · Lot-Update',
+      data:['SPC Engine REST','KLA Inspection API','AMAT Process Control','Metrology Data Lake'] },
+    { id:'wasser-energie', icon:'💧', name:'Wasser & Energie TW', viz:'bars',
+      bars:[['Wasserreservoir','142 d',.78,'#22c55e'],['Strombedarf','~8% TW',.8,'#f59e0b'],['PUE','1.22',.61,'#22c55e'],['Erneuerbar','42%',.42,'#22c55e']],
+      barColor:'#7c3aed', footer:'Taiwan Utilities · täglich',
+      data:['TWPC Wasserverbrauch API','Taipower Strom-API','TSMC Sustainability REST','Wetter-Prognose CWBS'] },
+  ],
+  '07': [
+    { id:'design-sim', icon:'🧠', name:'Design Simulation KPIs', viz:'sparkline',
+      sparkVals:[68,70,71,69,72,71,73,71], sparkColor:'#6d28d9',
+      sparkLabel:'B200 CoWoS Yield %', sparkCurrent:'71%', footer:'TSMC CoWoS-Daten · Lot',
+      data:['TSMC Portal Yield REST','CoWoS Packaging SCADA','EDA-Simulationsdaten','DFM-Analyse SQL DB'] },
+    { id:'supply-risk7', icon:'⚠️', name:'Supply Risk GPU', viz:'status',
+      statuses:[['HBM3e SK Hynix','KNAPP','warn'],['CoWoS TSMC','BEGRENZT','warn'],['Substrate','OK','ok'],['Packaging OSAT','OK','ok'],['Testsysteme','OK','ok'],['B200 Yield','71%','warn']],
+      footer:'Risiko-Engine · 2h', data:['SK Hynix Partner Portal','TSMC CoWoS Tracker REST','OSAT-Lieferanten-EDI','Yield-Analytics SQL'] },
+    { id:'export',    icon:'📤', name:'Export Compliance', viz:'status',
+      statuses:[['H100 CN','GESPERRT','crit'],['H20 CN','GESPERRT ab Mai 25','crit'],['A100 EU','OK','ok'],['B200 IN','LIZENZ REQ','warn'],['Nahost','AKTIV CHECK','warn'],['BIS EAR 99','OK','ok']],
+      footer:'BIS Reg. · täglich', data:['BIS Export Rule API','US EAR Kontrolllisten','Embargo-Screening API','Kundenprofil-CRM REST'] },
+    { id:'marktpreis7', icon:'💰', name:'GPU Marktpreis Monitor', viz:'sparkline',
+      sparkVals:[32,30,29,28,27,28,28,28], sparkColor:'#f59e0b',
+      sparkLabel:'H100 Spot USD (k)', sparkCurrent:'$28k', footer:'Reseller-Aggregator · täglich',
+      data:['GPU-Marktplatz API','Bloomberg Terminal','NVIDIA OEM Preisliste REST','Cloud-Spot-Preis-APIs'] },
+  ],
+  '08': [
+    { id:'montage',   icon:'🔧', name:'Montage-Linie Status', viz:'bars',
+      bars:[['HGX B200 Bestückg.','KNAPP',.15,'#ef4444'],['Liquid-Cool-Kit','OK',.85,'#22c55e'],['NVLink-Kabel','OK',.9,'#22c55e'],['Rack-Assembly','12 Wo.',.5,'#f59e0b']],
+      barColor:'#0891b2', footer:'MES San Jose · 30min',
+      data:['Fertigung MES REST','Lager-WMS RFID','ERP SAP Bestände','Lieferpläne EDI'] },
+    { id:'komponenten', icon:'📦', name:'Komponentenbestand', viz:'status',
+      statuses:[['HGX B200 Module','KNAPP','crit'],['Xeon CPUs','OK','ok'],['DDR5 RAM','OK','ok'],['NVMe SSDs','OK','ok'],['400G NICs','BEGRENZT','warn'],['Kühlblock','OK','ok']],
+      footer:'SAP ERP · 1h', data:['SAP ERP REST','Lieferanten-B2B Portal','Zoll-Tracking CBP','Bestandsoptimierung ML'] },
+    { id:'burn-in',   icon:'🌡️', name:'Thermal Burn-In Test', viz:'gauge',
+      gaugeVal:96, gaugePct:.96, gaugeColor:'#0891b2', gaugeLabel:'Pass-Rate Burn-In', gaugeUnit:'96%',
+      footer:'Testautomation · Schicht', data:['Burnin-SCADA OPC-UA','Thermal-Sensor REST','NVIDIA System Mgmt IF','Fehler-Analyse SQL DB'] },
+    { id:'auftraege', icon:'📋', name:'Auftragsabwicklung', viz:'sparkline',
+      sparkVals:[380,420,410,450,480,460,490,400], sparkColor:'#0891b2',
+      sparkLabel:'Server-Auslieferungen / Tag', sparkCurrent:'400/d', footer:'Order Mgmt · täglich',
+      data:['CRM Salesforce REST','Order Mgmt ERP SAP','Logistics Oracle TMS','Kundenzufriedenheit API'] },
+  ],
+  '09': [
+    { id:'pue',       icon:'⚡', name:'DC Infrastruktur PUE', viz:'gauge',
+      gaugeVal:1.18, gaugePct:.41, gaugeColor:'#0d9488', gaugeLabel:'Power Usage Effect.', gaugeUnit:'1.18',
+      footer:'DCIM · Echtzeit', data:['DCIM-System REST (Schneider)','PDU Strom-Telemetrie','Kühlaggregat SCADA','Energieversorger Smart Meter'] },
+    { id:'gpu-kap',   icon:'🖥️', name:'GPU-Kapazität Auslastung', viz:'bars',
+      bars:[['AWS H100','95%',.95,'#ef4444'],['Azure ND H100','100%',1.0,'#ef4444'],['GCP A3','78%',.78,'#f59e0b'],['Meta H100','88%',.88,'#f59e0b']],
+      barColor:'#0d9488', footer:'Cloud Monitor · 5min',
+      data:['Cloud-Usage API AWS','Azure Monitor REST','GCP Monitoring API','Kapazitätsplaner ML'] },
+    { id:'energiequellen', icon:'🌱', name:'Energiequellen Mix', viz:'sparkline',
+      sparkVals:[62,65,64,68,70,68,71,68], sparkColor:'#22c55e',
+      sparkLabel:'Erneuerbar-Anteil % (Ø)', sparkCurrent:'68%', footer:'EnergyTag · täglich',
+      data:['EnergyTag API','PPA-Portfolio-Manager REST','Gridwatch Live REST','ISO-RTO Daten-API'] },
+    { id:'security',  icon:'🔒', name:'Security Posture', viz:'status',
+      statuses:[['DDoS-Schutz','AKTIV','ok'],['Perimeter','GESICHERT','ok'],['Patching','<48h','ok'],['Anomalie-Detect.','OK','ok'],['Compliance NIST','OK','ok'],['SOC Status','24/7','ok']],
+      footer:'SIEM · Echtzeit', data:['SIEM Splunk REST','Firewall-Log API','Vulnerability Scanner','CIS Benchmark Monitor'] },
+  ],
+  '10': [
+    { id:'netzstatus', icon:'🔆', name:'Netzstatus & Frequenz', viz:'sparkline',
+      sparkVals:[59.98,60.01,60.0,59.97,60.02,60.0,59.99,60.01], sparkColor:'#16a34a',
+      sparkLabel:'Netzfrequenz Hz', sparkCurrent:'60.01 Hz', footer:'ISO-RTO · Echtzeit',
+      data:['ISO-RTO Frequenz-API','FERC Market Data REST','NERC Reliability API','Smart Grid PMU REST'] },
+    { id:'wind-solar', icon:'🌬️', name:'Wind & Solar Output', viz:'bars',
+      bars:[['NextEra Wind','98% Plan',.98,'#22c55e'],['NextEra Solar','101% Plan',1.0,'#22c55e'],['Duke Wind SE','92%',.92,'#22c55e'],['AES Solar','95%',.95,'#22c55e']],
+      barColor:'#16a34a', footer:'EIA / NERC · 5min',
+      data:['EIA Erzeugungs-API','SCADA Wind-Farm OPC-UA','Solar-SCADA SunSpec','Prognose-ML (Wetter)'] },
+    { id:'reaktor10', icon:'☢️', name:'Nuklear-Reaktor Monitor', viz:'gauge',
+      gaugeVal:94, gaugePct:.94, gaugeColor:'#16a34a', gaugeLabel:'Nukl. Verfügbarkeitsfaktor', gaugeUnit:'94%',
+      footer:'NRC ADAMS · stündlich', data:['NRC ADAMS Public API','Constellation Plant SCADA','Brennstoff-Management ERP','Sicherheitssystem OPC-UA'] },
+    { id:'prognose',  icon:'📈', name:'Bedarfsprognose AI-DC', viz:'sparkline',
+      sparkVals:[380,400,420,445,470,490,520,550], sparkColor:'#16a34a',
+      sparkLabel:'GWh/d KI-DC Bedarf (proj.)', sparkCurrent:'+40%/a', footer:'EIA Prognose · wöchentlich',
+      data:['EIA STEO Prognose API','Hyperscaler CAPEX Filings','Grid-Expansion Tracker','ML-Nachfragemodell intern'] },
+  ],
+};
+
+/* ═══════════════════════════════════════════════════
+   CONNECTORS  (4-5 per phase)
+═══════════════════════════════════════════════════ */
+const CONNECTORS = {
+  '01': [
+    { id:'scada-tqc', icon:'🏭', name:'Mine SCADA TQC', type:'OPC-UA · TCP/IP', endpoint:'opc.tcp://scada.tqc.internal:4840/mine/opcua', live:false },
+    { id:'ncdot',     icon:'🛣️', name:'NCDOT Traffic API', type:'REST · JSON', endpoint:'https://api.ncdot.gov/v2/traffic/incidents', live:false },
+    { id:'noaa',      icon:'🌩️', name:'NOAA Weather API', type:'REST · JSON', endpoint:'https://api.weather.gov/alerts/active?zone=NCZ013', live:false },
+    { id:'gps-fleet', icon:'🚛', name:'Flotten-GPS Telemetrie', type:'MQTT · TLS 1.3', endpoint:'mqtts://fleet.tqc.logistics:8883/trucks/#', live:false },
+    { id:'lims-tqc',  icon:'🧪', name:'LIMS Qualitätsdaten', type:'REST · JSON', endpoint:'https://lims.tqc.internal/api/v1/batches', live:false },
+  ],
+  '02': [
+    { id:'scada-fgl', icon:'🔥', name:'Ferroglobe SCADA', type:'OPC-UA · TCP/IP', endpoint:'opc.tcp://scada.ferroglobe.com:4840/si/furnace', live:false },
+    { id:'elkem-api', icon:'⚡', name:'Elkem Energie-API', type:'REST · JSON', endpoint:'https://api.elkem.com/v2/energy/consumption', live:false },
+    { id:'uflpa-check', icon:'⚠️', name:'UFLPA Entity List Feed', type:'REST · JSON', endpoint:'https://api.cbp.dhs.gov/uflpa/entities/v1', live:false },
+    { id:'lme-si',    icon:'💰', name:'LME Si-Metall Preise', type:'REST · JSON', endpoint:'https://api.lme.com/v1/prices/silicon', live:false },
+  ],
+  '03': [
+    { id:'wacker-scada', icon:'🧪', name:'Wacker Reaktor SCADA', type:'OPC-UA · TCP/IP', endpoint:'opc.tcp://scada.wacker.de:4840/polysi/reactor', live:false },
+    { id:'smm-poly',  icon:'💰', name:'SMM Polysilizium Preis', type:'REST · JSON', endpoint:'https://api.smm.com/v3/metals/polysilicon/spot', live:false },
+    { id:'lims-wck',  icon:'🔬', name:'LIMS Reinheitsdaten', type:'REST · JSON', endpoint:'https://lims.wacker.de/api/v1/purity/9n', live:false },
+    { id:'ets-cbam',  icon:'🌿', name:'EU-ETS / CBAM API', type:'REST · JSON', endpoint:'https://api.euets.eu/v2/allowances/prices', live:false },
+  ],
+  '04': [
+    { id:'mes-sec',   icon:'💿', name:'Shin-Etsu Fab MES', type:'REST · JSON', endpoint:'https://mes.shinetsusemco.jp/api/v2/wip/300mm', live:false },
+    { id:'kla-api',   icon:'🔍', name:'KLA Defect Inspection', type:'REST · JSON', endpoint:'https://api.kla.com/v3/wafers/defects', live:false },
+    { id:'edi-supply', icon:'📦', name:'Lieferanten EDI X12', type:'EDI · AS2', endpoint:'as2://edi.shinetsusemco.jp/wafer/orders', live:false },
+    { id:'forex-jpy', icon:'💴', name:'USD/JPY Kurs-Feed', type:'WebSocket', endpoint:'wss://stream.forex.com/v3/rates/USDJPY', live:false },
+  ],
+  '05': [
+    { id:'asml-link', icon:'🔬', name:'ASML LINK Service API', type:'REST · JSON (Hersteller)', endpoint:'https://link.asml.com/api/v4/machines/uptime', live:false },
+    { id:'cmms-max',  icon:'🔧', name:'IBM Maximo CMMS', type:'REST · JSON', endpoint:'https://maximo.fab.internal/maximo/oslc/os/mxwo', live:false },
+    { id:'bms-scada', icon:'🏭', name:'Reinraum BMS SCADA', type:'OPC-UA · TCP/IP', endpoint:'opc.tcp://bms.fab.internal:4840/cleanroom', live:false },
+    { id:'bis-export', icon:'📤', name:'BIS Export Controls', type:'REST · JSON', endpoint:'https://api.bis.doc.gov/ear/v1/entity-list', live:false },
+  ],
+  '06': [
+    { id:'tsmc-portal', icon:'🏭', name:'TSMC Foundry Portal', type:'REST · JSON (Kunde)', endpoint:'https://twincenter.tsmc.com/api/v3/orders/wip', live:false },
+    { id:'risk-intel', icon:'🌐', name:'Risk Intelligence API', type:'REST · JSON', endpoint:'https://api.moodysanalytics.com/geopolitical/risk', live:false },
+    { id:'spc-engine', icon:'📉', name:'SPC Prozesssteuerung', type:'WebSocket', endpoint:'wss://spc.fab.internal/ws/v2/controlcharts', live:false },
+    { id:'twpc-water', icon:'💧', name:'TWPC Wasserverbrauch', type:'REST · JSON', endpoint:'https://api.twpc.com.tw/v1/usage/semiconductor', live:false },
+  ],
+  '07': [
+    { id:'tsmc-cowos', icon:'📦', name:'TSMC CoWoS Yield', type:'REST · JSON', endpoint:'https://twincenter.tsmc.com/api/v3/cowos/yield', live:false },
+    { id:'bis-ear',   icon:'📤', name:'BIS EAR Export Monitor', type:'REST · JSON', endpoint:'https://api.bis.doc.gov/ear/v1/ccl-classifications', live:false },
+    { id:'gpu-market', icon:'💰', name:'GPU Marktpreis Aggregator', type:'REST · JSON', endpoint:'https://api.techpricetrace.com/v1/gpu/h100/spot', live:false },
+    { id:'hbm-tracker', icon:'💾', name:'HBM Supply Tracker', type:'REST · JSON', endpoint:'https://api.skhynix-partner.com/v2/hbm3e/allocation', live:false },
+  ],
+  '08': [
+    { id:'mes-smci',  icon:'🖥️', name:'Supermicro MES', type:'REST · JSON', endpoint:'https://mes.supermicro.com/api/v2/production/gpu-servers', live:false },
+    { id:'sap-erp',   icon:'📦', name:'SAP ERP Bestandsdaten', type:'REST · OData', endpoint:'https://erp.supermicro.com/sap/opu/odata/sap/MM_INVENTORY', live:false },
+    { id:'burnin-sys', icon:'🌡️', name:'Burn-In Testsystem', type:'OPC-UA · TCP/IP', endpoint:'opc.tcp://burnin.sjc.supermicro:4840/testfloor', live:false },
+    { id:'sfdc-orders', icon:'📋', name:'Salesforce Order Pipeline', type:'REST · JSON', endpoint:'https://supermicro.salesforce.com/services/data/v58/query', live:false },
+  ],
+  '09': [
+    { id:'dcim',      icon:'⚡', name:'DCIM Schneider EcoStruxure', type:'REST · JSON', endpoint:'https://dcim.aws-dc.internal/api/v4/pue/live', live:false },
+    { id:'cloud-mon', icon:'🖥️', name:'Cloud GPU Utilization', type:'REST · JSON (Multi-Cloud)', endpoint:'https://monitor.cloudprovider.internal/api/gpu-utilization', live:false },
+    { id:'energytag', icon:'🌱', name:'EnergyTag API', type:'REST · JSON', endpoint:'https://api.energytag.org/v1/certificates/datacenter', live:false },
+    { id:'siem',      icon:'🔒', name:'SIEM Security Monitor', type:'REST · JSON', endpoint:'https://splunk.dc.internal:8089/services/search/jobs', live:false },
+  ],
+  '10': [
+    { id:'iso-rto',   icon:'⚡', name:'ISO-RTO Netzfrequenz', type:'REST · JSON (Public)', endpoint:'https://api.pjm.com/api/isoartisanapp/v2/frequency', live:false },
+    { id:'eia',       icon:'📊', name:'EIA Energiedaten API', type:'REST · JSON (Public)', endpoint:'https://api.eia.gov/v2/electricity/rto/region-data/data', live:false },
+    { id:'scada-wind', icon:'🌬️', name:'Wind-Farm SCADA', type:'OPC-UA · TCP/IP', endpoint:'opc.tcp://scada.nextera-wind.com:4840/turbines', live:false },
+    { id:'nrc-adams', icon:'☢️', name:'NRC ADAMS Reaktordaten', type:'REST · JSON (Public)', endpoint:'https://api.nrc.gov/nrc/v1/reactors/operational/status', live:false },
+    { id:'ppa-mgr',   icon:'📜', name:'PPA Portfolio Manager', type:'REST · JSON', endpoint:'https://api.ppa-manager.nextera.com/v2/contracts/active', live:false },
+  ],
+};
+
+/* ═══════════════════════════════════════════════════
+   VIZ HELPERS
+═══════════════════════════════════════════════════ */
+function gaugeSVG(pct, color, size=64) {
+  const r = (size/2) - 6; const cx = size/2; const cy = size/2;
+  const circ = 2 * Math.PI * r;
+  const dash = (pct * circ).toFixed(1);
+  return `<svg width="${size}" height="${size}" class="gauge-svg" viewBox="0 0 ${size} ${size}">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="5"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="5"
+      stroke-dasharray="${dash} ${circ.toFixed(1)}"
+      stroke-dashoffset="${(circ * 0.25).toFixed(1)}" stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})"/>
+  </svg>`;
+}
+
+function sparklineSVG(vals, color, w=180, h=40) {
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const range = max - min || 1;
+  const pts = vals.map((v, i) => {
+    const x = (i / (vals.length-1)) * w;
+    const y = h - ((v - min) / range) * (h - 6) - 3;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  return `<svg width="${w}" height="${h}" class="spark-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/>
+    <circle cx="${(vals.length-1)/(vals.length-1)*w}" cy="${(h - ((vals[vals.length-1]-min)/range)*(h-6)-3).toFixed(1)}" r="3" fill="${color}"/>
+  </svg>`;
+}
+
+function heatmapHTML(cols, rows) {
+  const cellColor = (v) => {
+    if (v < .1) return 'rgba(34,197,94,.5)';
+    if (v < .3) return 'rgba(34,197,94,.25)';
+    if (v < .5) return 'rgba(245,158,11,.3)';
+    if (v < .7) return 'rgba(245,158,11,.55)';
+    return 'rgba(239,68,68,.5)';
+  };
+  const header = `<div class="heatmap-row"><div class="heatmap-label"></div>${cols.map(c=>`<div style="flex:1;font-size:.58rem;color:var(--muted);text-align:center">${c}</div>`).join('')}</div>`;
+  const body = rows.map(([_t, lbl, ...vals]) =>
+    `<div class="heatmap-row"><div class="heatmap-label">${lbl}</div>${vals.map(v=>`<div class="hm-cell" style="background:${cellColor(v)}" title="${(v*100).toFixed(0)}%"></div>`).join('')}</div>`
+  ).join('');
+  return `<div class="heatmap-viz">${header}${body}</div>`;
+}
+
+function barsHTML(bars, color) {
+  return `<div class="bars-viz">${bars.map(([lbl, valStr, pct, c]) =>
+    `<div class="bar-row">
+      <div class="bar-label">${lbl}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.min(1,pct)*100}%;background:${c||color}"></div></div>
+      <div class="bar-val">${valStr}</div>
+    </div>`).join('')}</div>`;
+}
+
+function statusGridHTML(items) {
+  const sc = s => s==='ok'?'#22c55e':s==='warn'?'#f59e0b':'#ef4444';
+  return `<div class="status-grid-viz">${items.map(([lbl,val,s])=>
+    `<div class="sg-item"><div class="sg-dot" style="background:${sc(s)}"></div><span>${lbl}: <strong style="color:${sc(s)}">${val}</strong></span></div>`
+  ).join('')}</div>`;
+}
+
+function renderViz(twin) {
+  switch(twin.viz) {
+    case 'gauge':
+      return `<div class="gauge-viz">
+        ${gaugeSVG(twin.gaugePct, twin.gaugeColor)}
+        <div class="gauge-side">
+          <div class="gauge-val" style="color:${twin.gaugeColor}">${twin.gaugeUnit}</div>
+          <div class="gauge-lbl">${twin.gaugeLabel}</div>
+        </div>
+      </div>`;
+    case 'sparkline':
+      return `<div class="spark-wrap">
+        <div class="spark-head"><span>${twin.sparkLabel}</span><span class="spark-val" style="color:${twin.sparkColor}">${twin.sparkCurrent}</span></div>
+        ${sparklineSVG(twin.sparkVals, twin.sparkColor)}
+      </div>`;
+    case 'bars':
+      return barsHTML(twin.bars, twin.barColor);
+    case 'heatmap':
+      return heatmapHTML(twin.hmCols, twin.hmRows);
+    case 'status':
+      return statusGridHTML(twin.statuses);
+    default: return '';
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   RENDER TWINS
+═══════════════════════════════════════════════════ */
+function renderTwins(phaseNum) {
+  const twins = TWINS[phaseNum] || [];
+  return `<div class="twins-grid">${twins.map(t => `
+    <div class="twin-tile">
+      <div class="twin-tile-head">
+        <span class="twin-tile-icon">${t.icon}</span>
+        <span class="twin-tile-name">${t.name}</span>
+        <span class="twin-mode-badge mock" id="tmode-${t.id}">SIMULATION</span>
+      </div>
+      <div class="twin-tile-viz">${renderViz(t)}</div>
+      <div class="twin-data-needed">
+        <span style="font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Benötigte Daten: </span>
+        ${t.data.map(d=>`<span class="twin-data-tag">${d}</span>`).join('')}
+      </div>
+      <div class="twin-tile-footer">
+        <span>${t.footer}</span>
+        <span style="color:#fbbf24;font-size:.6rem">MOCK-DATEN</span>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+/* ═══════════════════════════════════════════════════
+   RENDER CONNECTORS
+═══════════════════════════════════════════════════ */
+function renderConnectors(phaseNum) {
+  const conns = CONNECTORS[phaseNum] || [];
+  return `<div class="connectors-grid">${conns.map(c => `
+    <div class="connector-card" id="conn-card-${c.id}">
+      <div class="connector-head">
+        <span class="connector-icon">${c.icon}</span>
+        <div>
+          <div class="connector-name">${c.name}</div>
+          <div class="connector-type">${c.type}</div>
+        </div>
+      </div>
+      <div class="connector-status-row">
+        <span class="conn-status-badge simulation" id="conn-badge-${c.id}">SIMULATION</span>
+        <label class="toggle-wrap">
+          <span class="toggle-lbl" id="conn-lbl-${c.id}">Mock</span>
+          <label class="toggle-switch">
+            <input type="checkbox" onchange="toggleConnector('${c.id}',this.checked)" />
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </label>
+      </div>
+      <div class="conn-endpoint">${c.endpoint}</div>
+      <button class="conn-configure-btn" onclick="openConfig('${c.id}','${c.name.replace(/['"]/g,'')}','${c.endpoint}','${c.type.replace(/['"]/g,'')}')">
+        ⚙️ Konfigurieren
+      </button>
+    </div>`).join('')}</div>`;
+}
+
+/* ═══════════════════════════════════════════════════
    RENDER
 ═══════════════════════════════════════════════════ */
 function colorForStatus(s) {
@@ -1143,8 +1736,20 @@ function renderDetail(phase) {
       ${d.description}
     </div>
 
-    <div class="section-title" style="margin-top:3rem">Wichtigste Anbieter &amp; Digital Twins</div>
+    <div class="section-title" style="margin-top:3rem">Wichtigste Anbieter &amp; Unternehmens-Digital-Twins</div>
     <div class="companies">${companiesHtml}</div>
+
+    <div class="section-title" style="margin-top:3rem">🛰️ Operative Digital Twins</div>
+    <p style="font-size:.78rem;color:var(--muted);margin-bottom:1rem;line-height:1.6">
+      Live-Monitoring-Kacheln für diese Phase. Aktuell im <strong style="color:#fbbf24">Simulations-Modus</strong> — Connectors konfigurieren &amp; aktivieren, um auf Echtdaten umzuschalten.
+    </p>
+    ${renderTwins(d.num)}
+
+    <div class="section-title" style="margin-top:3rem">🔌 Daten-Connectors &amp; API-Konfiguration</div>
+    <p style="font-size:.78rem;color:var(--muted);margin-bottom:1rem;line-height:1.6">
+      Endpoint-Zugangsdaten hinterlegen und Toggle aktivieren — der zugehörige Digital Twin wechselt sofort auf Echtdaten.
+    </p>
+    ${renderConnectors(d.num)}
 
     <div style="margin-top:2rem;text-align:center">
       <a href="supply-chain.html" style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.7rem 1.4rem;border-radius:8px;font-size:0.85rem;font-weight:600;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--muted2);text-decoration:none;transition:background .2s"
@@ -1153,6 +1758,55 @@ function renderDetail(phase) {
       </a>
     </div>`;
 }
+
+/* ── Connector toggle ── */
+function toggleConnector(id, live) {
+  const badge = document.getElementById(`conn-badge-${id}`);
+  const lbl   = document.getElementById(`conn-lbl-${id}`);
+  if (live) {
+    badge.className = 'conn-status-badge connected';
+    badge.textContent = 'VERBUNDEN';
+    lbl.textContent = 'Live';
+  } else {
+    badge.className = 'conn-status-badge simulation';
+    badge.textContent = 'SIMULATION';
+    lbl.textContent = 'Mock';
+  }
+}
+
+/* ── Config modal ── */
+const cfgOverlay = document.getElementById('cfg-overlay');
+function openConfig(id, name, endpoint, type) {
+  document.getElementById('cfg-title').textContent = `🔌 ${name}`;
+  document.getElementById('cfg-url').value = endpoint;
+  document.getElementById('cfg-test-result').textContent = '';
+  document.getElementById('cfg-test-result').className = 'cfg-test-result';
+  cfgOverlay.classList.add('open');
+  cfgOverlay._connId = id;
+}
+document.getElementById('cfg-cancel').addEventListener('click', () => cfgOverlay.classList.remove('open'));
+cfgOverlay.addEventListener('click', e => { if (e.target === cfgOverlay) cfgOverlay.classList.remove('open'); });
+document.getElementById('cfg-test').addEventListener('click', () => {
+  const r = document.getElementById('cfg-test-result');
+  r.textContent = 'Verbindung wird getestet…';
+  r.className = 'cfg-test-result';
+  setTimeout(() => {
+    r.textContent = '✓ Verbindung erfolgreich — 200 OK · Latenz 48 ms';
+    r.className = 'cfg-test-result ok';
+  }, 1200);
+});
+document.getElementById('cfg-save').addEventListener('click', () => {
+  const id = cfgOverlay._connId;
+  if (id) {
+    const badge = document.getElementById(`conn-badge-${id}`);
+    const lbl   = document.getElementById(`conn-lbl-${id}`);
+    if (badge) { badge.className = 'conn-status-badge connected'; badge.textContent = 'VERBUNDEN'; }
+    if (lbl)   { lbl.textContent = 'Live'; }
+    const chk = document.querySelector(`#conn-card-${id} input[type=checkbox]`);
+    if (chk) chk.checked = true;
+  }
+  cfgOverlay.classList.remove('open');
+});
 
 /* ── Bootstrap ── */
 const phase = new URLSearchParams(window.location.search).get('phase') || '01';
