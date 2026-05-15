@@ -390,6 +390,7 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.15); border-radius: 2px; }
   </style>
+  <script src="api-config.js"></script>
 </head>
 <body>
 
@@ -400,6 +401,7 @@
   <div class="nav-status">
     <span class="blink">●</span> LIVE FEED AKTIV
   </div>
+  <button class="st-settings-btn" onclick="stOpenSettings()" title="API-Einstellungen" style="margin-left:0.5rem">⚙</button>
   <a href="#" id="nav-back-btn" class="nav-back">← Detail</a>
 </nav>
 
@@ -556,7 +558,7 @@ const accentColor = decodeURIComponent(params.get('color') || '#00e5ff');
 /* ── Phase-specific config ── */
 const PHASE_CONFIG = {
   '01': {
-    terrain: 'forest',
+    terrain: 'forest', lat: 35.920, lon: -82.063, usState: 'NC',
     coordLabel: '35.920°N 82.063°W · ALT: 520 m',
     satCoords: 'LAT: 35.920°N\nLNG: 82.063°W\nALT: 520 m',
     satellite: 'SENTINEL-2',
@@ -569,7 +571,7 @@ const PHASE_CONFIG = {
     risk:      [ ['Geopolit. Risiko',   '7.2/10',    0.72, 'warn'], ['Versorg.-Risiko',   '9.5/10',    0.95, 'crit'], ['Transporthindernisse', 'KEINE', 0.0, 'ok'],  ['Natur-Event',       'KEINES',    0.0,  'ok'], ],
   },
   '02': {
-    terrain: 'industrial',
+    terrain: 'industrial', lat: 39.546, lon: -81.636, usState: 'OH',
     coordLabel: '39.546°N 81.636°W · ALT: 185 m',
     satCoords: 'LAT: 39.546°N\nLNG: 81.636°W\nALT: 185 m',
     satellite: 'LANDSAT-9',
@@ -582,7 +584,7 @@ const PHASE_CONFIG = {
     risk:      [ ['Geopolit. Risiko',   '6.8/10',    0.68, 'warn'], ['Xinjiang-Risiko',   'ERHÖHT',    0.7,  'warn'], ['Energieausfall',    'NIEDRIG',   0.15, 'ok'],   ['Streik-Risiko',     'KEINES',    0.0,  'ok'], ],
   },
   '03': {
-    terrain: 'industrial',
+    terrain: 'industrial', lat: 34.261, lon: 117.185, usState: null,
     coordLabel: '34.261°N 117.185°E · ALT: 45 m',
     satCoords: 'LAT: 34.261°N\nLNG: 117.185°E\nALT: 45 m',
     satellite: 'GAOFEN-7',
@@ -595,7 +597,7 @@ const PHASE_CONFIG = {
     risk:      [ ['Geopolit. Risiko',   '7.5/10',    0.75, 'warn'], ['Preisdruck',        'HOCH',      0.8,  'warn'], ['Energiekontingent', 'NORMAL',    0.4,  'ok'],   ['Sanktions-Risiko',  'GERING',    0.2,  'ok'], ],
   },
   '04': {
-    terrain: 'urban',
+    terrain: 'urban', lat: 37.170, lon: 138.249, usState: null,
     coordLabel: '37.170°N 138.249°E · ALT: 6 m',
     satCoords: 'LAT: 37.170°N\nLNG: 138.249°E\nALT: 6 m',
     satellite: 'ALOS-3',
@@ -608,7 +610,7 @@ const PHASE_CONFIG = {
     risk:      [ ['Geopolit. Risiko',   '6.4/10',    0.64, 'warn'], ['Erdbeben-Risiko',   '6.0/10',    0.6,  'warn'], ['Export-Lizenz JP',  'GÜLTIG',    0.0,  'ok'],   ['Preisdruck',        'GERING',    0.2,  'ok'], ],
   },
   '05': {
-    terrain: 'urban',
+    terrain: 'urban', lat: 51.421, lon: 5.490, usState: null,
     coordLabel: '51.421°N 5.490°E · ALT: 23 m',
     satCoords: 'LAT: 51.421°N\nLNG: 5.490°E\nALT: 23 m',
     satellite: 'PLEIADES-1A',
@@ -621,7 +623,7 @@ const PHASE_CONFIG = {
     risk:      [ ['Geopolit. Risiko',   '9.1/10',    0.91, 'crit'], ['NL Exportkontrolle','AKTIV (CN)',0.85, 'crit'], ['Technol.-Monopol',  '10/10',     1.0,  'crit'], ['Lieferketten-Breite','7.0/10',   0.7,  'warn'], ],
   },
   '06': {
-    terrain: 'urban',
+    terrain: 'urban', lat: 24.786, lon: 120.997, usState: null,
     coordLabel: '24.786°N 120.997°E · ALT: 75 m',
     satCoords: 'LAT: 24.786°N\nLNG: 120.997°E\nALT: 75 m',
     satellite: 'FORMOSAT-7',
@@ -634,7 +636,7 @@ const PHASE_CONFIG = {
     risk:      [ ['Taiwan-Geopolit.',   '9.5/10',    0.95, 'crit'], ['Wasserrisiko',      '6.5/10',    0.65, 'warn'], ['Erdbebenrisiko',    '7.0/10',    0.7,  'warn'], ['Konzentration',     '9.0/10',    0.9,  'crit'], ],
   },
   '07': {
-    terrain: 'urban',
+    terrain: 'urban', lat: 37.372, lon: -121.964, usState: 'CA',
     coordLabel: '37.372°N -121.964°W · ALT: 21 m',
     satCoords: 'LAT: 37.372°N\nLNG: -121.964°W\nALT: 21 m',
     satellite: 'WORLDVIEW-3',
@@ -647,7 +649,7 @@ const PHASE_CONFIG = {
     risk:      [ ['Geopolit. Risiko',   '8.3/10',    0.83, 'crit'], ['Export-Kontrolle',  '8.0/10',    0.8,  'crit'], ['TSMC-Abhängigkeit', '8.5/10',    0.85, 'crit'], ['HBM-Engpass',       '7.0/10',    0.7,  'warn'], ],
   },
   '08': {
-    terrain: 'urban',
+    terrain: 'urban', lat: 37.387, lon: -121.944, usState: 'CA',
     coordLabel: '37.387°N -121.944°W · ALT: 15 m',
     satCoords: 'LAT: 37.387°N\nLNG: -121.944°W\nALT: 15 m',
     satellite: 'WORLDVIEW-2',
@@ -660,7 +662,7 @@ const PHASE_CONFIG = {
     risk:      [ ['GPU-Engpass',        '7.5/10',    0.75, 'warn'], ['Lieferkettenrisiko','4.5/10',    0.45, 'ok'],   ['Kühlengpass',       '5.5/10',    0.55, 'warn'], ['QS-Risiko',         '4.0/10',    0.4,  'ok'], ],
   },
   '09': {
-    terrain: 'desert',
+    terrain: 'desert', lat: 39.043, lon: -77.487, usState: 'VA',
     coordLabel: '39.043°N -77.487°W · ALT: 82 m',
     satCoords: 'LAT: 39.043°N\nLNG: -77.487°W\nALT: 82 m',
     satellite: 'MAXAR-WV3',
@@ -673,7 +675,7 @@ const PHASE_CONFIG = {
     risk:      [ ['Kapazitätsengpass',  '7.5/10',    0.75, 'warn'], ['Stromversorgung',   '7.0/10',    0.7,  'warn'], ['Kühlrisiko',        '5.0/10',    0.5,  'warn'], ['Cyberangriff-Risk.','4.0/10',   0.4,  'ok'], ],
   },
   '10': {
-    terrain: 'desert',
+    terrain: 'desert', lat: 26.896, lon: -80.107, usState: 'FL',
     coordLabel: '26.896°N -80.107°W · ALT: 5 m',
     satCoords: 'LAT: 26.896°N\nLNG: -80.107°W\nALT: 5 m',
     satellite: 'LANDSAT-9',
@@ -866,6 +868,116 @@ setInterval(() => {
   const t = jitterTargets[Math.floor(Math.random() * jitterTargets.length)];
   renderSensorSection(t.id, t.rows);
 }, 4000);
+
+/* ── Live data helpers ── */
+
+function markSectionLive(sectionId, source) {
+  const section = document.getElementById(sectionId);
+  if (!section) return;
+  const title = section.querySelector('.sp-section-title');
+  if (!title || title.dataset.live) return;
+  title.dataset.live = '1';
+  title.insertAdjacentHTML('beforeend',
+    `<span class="st-live-badge">LIVE</span>`);
+  title.insertAdjacentHTML('afterend',
+    `<div class="st-data-source">Quelle: ${source} · Aktualisiert ${new Date().toTimeString().slice(0,5)} UTC</div>`);
+}
+
+function injectLiveAlert(text, level) {
+  const alertList = document.getElementById('alert-list');
+  if (!alertList) return;
+  const now = new Date().toTimeString().slice(0, 8);
+  const cls = level === 'WARN' ? 'warn' : level === 'CRIT' ? 'crit' : 'info';
+  const el = document.createElement('div');
+  el.className = `alert-item ${cls}`;
+  el.innerHTML = `<span class="alert-time">${now}</span><span class="alert-lvl">${level}</span><span class="alert-text">${text}</span>`;
+  el.style.cssText = 'opacity:0;transform:translateX(-8px);transition:opacity .4s,transform .4s';
+  alertList.insertBefore(el, alertList.firstChild);
+  requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'none'; });
+  const cnt = document.getElementById('alert-count');
+  if (cnt) {
+    const n = parseInt(cnt.textContent) || 0;
+    cnt.textContent = `${n + 1} Events`;
+  }
+}
+
+async function loadLiveData() {
+  const lat = cfg.lat, lon = cfg.lon;
+  if (lat == null || lon == null) return;
+
+  // 1. Open-Meteo weather → update env KPIs
+  const wx = await ApiConfig.fetchWeather(lat, lon);
+  if (wx) {
+    cfg.env.forEach(row => {
+      const lbl = row[0].toLowerCase();
+      if (lbl.includes('wind')) {
+        row[1] = `${wx.wind_kmh} km/h`;
+        row[2] = Math.min(wx.wind_kmh / 120, 1);
+        row[3] = wx.wind_kmh > 60 ? 'warn' : 'ok';
+      } else if (lbl.includes('nieder') || lbl.includes('regen')) {
+        row[1] = `${wx.precip_mm} mm`;
+        row[2] = Math.min(wx.precip_mm / 50, 1);
+        row[3] = wx.precip_mm > 20 ? 'warn' : 'ok';
+      } else if (lbl.includes('temp') || lbl.includes('außen')) {
+        row[1] = `${wx.temp_c}°C`;
+        row[2] = Math.min(Math.abs(wx.temp_c) / 45, 1);
+        row[3] = 'ok';
+      } else if (lbl.includes('solar') && lbl.includes('einstrah')) {
+        // cloud cover affects solar irradiance estimate
+        const irr = Math.round(1000 * (1 - wx.cloud_pct / 100));
+        row[1] = `~${irr} W/m²`;
+        row[2] = irr / 1000;
+        row[3] = irr < 200 ? 'warn' : 'ok';
+      }
+    });
+    renderSensorSection('env-kpis', cfg.env);
+    markSectionLive('env-kpis', 'Open-Meteo');
+  }
+
+  // 2. USGS earthquakes → update risk KPIs
+  const eq = await ApiConfig.fetchEarthquakes(lat, lon);
+  if (eq) {
+    cfg.risk.forEach(row => {
+      const lbl = row[0].toLowerCase();
+      if (lbl.includes('erdbeben') || lbl.includes('natur-event') || lbl.includes('seismi')) {
+        if (eq.count === 0) {
+          row[1] = 'KEINES'; row[2] = 0; row[3] = 'ok';
+        } else {
+          row[1] = `M${eq.maxMag} (${eq.count} Ereig.)`;
+          row[2] = Math.min(eq.maxMag / 9, 1);
+          row[3] = eq.maxMag >= 5.0 ? 'crit' : eq.maxMag >= 3.5 ? 'warn' : 'ok';
+        }
+      }
+    });
+    renderSensorSection('risk-kpis', cfg.risk);
+    markSectionLive('risk-kpis', 'USGS');
+    if (eq.count > 0 && eq.maxMag >= 3.0) {
+      injectLiveAlert(`USGS: ${eq.count} Erdbeben in 500 km · Stärkstes M${eq.maxMag} · ${eq.nearest || ''}`, eq.maxMag >= 5 ? 'CRIT' : 'WARN');
+    }
+  }
+
+  // 3. NOAA alerts (US phases only)
+  if (cfg.usState) {
+    const noaaAlerts = await ApiConfig.fetchNoaaAlerts(cfg.usState);
+    if (noaaAlerts?.length) {
+      noaaAlerts.forEach(a => {
+        const lvl = a.severity === 'Extreme' || a.severity === 'Severe' ? 'WARN' : 'INFO';
+        injectLiveAlert(`NOAA ${cfg.usState}: ${a.headline}`, lvl);
+      });
+      markSectionLive('env-kpis', 'Open-Meteo / NOAA');
+    }
+  }
+
+  // 4. NASA EONET natural events → alert feed
+  const events = await ApiConfig.fetchNaturalEvents();
+  if (events?.length) {
+    events.slice(0, 3).forEach(e => {
+      injectLiveAlert(`NASA EONET · ${e.category}: ${e.title}`, 'INFO');
+    });
+  }
+}
+
+loadLiveData();
 </script>
 </body>
 </html>

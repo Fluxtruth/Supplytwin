@@ -190,6 +190,7 @@
     <button id="disruption-btn" class="disruption-btn">⚡ Störung simulieren</button>
     <a href="supply-chain.html" class="nav-link">≡ Listen-Ansicht</a>
     <a href="index.html" class="nav-link">← Startseite</a>
+    <button class="st-settings-btn" onclick="stOpenSettings()" title="API-Einstellungen">⚙</button>
   </div>
 </nav>
 
@@ -985,5 +986,6 @@ document.getElementById('disruption-btn').addEventListener('click', () => {
 renderGraph();
 applyTransform();
 </script>
+<script src="api-config.js"></script>
 </body>
 </html>
