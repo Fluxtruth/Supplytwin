@@ -190,9 +190,39 @@
     <button id="disruption-btn" class="disruption-btn">⚡ Störung simulieren</button>
     <a href="supply-chain.html" class="nav-link">≡ Listen-Ansicht</a>
     <a href="index.html" class="nav-link">← Startseite</a>
-    <button class="st-settings-btn" onclick="stOpenSettings()" title="API-Einstellungen">⚙</button>
+    <button id="g-settings-btn" title="Einstellungen" style="padding:.28rem .6rem;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--muted2);cursor:pointer;font-size:.82rem;font-family:inherit">⚙️</button>
   </div>
 </nav>
+
+<div id="g-settings-overlay" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.55);align-items:center;justify-content:center">
+  <div style="background:#0f1422;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:1.6rem;width:340px;max-width:calc(100vw - 2rem);box-shadow:0 24px 64px rgba(0,0,0,.6)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <span style="font-size:.92rem;font-weight:800">⚙️ FMP API-Key</span>
+      <button id="g-settings-close" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:5px;color:#8490b8;cursor:pointer;padding:.2rem .5rem;font-family:inherit">✕</button>
+    </div>
+    <label style="font-size:.62rem;color:#5a6380;letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:.35rem">Financial Modeling Prep API-Key</label>
+    <input id="g-fmp-key" type="password" placeholder="••••••••••••••" style="width:100%;padding:.5rem .7rem;border-radius:7px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#e0e4f0;font-size:.8rem;font-family:inherit;box-sizing:border-box;margin-bottom:.8rem" />
+    <button id="g-fmp-save" style="width:100%;padding:.48rem;border-radius:7px;background:linear-gradient(135deg,#4f8ef7,#a855f7);border:none;color:#fff;font-size:.8rem;font-weight:600;cursor:pointer;font-family:inherit">Speichern</button>
+  </div>
+</div>
+<script>
+(function(){
+  const ov = document.getElementById('g-settings-overlay');
+  document.getElementById('g-settings-btn').addEventListener('click', () => {
+    try { document.getElementById('g-fmp-key').value = localStorage.getItem('supplytwin_fmp_key') || ''; } catch {}
+    ov.style.display = 'flex';
+  });
+  document.getElementById('g-settings-close').addEventListener('click', () => { ov.style.display = 'none'; });
+  ov.addEventListener('click', e => { if (e.target === ov) ov.style.display = 'none'; });
+  document.getElementById('g-fmp-save').addEventListener('click', () => {
+    const k = document.getElementById('g-fmp-key').value.trim();
+    try { if (k) localStorage.setItem('supplytwin_fmp_key', k); } catch {}
+    const btn = document.getElementById('g-fmp-save');
+    btn.textContent = 'Gespeichert ✓';
+    setTimeout(() => { btn.textContent = 'Speichern'; ov.style.display = 'none'; }, 1200);
+  });
+})();
+</script>
 
 <div id="graph-wrap">
   <svg id="graph-svg">

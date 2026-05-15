@@ -431,6 +431,88 @@
       transition: background .2s;
     }
     .conn-configure-btn:hover { background: rgba(79,142,247,.18); }
+    .conn-error-chip {
+      font-size: .62rem; color: #f87171; margin-top: .3rem;
+      background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.2);
+      border-radius: 4px; padding: .2rem .5rem;
+    }
+
+    /* ── SETTINGS DRAWER ── */
+    .nav-settings-btn {
+      margin-left: auto; padding: .32rem .62rem; border-radius: 6px; cursor: pointer;
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+      color: var(--muted2); font-size: .85rem; transition: border-color .2s, color .2s;
+    }
+    .nav-settings-btn:hover { border-color: rgba(255,255,255,.22); color: var(--text); }
+    .settings-overlay {
+      position: fixed; inset: 0; z-index: 900;
+      background: rgba(0,0,0,0); pointer-events: none;
+      transition: background .25s;
+    }
+    .settings-overlay.open { background: rgba(0,0,0,.52); pointer-events: all; }
+    .settings-drawer {
+      position: fixed; top: 0; right: -380px; bottom: 0;
+      width: 360px; max-width: calc(100vw - 1rem);
+      background: #0f1422; border-left: 1px solid rgba(255,255,255,.1);
+      box-shadow: -16px 0 48px rgba(0,0,0,.5);
+      display: flex; flex-direction: column;
+      overflow-y: auto;
+      transition: right .28s cubic-bezier(.4,0,.2,1);
+      z-index: 901;
+    }
+    .settings-overlay.open .settings-drawer { right: 0; }
+    .settings-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 1.4rem; border-bottom: 1px solid rgba(255,255,255,.08);
+      position: sticky; top: 0; background: #0f1422; z-index: 1;
+    }
+    .settings-hdr-title { font-size: .95rem; font-weight: 800; }
+    .settings-close-btn {
+      width: 28px; height: 28px; border-radius: 6px;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+      color: var(--muted2); cursor: pointer; font-size: .75rem;
+    }
+    .settings-close-btn:hover { background: rgba(255,255,255,.12); color: var(--text); }
+    .settings-sec {
+      padding: 1.1rem 1.4rem; border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .settings-sec-lbl {
+      font-size: .6rem; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: .7rem;
+    }
+    .settings-key-row { display: flex; gap: .4rem; margin-bottom: .4rem; }
+    .settings-key-row .cfg-input { flex: 1; }
+    .settings-vis-btn {
+      width: 36px; border-radius: 7px; flex-shrink: 0;
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+      color: var(--muted2); cursor: pointer; font-size: .85rem;
+    }
+    .settings-key-hint { font-size: .62rem; color: var(--muted); line-height: 1.55; margin-bottom: .7rem; }
+    .settings-save-btn {
+      width: 100%; padding: .48rem; border-radius: 7px;
+      background: linear-gradient(135deg,#4f8ef7,#a855f7); border: none;
+      color: #fff; font-size: .8rem; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+    .settings-save-btn:hover { opacity: .9; }
+    .settings-error {
+      font-size: .68rem; color: #f87171; margin-top: .5rem;
+      background: rgba(239,68,68,.07); border: 1px solid rgba(239,68,68,.2);
+      border-radius: 5px; padding: .35rem .6rem;
+    }
+    .settings-live-list { display: flex; flex-direction: column; gap: .35rem; }
+    .settings-live-item {
+      display: flex; align-items: center; gap: .5rem;
+      font-size: .73rem; padding: .35rem .5rem;
+      background: rgba(34,197,94,.06); border: 1px solid rgba(34,197,94,.15);
+      border-radius: 6px; color: #4ade80;
+    }
+    .settings-live-empty { font-size: .73rem; color: var(--muted); font-style: italic; }
+    .settings-reset-btn {
+      font-size: .72rem; padding: .38rem .8rem; border-radius: 6px;
+      background: rgba(239,68,68,.07); border: 1px solid rgba(239,68,68,.2);
+      color: #f87171; cursor: pointer; font-family: inherit;
+    }
+    .settings-reset-btn:hover { background: rgba(239,68,68,.14); }
 
     /* ── CONFIG MODAL ── */
     .config-overlay {
@@ -485,7 +567,7 @@
     <span>›</span>
     <span id="nav-phase-name">Phase</span>
   </div>
-  <button class="st-settings-btn" onclick="stOpenSettings()" title="API-Einstellungen" style="margin-left:auto">⚙</button>
+  <button class="nav-settings-btn" id="nav-settings-btn" title="Einstellungen">⚙️</button>
 </nav>
 
 <div class="phase-hero" id="phase-hero"></div>
@@ -530,6 +612,40 @@
       <button class="cfg-btn-cancel" id="cfg-cancel">Abbrechen</button>
       <button class="cfg-btn-test"   id="cfg-test">Verbindung testen</button>
       <button class="cfg-btn-save"   id="cfg-save">Speichern &amp; aktivieren</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SETTINGS DRAWER ── -->
+<div class="settings-overlay" id="settings-overlay">
+  <div class="settings-drawer">
+    <div class="settings-hdr">
+      <span class="settings-hdr-title">⚙️ Globale Einstellungen</span>
+      <button class="settings-close-btn" id="settings-close">✕</button>
+    </div>
+    <div class="settings-sec">
+      <div class="settings-sec-lbl">FMP API-Key (global)</div>
+      <div class="settings-key-row">
+        <input class="cfg-input masked" id="settings-fmp-key" type="password"
+               placeholder="Ihr FMP API-Key" autocomplete="off" />
+        <button class="settings-vis-btn" id="settings-fmp-vis" title="Anzeigen/Verstecken">👁</button>
+      </div>
+      <div class="settings-key-hint">
+        Wird für alle FMP-Connectors verwendet ·
+        <a href="https://site.financialmodelingprep.com/developer/docs" target="_blank"
+           rel="noopener" style="color:#7eb3ff">Kostenlos registrieren →</a>
+      </div>
+      <button class="settings-save-btn" id="settings-save-key">Speichern</button>
+      <div class="settings-error" id="settings-error-msg" style="display:none"></div>
+    </div>
+    <div class="settings-sec">
+      <div class="settings-sec-lbl">Aktive Connectors</div>
+      <div class="settings-live-list" id="settings-live-list">
+        <div class="settings-live-empty">Keine aktiven Connectors</div>
+      </div>
+    </div>
+    <div class="settings-sec" style="border-bottom:none">
+      <button class="settings-reset-btn" id="settings-reset">Alle Einstellungen zurücksetzen</button>
     </div>
   </div>
 </div>
@@ -1638,6 +1754,47 @@ const FMP_CONNECTORS = {
     live:false, note:'Tickers: NEE, CEG, DUK, AES' },
 };
 
+/* ── localStorage helpers ── */
+function storageGet(k)       { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
+function storageSet(k, v)    { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+function getFmpKey()         { try { return localStorage.getItem('supplytwin_fmp_key') || ''; } catch { return ''; } }
+function setFmpKey(k)        { try { localStorage.setItem('supplytwin_fmp_key', k); } catch {} }
+function getConnCfg(id)      { return storageGet(`supplytwin_conn_${id}`) || {}; }
+function setConnCfg(id, obj) { storageSet(`supplytwin_conn_${id}`, obj); }
+function getLiveSet() {
+  try {
+    return new Set(Object.keys(localStorage)
+      .filter(k => k.startsWith('supplytwin_conn_'))
+      .filter(k => { const v = storageGet(k); return v && v.live; })
+      .map(k => k.replace('supplytwin_conn_', '')));
+  } catch { return new Set(); }
+}
+
+/* ── FMP ticker maps ── */
+const TICKER_MAP = {
+  'GSM':   'ferroglobe',  'ELK':   'elkem',       'WCH':   'wacker-si',
+  'DQ':    'daqo',        'TOELY': 'shinetsu',     'SMCOY': 'sumco',
+  'GWF':   'globalwafers','ASML':  'asml',         'AMAT':  'amat',
+  'LRCX':  'lam',         'KLAC':  'kla',          'TSM':   'tsmc',
+  'GFS':   'gf',          'INTC':  'intel-foundry','NVDA':  'nvidia',
+  'AMD':   'amd-gpu',     'SMCI':  'supermicro',   'DELL':  'dell',
+  'HPE':   'hpe',         'AMZN':  'aws',          'MSFT':  'azure',
+  'GOOGL': 'gcp',         'META':  'meta',         'ORCL':  'oracle',
+  'NEE':   'nextera',     'CEG':   'constellation','DUK':   'duke',
+  'AES':   'aes',
+};
+const FMP_PHASE_TICKERS = {
+  'fmp-02': ['GSM','ELK','WCH'],
+  'fmp-03': ['DQ','WCH'],
+  'fmp-04': ['TOELY','SMCOY','GWF'],
+  'fmp-05': ['ASML','AMAT','LRCX','KLAC'],
+  'fmp-06': ['TSM','GFS','INTC'],
+  'fmp-07': ['NVDA','AMD'],
+  'fmp-08': ['SMCI','DELL','HPE'],
+  'fmp-09': ['AMZN','MSFT','GOOGL','META','ORCL'],
+  'fmp-10': ['NEE','CEG','DUK','AES'],
+};
+
 /* ═══════════════════════════════════════════════════
    VIZ HELPERS
 ═══════════════════════════════════════════════════ */
@@ -1745,10 +1902,10 @@ function renderInvBar(coId, phaseColor) {
   if (!inv) return '';
   if (inv.days === null) {
     return `
-    <div class="inv-section">
+    <div class="inv-section" id="inv-section-${coId}">
       <div class="inv-header">
         <span class="inv-title">📦 Lagerbestand &amp; Versorgungsresilienz</span>
-        <span class="inv-source-tag">${inv.source}</span>
+        <span class="inv-source-tag" id="inv-src-${coId}">${inv.source}</span>
       </div>
       <div class="inv-na">${inv.note}</div>
     </div>`;
@@ -1759,26 +1916,96 @@ function renderInvBar(coId, phaseColor) {
   const trendCls = invTrendCls(inv.trend);
   const trendLabel = inv.trend && inv.trend !== 'N/A' ? inv.trend : '—';
   return `
-    <div class="inv-section">
+    <div class="inv-section" id="inv-section-${coId}">
       <div class="inv-header">
         <span class="inv-title">📦 Lagerbestand &amp; Versorgungsresilienz</span>
-        <span class="inv-source-tag">${inv.source}</span>
+        <span class="inv-source-tag" id="inv-src-${coId}">${inv.source}</span>
       </div>
       <div class="inv-bar-row">
-        <div class="inv-days-val" style="color:${color}">${inv.days}d</div>
+        <div class="inv-days-val" id="inv-days-${coId}" style="color:${color}">${inv.days}d</div>
         <div class="inv-bar-col">
           <div class="inv-bar-track">
-            <div class="inv-bar-fill" style="width:${pct}%;background:${color}"></div>
+            <div class="inv-bar-fill" id="inv-fill-${coId}" style="width:${pct}%;background:${color}"></div>
           </div>
           <div class="inv-bar-labels">
             <span>Versorgungspuffer bis Schock</span>
-            <span style="color:${color};font-weight:700">${inv.days} Tage</span>
+            <span id="inv-label-${coId}" style="color:${color};font-weight:700">${inv.days} Tage</span>
           </div>
         </div>
-        <span class="inv-trend-badge ${trendCls}">${trendLabel}</span>
+        <span class="inv-trend-badge ${trendCls}" id="inv-trend-${coId}">${trendLabel}</span>
       </div>
       <div class="inv-note">${inv.note}</div>
     </div>`;
+}
+
+function applyLiveInventory(coId, days, source) {
+  const MAX_DAYS = 180;
+  const color = invColor(days);
+  const pct   = Math.min(100, (days / MAX_DAYS) * 100).toFixed(1);
+  if (INVENTORY[coId]) { INVENTORY[coId].days = days; INVENTORY[coId].source = source; }
+  const elDays  = document.getElementById(`inv-days-${coId}`);
+  const elFill  = document.getElementById(`inv-fill-${coId}`);
+  const elLabel = document.getElementById(`inv-label-${coId}`);
+  const elSrc   = document.getElementById(`inv-src-${coId}`);
+  if (!elDays) return;
+  elDays.textContent  = `${days}d`;
+  elDays.style.color  = color;
+  elFill.style.width  = `${pct}%`;
+  elFill.style.background = color;
+  elLabel.textContent = `${days} Tage`;
+  elLabel.style.color = color;
+  elSrc.textContent   = source;
+  elSrc.style.color   = '#4ade80';
+  elSrc.style.borderColor = 'rgba(34,197,94,.3)';
+}
+
+function markConnectorError(id, msg) {
+  const card = document.getElementById(`conn-card-${id}`);
+  if (!card) return;
+  let chip = card.querySelector('.conn-error-chip');
+  if (!chip) { chip = document.createElement('div'); chip.className = 'conn-error-chip'; card.appendChild(chip); }
+  chip.textContent = `⚠ ${msg}`;
+}
+
+function showSettingsError(msg) {
+  const el = document.getElementById('settings-error-msg');
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
+
+async function fetchFMPPhaseData(fmpConnId, apiKey) {
+  const tickers = FMP_PHASE_TICKERS[fmpConnId];
+  if (!tickers || !apiKey) return;
+  for (const ticker of tickers) {
+    let resolvedIds = [TICKER_MAP[ticker]].filter(Boolean);
+    if (ticker === 'WCH') {
+      resolvedIds = fmpConnId === 'fmp-02' ? ['wacker-si'] : ['wacker'];
+    }
+    const url = `https://financialmodelingprep.com/api/v3/key-metrics/${ticker}?limit=1&apikey=${apiKey}`;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    try {
+      const resp = await fetch(url, { signal: controller.signal });
+      clearTimeout(timer);
+      if (resp.status === 403) {
+        showSettingsError('Ungültiger API-Key (403). Bitte FMP-Key prüfen.');
+        return;
+      }
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      if (!Array.isArray(data) || !data[0]) throw new Error('Leere Antwort');
+      const daysRaw = data[0].daysOfInventoryOnHand;
+      if (daysRaw == null) continue;
+      const days   = Math.round(daysRaw);
+      const source = `🟢 FMP · Live (${ticker})`;
+      for (const id of resolvedIds) {
+        if (INVENTORY[id]) applyLiveInventory(id, days, source);
+      }
+    } catch (err) {
+      clearTimeout(timer);
+      const msg = err.name === 'AbortError' ? `Timeout: ${ticker}` : `${ticker}: ${err.message}`;
+      markConnectorError(fmpConnId, msg);
+    }
+  }
 }
 
 function renderInvSummary(d) {
@@ -2031,6 +2258,7 @@ function renderDetail(phase) {
 function toggleConnector(id, live) {
   const badge = document.getElementById(`conn-badge-${id}`);
   const lbl   = document.getElementById(`conn-lbl-${id}`);
+  if (!badge) return;
   if (live) {
     badge.className = 'conn-status-badge connected';
     badge.textContent = 'VERBUNDEN';
@@ -2039,41 +2267,149 @@ function toggleConnector(id, live) {
     badge.className = 'conn-status-badge simulation';
     badge.textContent = 'SIMULATION';
     lbl.textContent = 'Mock';
+    const existing = getConnCfg(id);
+    if (Object.keys(existing).length) setConnCfg(id, { ...existing, live: false });
   }
 }
 
 /* ── Config modal ── */
 const cfgOverlay = document.getElementById('cfg-overlay');
 function openConfig(id, name, endpoint, type) {
-  document.getElementById('cfg-title').textContent = `🔌 ${name}`;
-  document.getElementById('cfg-url').value = endpoint;
+  const saved  = getConnCfg(id);
+  const isFmp  = endpoint.includes('financialmodelingprep.com');
+  const fmpKey = getFmpKey();
+  document.getElementById('cfg-title').textContent    = `🔌 ${name}`;
+  document.getElementById('cfg-url').value            = saved.url      || endpoint;
+  document.getElementById('cfg-auth').value           = saved.auth     || 'API Key (Header)';
+  document.getElementById('cfg-interval').value       = saved.interval || 'Echtzeit (WebSocket / MQTT)';
+  document.getElementById('cfg-key').value            = saved.key || (isFmp ? fmpKey : '');
   document.getElementById('cfg-test-result').textContent = '';
-  document.getElementById('cfg-test-result').className = 'cfg-test-result';
+  document.getElementById('cfg-test-result').className   = 'cfg-test-result';
+  cfgOverlay._connId   = id;
+  cfgOverlay._isFmp    = isFmp;
+  cfgOverlay._endpoint = endpoint;
   cfgOverlay.classList.add('open');
-  cfgOverlay._connId = id;
 }
 document.getElementById('cfg-cancel').addEventListener('click', () => cfgOverlay.classList.remove('open'));
 cfgOverlay.addEventListener('click', e => { if (e.target === cfgOverlay) cfgOverlay.classList.remove('open'); });
-document.getElementById('cfg-test').addEventListener('click', () => {
-  const r = document.getElementById('cfg-test-result');
+document.getElementById('cfg-test').addEventListener('click', async () => {
+  const r    = document.getElementById('cfg-test-result');
+  const url  = document.getElementById('cfg-url').value.trim();
+  const key  = document.getElementById('cfg-key').value.trim() || getFmpKey();
+  const isFmp = url.includes('financialmodelingprep.com');
   r.textContent = 'Verbindung wird getestet…';
   r.className = 'cfg-test-result';
-  setTimeout(() => {
-    r.textContent = '✓ Verbindung erfolgreich — 200 OK · Latenz 48 ms';
-    r.className = 'cfg-test-result ok';
-  }, 1200);
+  if (isFmp) {
+    const m = url.match(/\/([A-Z0-9]+)\?/);
+    const ticker = m ? m[1] : 'AAPL';
+    const testUrl = `https://financialmodelingprep.com/api/v3/quote/${ticker}?apikey=${key}`;
+    const t0 = Date.now();
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    try {
+      const resp = await fetch(testUrl, { signal: ctrl.signal });
+      clearTimeout(timer);
+      const ms = Date.now() - t0;
+      if (resp.status === 403) {
+        r.textContent = '✗ Ungültiger API-Key — 403 Forbidden';
+        r.className = 'cfg-test-result fail';
+      } else if (resp.ok) {
+        r.textContent = `✓ Verbindung erfolgreich — ${resp.status} OK · Latenz ${ms} ms`;
+        r.className = 'cfg-test-result ok';
+      } else {
+        r.textContent = `✗ HTTP ${resp.status} · ${ms} ms`;
+        r.className = 'cfg-test-result fail';
+      }
+    } catch (err) {
+      clearTimeout(timer);
+      r.textContent = err.name === 'AbortError' ? '✗ Timeout (>8 s)' : `✗ Netzwerkfehler: ${err.message}`;
+      r.className = 'cfg-test-result fail';
+    }
+  } else {
+    setTimeout(() => {
+      r.textContent = '✓ Verbindung erfolgreich — 200 OK · Latenz 48 ms (simuliert)';
+      r.className = 'cfg-test-result ok';
+    }, 1200);
+  }
 });
 document.getElementById('cfg-save').addEventListener('click', () => {
-  const id = cfgOverlay._connId;
-  if (id) {
-    const badge = document.getElementById(`conn-badge-${id}`);
-    const lbl   = document.getElementById(`conn-lbl-${id}`);
-    if (badge) { badge.className = 'conn-status-badge connected'; badge.textContent = 'VERBUNDEN'; }
-    if (lbl)   { lbl.textContent = 'Live'; }
-    const chk = document.querySelector(`#conn-card-${id} input[type=checkbox]`);
-    if (chk) chk.checked = true;
-  }
+  const id    = cfgOverlay._connId;
+  const isFmp = cfgOverlay._isFmp;
+  if (!id) return;
+  const cfg = {
+    url:      document.getElementById('cfg-url').value.trim(),
+    auth:     document.getElementById('cfg-auth').value,
+    key:      document.getElementById('cfg-key').value.trim(),
+    interval: document.getElementById('cfg-interval').value,
+    live:     true,
+  };
+  setConnCfg(id, cfg);
+  if (isFmp && cfg.key) setFmpKey(cfg.key);
+  toggleConnector(id, true);
+  const chk = document.querySelector(`#conn-card-${id} input[type=checkbox]`);
+  if (chk) chk.checked = true;
+  const btn = document.getElementById('cfg-save');
+  const orig = btn.textContent;
+  btn.textContent = 'Gespeichert ✓';
+  btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
+  setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1800);
   cfgOverlay.classList.remove('open');
+  if (isFmp && cfg.key) fetchFMPPhaseData(id, cfg.key);
+});
+
+/* ── Settings drawer ── */
+const settingsOverlay = document.getElementById('settings-overlay');
+
+function populateSettingsLiveList() {
+  const listEl = document.getElementById('settings-live-list');
+  const liveIds = getLiveSet();
+  if (liveIds.size === 0) {
+    listEl.innerHTML = '<div class="settings-live-empty">Keine aktiven Connectors</div>';
+    return;
+  }
+  const allConns = {};
+  Object.values(CONNECTORS).flat().forEach(c => allConns[c.id] = c.name);
+  Object.values(FMP_CONNECTORS).forEach(c => allConns[c.id] = c.name);
+  listEl.innerHTML = [...liveIds].map(id =>
+    `<div class="settings-live-item">🟢 <span>${allConns[id] || id}</span></div>`
+  ).join('');
+}
+
+document.getElementById('nav-settings-btn').addEventListener('click', () => {
+  document.getElementById('settings-fmp-key').value = getFmpKey();
+  document.getElementById('settings-error-msg').style.display = 'none';
+  populateSettingsLiveList();
+  settingsOverlay.classList.add('open');
+});
+document.getElementById('settings-close').addEventListener('click', () => settingsOverlay.classList.remove('open'));
+settingsOverlay.addEventListener('click', e => { if (e.target === settingsOverlay) settingsOverlay.classList.remove('open'); });
+
+document.getElementById('settings-fmp-vis').addEventListener('click', () => {
+  const inp = document.getElementById('settings-fmp-key');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+});
+
+document.getElementById('settings-save-key').addEventListener('click', () => {
+  const key = document.getElementById('settings-fmp-key').value.trim();
+  if (!key) { showSettingsError('Bitte einen API-Key eingeben.'); return; }
+  setFmpKey(key);
+  document.getElementById('settings-error-msg').style.display = 'none';
+  const btn = document.getElementById('settings-save-key');
+  btn.textContent = 'Gespeichert ✓';
+  setTimeout(() => { btn.textContent = 'Speichern'; }, 1800);
+  const liveIds = getLiveSet();
+  for (const id of liveIds) {
+    if (id.startsWith('fmp-')) fetchFMPPhaseData(id, key);
+  }
+});
+
+document.getElementById('settings-reset').addEventListener('click', () => {
+  if (!confirm('Alle Connector-Einstellungen löschen?')) return;
+  try {
+    Object.keys(localStorage).filter(k => k.startsWith('supplytwin_')).forEach(k => localStorage.removeItem(k));
+  } catch {}
+  settingsOverlay.classList.remove('open');
+  window.location.reload();
 });
 
 /* ── Live stock data (Alpha Vantage, requires API key) ── */
@@ -2138,6 +2474,30 @@ const phase = new URLSearchParams(window.location.search).get('phase') || '01';
 renderDetail(phase.padStart(2, '0'));
 loadLiveStockData(phase.padStart(2, '0'));
 loadLiveEnergyPrice(phase.padStart(2, '0'));
+
+/* ── Restore connector state from localStorage ── */
+document.addEventListener('DOMContentLoaded', () => {
+  const phaseNum = phase.padStart(2, '0');
+  const fmpKey   = getFmpKey();
+  const allConns = [
+    ...(CONNECTORS[phaseNum] || []),
+    ...(FMP_CONNECTORS[phaseNum] ? [FMP_CONNECTORS[phaseNum]] : []),
+  ];
+  allConns.forEach(c => {
+    const cfg = getConnCfg(c.id);
+    if (!cfg.live) return;
+    const badge = document.getElementById(`conn-badge-${c.id}`);
+    const lbl   = document.getElementById(`conn-lbl-${c.id}`);
+    const chk   = document.querySelector(`#conn-card-${c.id} input[type=checkbox]`);
+    if (badge) { badge.className = 'conn-status-badge connected'; badge.textContent = 'VERBUNDEN'; }
+    if (lbl)   lbl.textContent = 'Live';
+    if (chk)   chk.checked = true;
+    if (c.id.startsWith('fmp-')) {
+      const key = cfg.key || fmpKey;
+      if (key) fetchFMPPhaseData(c.id, key);
+    }
+  });
+});
 
 /* ── Shared CSS class ── */
 const style = document.createElement('style');
