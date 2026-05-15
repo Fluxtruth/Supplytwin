@@ -1,0 +1,17 @@
+{
+  "name": "supplytwin-api",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Supply Chain Twin — REST API + SSE Events + MCP Server",
+  "scripts": {
+    "start": "node server.js",
+    "mcp":   "node mcp-server.js",
+    "dev":   "node --watch server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "zod": "^3.22.4"
+  }
+}
