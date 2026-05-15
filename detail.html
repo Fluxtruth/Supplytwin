@@ -417,6 +417,7 @@
     .cfg-test-result.ok   { color: #4ade80; }
     .cfg-test-result.fail { color: #f87171; }
   </style>
+  <script src="api-config.js"></script>
 </head>
 <body>
 
@@ -428,6 +429,7 @@
     <span>›</span>
     <span id="nav-phase-name">Phase</span>
   </div>
+  <button class="st-settings-btn" onclick="stOpenSettings()" title="API-Einstellungen" style="margin-left:auto">⚙</button>
 </nav>
 
 <div class="phase-hero" id="phase-hero"></div>
@@ -1808,9 +1810,68 @@ document.getElementById('cfg-save').addEventListener('click', () => {
   cfgOverlay.classList.remove('open');
 });
 
+/* ── Live stock data (Alpha Vantage, requires API key) ── */
+const PHASE_STOCKS = {
+  '05': [{ sym: 'ASML',  label: 'ASML Aktienkurs' }],
+  '06': [{ sym: 'TSM',   label: 'TSMC Aktienkurs' }, { sym: 'INTC', label: 'Intel Aktienkurs' }],
+  '07': [{ sym: 'NVDA',  label: 'NVIDIA Aktienkurs' }, { sym: 'AMD', label: 'AMD Aktienkurs' }],
+  '08': [{ sym: 'SMCI',  label: 'Supermicro Aktienkurs' }],
+  '10': [{ sym: 'NEE',   label: 'NextEra Aktienkurs' }],
+};
+
+async function loadLiveStockData(phaseId) {
+  const stocks = PHASE_STOCKS[phaseId];
+  if (!stocks) return;
+  for (const { sym, label } of stocks) {
+    const q = await ApiConfig.fetchStockQuote(sym);
+    if (!q) continue;
+    const sign = parseFloat(q.change) >= 0 ? '+' : '';
+    const color = parseFloat(q.change) >= 0 ? '#4ade80' : '#f87171';
+    document.querySelectorAll('.kpi-label').forEach(el => {
+      if (el.textContent.trim().toLowerCase().includes(sym.toLowerCase()) ||
+          el.textContent.trim().toLowerCase().includes(label.toLowerCase())) {
+        const card = el.closest('.kpi-card');
+        if (!card) return;
+        const valEl = card.querySelector('.kpi-val');
+        if (valEl) {
+          valEl.textContent = `$${q.price}`;
+          valEl.style.color = color;
+        }
+        if (!card.querySelector('.st-data-source')) {
+          card.insertAdjacentHTML('beforeend',
+            `<div class="st-data-source" style="font-size:.6rem;color:#3d4460;margin-top:.25rem">` +
+            `${sign}${q.change} (${sign}${parseFloat(q.changePct).toFixed(2)}%) · Alpha Vantage</div>`);
+        }
+      }
+    });
+  }
+}
+
+async function loadLiveEnergyPrice(phaseId) {
+  if (phaseId !== '10') return;
+  const ep = await ApiConfig.fetchEnergyPrice();
+  if (!ep) return;
+  document.querySelectorAll('.kpi-label').forEach(el => {
+    const txt = el.textContent.toLowerCase();
+    if (txt.includes('strom') && (txt.includes('preis') || txt.includes('kWh'.toLowerCase()))) {
+      const card = el.closest('.kpi-card');
+      if (!card) return;
+      const valEl = card.querySelector('.kpi-val');
+      if (valEl) valEl.textContent = `$${ep.price_kWh}/kWh`;
+      if (!card.querySelector('.st-data-source')) {
+        card.insertAdjacentHTML('beforeend',
+          `<div class="st-data-source" style="font-size:.6rem;color:#3d4460;margin-top:.25rem">` +
+          `EIA · ${ep.period}</div>`);
+      }
+    }
+  });
+}
+
 /* ── Bootstrap ── */
 const phase = new URLSearchParams(window.location.search).get('phase') || '01';
 renderDetail(phase.padStart(2, '0'));
+loadLiveStockData(phase.padStart(2, '0'));
+loadLiveEnergyPrice(phase.padStart(2, '0'));
 
 /* ── Shared CSS class ── */
 const style = document.createElement('style');
