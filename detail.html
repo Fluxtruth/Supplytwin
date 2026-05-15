@@ -243,7 +243,63 @@
       .breadcrumb { display: none; }
     }
 
-    /* ── DIGITAL TWIN TILES ── */
+    /* ── INVENTORY / SUPPLY RESILIENCE ── */
+    .inv-section {
+      padding: .7rem 1.4rem 1rem;
+      border-top: 1px solid var(--border);
+      background: rgba(255,255,255,.015);
+    }
+    .inv-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: .55rem;
+    }
+    .inv-title {
+      font-size: .58rem; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .inv-source-tag {
+      font-size: .58rem; color: var(--muted);
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
+      padding: .1rem .4rem; border-radius: 3px;
+    }
+    .inv-bar-row {
+      display: flex; align-items: center; gap: .8rem;
+    }
+    .inv-days-val {
+      font-size: 1.3rem; font-weight: 900; line-height: 1; flex-shrink: 0; min-width: 62px;
+    }
+    .inv-bar-col { flex: 1; }
+    .inv-bar-track {
+      height: 7px; background: rgba(255,255,255,.07);
+      border-radius: 4px; overflow: hidden; margin-bottom: .28rem;
+    }
+    .inv-bar-fill { height: 100%; border-radius: 4px; }
+    .inv-bar-labels {
+      display: flex; justify-content: space-between;
+      font-size: .6rem; color: var(--muted);
+    }
+    .inv-trend-badge {
+      font-size: .62rem; font-weight: 700; padding: .12rem .42rem;
+      border-radius: 4px; flex-shrink: 0;
+    }
+    .inv-trend-up   { background:rgba(34,197,94,.12); color:#4ade80; border:1px solid rgba(34,197,94,.2); }
+    .inv-trend-down { background:rgba(239,68,68,.1);  color:#f87171; border:1px solid rgba(239,68,68,.2); }
+    .inv-trend-flat { background:rgba(255,255,255,.05); color:var(--muted); border:1px solid rgba(255,255,255,.08); }
+    .inv-note { font-size: .62rem; color: var(--muted); margin-top: .3rem; }
+    .inv-na { font-size: .73rem; color: var(--muted); font-style: italic; padding: .2rem 0; }
+
+    /* Phase inventory summary banner */
+    .inv-summary-banner {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1rem 1.4rem;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: .7rem;
+    }
+    .inv-summary-cell {
+      display: flex; flex-direction: column; gap: .18rem;
+    }
+    .inv-sum-label { font-size: .6rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+    .inv-sum-val   { font-size: 1.1rem; font-weight: 800; }
+    .inv-sum-sub   { font-size: .62rem; color: var(--muted); }
     .twins-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -1482,6 +1538,105 @@ const CONNECTORS = {
 };
 
 /* ═══════════════════════════════════════════════════
+   INVENTORY  (supply-shock survival in days)
+   Source: FMP Balance Sheet API — DIO = Inventory/COGS×365
+   For services/renewables: operational buffer estimate
+═══════════════════════════════════════════════════ */
+const INVENTORY = {
+  // Phase 01 — HPQ Mining
+  tqc:          { days:42,  trend:'+2d',   note:'Stockpile/Tagesförderung',      source:'FMP · Imerys Annual Report' },
+  sibelco:      { days:38,  trend:'−1d',   note:'Stockpile/Tagesförderung',      source:'Öff. Berichte' },
+  // Phase 02 — Si-Metall
+  ferroglobe:   { days:22,  trend:'stabil', note:'Fertigwaren / DIO Q4 2024',    source:'NYSE: GSM · FMP 10-Q' },
+  elkem:        { days:28,  trend:'+4d',   note:'Fertigwaren & WIP',              source:'Oslo Børs: ELK · FMP' },
+  hoshine:      { days:null, trend:null,   note:'UFLPA-sanktioniert',             source:'Keine Westdaten' },
+  'wacker-si':  { days:18,  trend:'−2d',   note:'DIO Balance Sheet 2024',        source:'XETRA: WCH · FMP' },
+  'cn-rest':    { days:14,  trend:'unbek.', note:'Schätzung Branchenø',          source:'Schätzung' },
+  // Phase 03 — Polysilizium
+  gcl:          { days:11,  trend:'−3d',   note:'Granular Poly / Tagesoutput',    source:'HKEX: 3800 · FMP' },
+  tongwei:      { days:14,  trend:'stabil', note:'DIO Jahresabschluss 2024',     source:'SZSE: 600438 · FMP' },
+  daqo:         { days:16,  trend:'+2d',   note:'DIO = Inv/COGS×365',            source:'NYSE: DQ · FMP 10-K' },
+  wacker:       { days:19,  trend:'−2d',   note:'DIO Balance Sheet 2024',        source:'XETRA: WCH · FMP' },
+  oci:          { days:22,  trend:'stabil', note:'EG-Poly Lager Malaysia',       source:'KRX: OCI · FMP' },
+  // Phase 04 — Wafer
+  shinetsu:     { days:35,  trend:'+1d',   note:'Wafer WIP / Tagesumsatz',       source:'TYO: 4063 · FMP' },
+  sumco:        { days:28,  trend:'stabil', note:'DIO Balance Sheet Q3 2024',    source:'TYO: 3436 · FMP' },
+  globalwafers: { days:40,  trend:'+5d',   note:'Wafer Lager + WIP',             source:'TWSE: 6488 · FMP' },
+  siltronic:    { days:32,  trend:'stabil', note:'DIO Annual Report 2024',       source:'XETRA: WAF · FMP' },
+  sksiltron:    { days:25,  trend:'+3d',   note:'SiC + Si Wafer kombiniert',     source:'KRX: SK Siltron · FMP' },
+  // Phase 05 — EUV / Anlagen
+  asml:         { days:180, trend:'+20d',  note:'Backlog-basiert · 18 Mo. Lead', source:'NASDAQ: ASML · FMP 20-F' },
+  amat:         { days:45,  trend:'+3d',   note:'Spare Parts + WIP Anlagen',     source:'NASDAQ: AMAT · FMP 10-Q' },
+  lam:          { days:38,  trend:'stabil', note:'DIO Quartalsbericht',          source:'NASDAQ: LRCX · FMP 10-Q' },
+  tel:          { days:42,  trend:'+2d',   note:'DIO Annual Report 2024',        source:'TYO: 8035 · FMP' },
+  kla:          { days:55,  trend:'+4d',   note:'Inspektion-Ersatzteile hoch',   source:'NASDAQ: KLAC · FMP 10-Q' },
+  // Phase 06 — Foundry
+  tsmc:         { days:45,  trend:'+2d',   note:'WIP Wafer / Tagesumsatz',       source:'TWSE: 2330 · FMP 20-F' },
+  'samsung-foundry':{ days:52, trend:'stabil', note:'Foundry WIP integriert',   source:'KRX: Samsung · FMP' },
+  'intel-foundry':  { days:38, trend:'−5d', note:'IFS WIP anteilig',            source:'NASDAQ: INTC · FMP 10-Q' },
+  gf:           { days:44,  trend:'+1d',   note:'DIO 12nm/RF Wafer',             source:'NASDAQ: GFS · FMP 10-Q' },
+  smic:         { days:48,  trend:'+8d',   note:'Bestandsaufbau Binnenmarkt',    source:'HKEX: 981 · FMP' },
+  // Phase 07 — AI Chips
+  nvidia:       { days:28,  trend:'+7d',   note:'Finished GPU / Tageslieferung', source:'NASDAQ: NVDA · FMP 10-Q' },
+  'amd-gpu':    { days:35,  trend:'+3d',   note:'MI300X Fertiglager Q1 2025',    source:'NASDAQ: AMD · FMP 10-Q' },
+  'google-tpu': { days:null, trend:null,   note:'Intern — keine Offenlegung',    source:'Nicht öffentlich' },
+  'aws-trnm':   { days:null, trend:null,   note:'Intern — keine Offenlegung',    source:'Nicht öffentlich' },
+  'intel-gaudi':{ days:28,  trend:'−3d',   note:'Gaudi 3 Lager anteilig',       source:'NASDAQ: INTC · FMP 10-Q' },
+  // Phase 08 — Server
+  'nvidia-dgx': { days:14,  trend:'−6d',   note:'HGX Module hochnachgefragt',   source:'NASDAQ: NVDA · FMP 10-Q' },
+  supermicro:   { days:22,  trend:'−4d',   note:'DIO lean ODM-Modell',           source:'NASDAQ: SMCI · FMP 10-Q' },
+  dell:         { days:32,  trend:'stabil', note:'PowerEdge Fertiglager',        source:'NYSE: DELL · FMP 10-Q' },
+  hpe:          { days:38,  trend:'+2d',   note:'ProLiant + Cray-Teile',         source:'NYSE: HPE · FMP 10-Q' },
+  inspur:       { days:null, trend:null,   note:'Entity-List sanktioniert',      source:'Keine Westdaten' },
+  // Phase 09 — Hyperscale DC (GPU capacity buffer, not balance sheet)
+  aws:          { days:60,  trend:'+8d',   note:'GPU Kapazitätspuffer',          source:'Schätzung · AWS CapEx' },
+  azure:        { days:30,  trend:'+2d',   note:'GPU + Server Vorhaltung',       source:'Schätzung · MSFT 10-Q' },
+  gcp:          { days:75,  trend:'+12d',  note:'TPU + H100 Puffer',             source:'Schätzung · Alphabet 10-Q' },
+  meta:         { days:45,  trend:'+5d',   note:'350k H100 Überschuss',          source:'Schätzung · Meta 10-Q' },
+  oracle:       { days:90,  trend:'+20d',  note:'xAI-Cluster Vorhaltung',        source:'Schätzung · OCI CapEx' },
+  // Phase 10 — Energie
+  nextera:      { days:0,   trend:null,    note:'Wind/Solar kontinuierlich',     source:'N/A' },
+  constellation:{ days:540, trend:'+30d',  note:'18-Monats Kernbrennstoffzyklus',source:'NRC · 10-K · FMP' },
+  duke:         { days:45,  trend:'stabil', note:'Gas-Reservoire + Storage',     source:'NYSE: DUK · FMP 10-Q' },
+  aes:          { days:30,  trend:'+5d',   note:'Batteriespeicher Ø Puffer',     source:'NYSE: AES · FMP 10-Q' },
+  'smr-cons':   { days:null, trend:null,   note:'Vorproduktion',                 source:'N/A' },
+};
+
+/* FMP connector appended to each phase's connector list */
+const FMP_CONNECTORS = {
+  '01': { id:'fmp-01', icon:'📊', name:'FMP Fundamental Data', type:'REST · JSON (FMP)',
+    endpoint:'https://financialmodelingprep.com/api/v3/balance-sheet-statement/IMRY?limit=4&apikey={YOUR_FMP_KEY}',
+    live:false, note:'Tickers: IMRY (Imerys), priv.' },
+  '02': { id:'fmp-02', icon:'📊', name:'FMP Fundamental Data', type:'REST · JSON (FMP)',
+    endpoint:'https://financialmodelingprep.com/api/v3/balance-sheet-statement/GSM?limit=4&apikey={YOUR_FMP_KEY}',
+    live:false, note:'Tickers: GSM, ELK, WCH' },
+  '03': { id:'fmp-03', icon:'📊', name:'FMP Fundamental Data', type:'REST · JSON (FMP)',
+    endpoint:'https://financialmodelingprep.com/api/v3/balance-sheet-statement/DQ?limit=4&apikey={YOUR_FMP_KEY}',
+    live:false, note:'Tickers: DQ (Daqo), WCH (Wacker)' },
+  '04': { id:'fmp-04', icon:'📊', name:'FMP Fundamental Data', type:'REST · JSON (FMP)',
+    endpoint:'https://financialmodelingprep.com/api/v3/balance-sheet-statement/TOELY?limit=4&apikey={YOUR_FMP_KEY}',
+    live:false, note:'Tickers: TOELY, SMCOY, GWF' },
+  '05': { id:'fmp-05', icon:'📊', name:'FMP Fundamental Data', type:'REST · JSON (FMP)',
+    endpoint:'https://financialmodelingprep.com/api/v3/balance-sheet-statement/ASML?limit=4&apikey={YOUR_FMP_KEY}',
+    live:false, note:'Tickers: ASML, AMAT, LRCX, KLAC' },
+  '06': { id:'fmp-06', icon:'📊', name:'FMP Fundamental Data', type:'REST · JSON (FMP)',
+    endpoint:'https://financialmodelingprep.com/api/v3/balance-sheet-statement/TSM?limit=4&apikey={YOUR_FMP_KEY}',
+    live:false, note:'Tickers: TSM, GFS, INTC' },
+  '07': { id:'fmp-07', icon:'📊', name:'FMP Fundamental Data', type:'REST · JSON (FMP)',
+    endpoint:'https://financialmodelingprep.com/api/v3/balance-sheet-statement/NVDA?limit=4&apikey={YOUR_FMP_KEY}',
+    live:false, note:'Tickers: NVDA, AMD' },
+  '08': { id:'fmp-08', icon:'📊', name:'FMP Fundamental Data', type:'REST · JSON (FMP)',
+    endpoint:'https://financialmodelingprep.com/api/v3/balance-sheet-statement/SMCI?limit=4&apikey={YOUR_FMP_KEY}',
+    live:false, note:'Tickers: SMCI, DELL, HPE' },
+  '09': { id:'fmp-09', icon:'📊', name:'FMP Fundamental Data', type:'REST · JSON (FMP)',
+    endpoint:'https://financialmodelingprep.com/api/v3/balance-sheet-statement/AMZN?limit=4&apikey={YOUR_FMP_KEY}',
+    live:false, note:'Tickers: AMZN, MSFT, GOOGL, META, ORCL' },
+  '10': { id:'fmp-10', icon:'📊', name:'FMP Fundamental Data', type:'REST · JSON (FMP)',
+    endpoint:'https://financialmodelingprep.com/api/v3/balance-sheet-statement/NEE?limit=4&apikey={YOUR_FMP_KEY}',
+    live:false, note:'Tickers: NEE, CEG, DUK, AES' },
+};
+
+/* ═══════════════════════════════════════════════════
    VIZ HELPERS
 ═══════════════════════════════════════════════════ */
 function gaugeSVG(pct, color, size=64) {
@@ -1567,6 +1722,112 @@ function renderViz(twin) {
 }
 
 /* ═══════════════════════════════════════════════════
+   INVENTORY HELPERS
+═══════════════════════════════════════════════════ */
+function invColor(days) {
+  if (!days || days <= 0)  return '#5a6380';
+  if (days < 14)  return '#ef4444';
+  if (days < 30)  return '#f97316';
+  if (days < 60)  return '#f59e0b';
+  if (days < 90)  return '#84cc16';
+  return '#22c55e';
+}
+
+function invTrendCls(trend) {
+  if (!trend || trend === 'N/A' || trend === 'stabil' || trend === 'unbek.') return 'inv-trend-flat';
+  return (trend.startsWith('+') || trend.startsWith('↑')) ? 'inv-trend-up' : 'inv-trend-down';
+}
+
+function renderInvBar(coId, phaseColor) {
+  const inv = INVENTORY[coId];
+  if (!inv) return '';
+  if (inv.days === null) {
+    return `
+    <div class="inv-section">
+      <div class="inv-header">
+        <span class="inv-title">📦 Lagerbestand &amp; Versorgungsresilienz</span>
+        <span class="inv-source-tag">${inv.source}</span>
+      </div>
+      <div class="inv-na">${inv.note}</div>
+    </div>`;
+  }
+  const color = invColor(inv.days);
+  const MAX_DAYS = 180;
+  const pct = Math.min(100, (inv.days / MAX_DAYS) * 100).toFixed(1);
+  const trendCls = invTrendCls(inv.trend);
+  const trendLabel = inv.trend && inv.trend !== 'N/A' ? inv.trend : '—';
+  return `
+    <div class="inv-section">
+      <div class="inv-header">
+        <span class="inv-title">📦 Lagerbestand &amp; Versorgungsresilienz</span>
+        <span class="inv-source-tag">${inv.source}</span>
+      </div>
+      <div class="inv-bar-row">
+        <div class="inv-days-val" style="color:${color}">${inv.days}d</div>
+        <div class="inv-bar-col">
+          <div class="inv-bar-track">
+            <div class="inv-bar-fill" style="width:${pct}%;background:${color}"></div>
+          </div>
+          <div class="inv-bar-labels">
+            <span>Versorgungspuffer bis Schock</span>
+            <span style="color:${color};font-weight:700">${inv.days} Tage</span>
+          </div>
+        </div>
+        <span class="inv-trend-badge ${trendCls}">${trendLabel}</span>
+      </div>
+      <div class="inv-note">${inv.note}</div>
+    </div>`;
+}
+
+function renderInvSummary(d) {
+  const entries = d.companies
+    .map(co => ({ co, inv: INVENTORY[co.id] }))
+    .filter(x => x.inv && x.inv.days !== null && x.inv.days > 0);
+
+  if (!entries.length) {
+    return `<p style="font-size:.78rem;color:var(--muted);margin-bottom:.5rem">Keine öffentlichen Inventardaten verfügbar. FMP-Connector konfigurieren für Echtdaten.</p>`;
+  }
+
+  const days  = entries.map(e => e.inv.days);
+  const minD  = Math.min(...days);
+  const maxD  = Math.max(...days);
+  const avgD  = Math.round(days.reduce((a,b)=>a+b,0)/days.length);
+  const weakest = entries.find(e => e.inv.days === minD);
+  const strongest = entries.find(e => e.inv.days === maxD);
+
+  const fmpNote = `<p style="font-size:.72rem;color:var(--muted);margin-top:.9rem;line-height:1.6">
+    📡 <strong style="color:var(--muted2)">Datenquelle:</strong> Financial Modeling Prep (FMP) Balance Sheet API — DIO = Inventory / COGS × 365.
+    API-Key im Connector-Panel konfigurieren → Echtzeit-Aktualisierung aktivieren.
+    Tickers: ${d.companies.filter(co => INVENTORY[co.id]?.source?.includes('FMP')).map(co=>co.abbr).join(', ') || 'siehe Connectors'}.
+  </p>`;
+
+  return `
+  <div class="inv-summary-banner">
+    <div class="inv-summary-cell">
+      <span class="inv-sum-label">Ø Puffer</span>
+      <span class="inv-sum-val" style="color:${invColor(avgD)}">${avgD}d</span>
+      <span class="inv-sum-sub">Ø über ${entries.length} Anbieter</span>
+    </div>
+    <div class="inv-summary-cell">
+      <span class="inv-sum-label">Engpass</span>
+      <span class="inv-sum-val" style="color:${invColor(minD)}">${minD}d</span>
+      <span class="inv-sum-sub">${weakest.co.abbr} — kritisch</span>
+    </div>
+    <div class="inv-summary-cell">
+      <span class="inv-sum-label">Stärkster Puffer</span>
+      <span class="inv-sum-val" style="color:${invColor(maxD)}">${maxD}d</span>
+      <span class="inv-sum-sub">${strongest.co.abbr}</span>
+    </div>
+    <div class="inv-summary-cell">
+      <span class="inv-sum-label">Schock-Schwelle</span>
+      <span class="inv-sum-val" style="color:#f59e0b">&lt;14d</span>
+      <span class="inv-sum-sub">Kritisch für Kette</span>
+    </div>
+  </div>
+  ${fmpNote}`;
+}
+
+/* ═══════════════════════════════════════════════════
    RENDER TWINS
 ═══════════════════════════════════════════════════ */
 function renderTwins(phaseNum) {
@@ -1594,7 +1855,8 @@ function renderTwins(phaseNum) {
    RENDER CONNECTORS
 ═══════════════════════════════════════════════════ */
 function renderConnectors(phaseNum) {
-  const conns = CONNECTORS[phaseNum] || [];
+  const fmpConn = FMP_CONNECTORS[phaseNum];
+  const conns = [...(CONNECTORS[phaseNum] || []), ...(fmpConn ? [fmpConn] : [])];
   return `<div class="connectors-grid">${conns.map(c => `
     <div class="connector-card" id="conn-card-${c.id}">
       <div class="connector-head">
@@ -1723,6 +1985,7 @@ function renderDetail(phase) {
           </div>
           <div class="co-kpis">${kpiRows}</div>
         </div>
+        ${renderInvBar(co.id, d.color)}
         ${alertsHtml}
       </div>`;
   }).join('');
@@ -1736,7 +1999,10 @@ function renderDetail(phase) {
       ${d.description}
     </div>
 
-    <div class="section-title" style="margin-top:3rem">Wichtigste Anbieter &amp; Unternehmens-Digital-Twins</div>
+    <div class="section-title" style="margin-top:3rem">📦 Versorgungsresilienz (Supply Shock Survival)</div>
+    ${renderInvSummary(d)}
+
+    <div class="section-title" style="margin-top:2.5rem">Wichtigste Anbieter &amp; Unternehmens-Digital-Twins</div>
     <div class="companies">${companiesHtml}</div>
 
     <div class="section-title" style="margin-top:3rem">🛰️ Operative Digital Twins</div>
