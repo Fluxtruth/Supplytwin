@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timeline & Events — Supply Chain Twin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080c16; --bg2: #0d1220; --bg3: #111828;
+      --border: rgba(255,255,255,0.07);
+      --text: #e0e4f0; --muted: #5a6380; --muted2: #8490b8;
+      --ok: #22c55e; --warn: #f59e0b; --crit: #ef4444;
+      --blue: #4f8ef7; --purple: #a855f7;
+    }
+    html, body { min-height: 100vh; background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 200;
+      display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+      padding: 0.6rem 1.2rem;
+      background: rgba(8,12,22,0.96); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo-icon { width: 24px; height: 24px; background: linear-gradient(135deg,#4f8ef7,#a855f7); border-radius: 5px; display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:#fff;flex-shrink:0; }
+    .nav-title  { font-size:.88rem; font-weight:600; color:#c8cfe8; }
+    .nav-link   { font-size:.72rem; color:var(--muted2); text-decoration:none; padding:.25rem .65rem; border:1px solid var(--border); border-radius:5px; transition:color .2s,border-color .2s; }
+    .nav-link:hover { color:var(--text); border-color:rgba(255,255,255,.18); }
+    .api-badge  { display:flex; align-items:center; gap:.35rem; font-size:.68rem; padding:.22rem .6rem; border-radius:4px; background:rgba(255,255,255,.04); border:1px solid var(--border); color:var(--muted); margin-left:auto; }
+    .api-badge .dot { width:6px; height:6px; border-radius:50%; background:var(--muted); }
+    .api-badge.live { color:#22c55e; border-color:rgba(34,197,94,.3); background:rgba(34,197,94,.07); }
+    .api-badge.live .dot { background:#22c55e; box-shadow:0 0 5px #22c55e; }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      position: sticky; top: 46px; z-index: 190;
+      background: rgba(8,12,22,0.95); backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: .55rem 1.2rem; display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+    }
+    .filter-group { display:flex; gap:.3rem; }
+    .filter-btn {
+      font-size: .68rem; font-weight: 600; padding: .22rem .62rem;
+      border-radius: 5px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted2); cursor: pointer;
+      transition: all .15s; font-family: inherit; white-space: nowrap;
+    }
+    .filter-btn:hover { border-color: rgba(255,255,255,.18); color: var(--text); }
+    .filter-btn.active { color: #fff; border-color: transparent; }
+    .filter-btn.active.t-all         { background: rgba(255,255,255,.12); }
+    .filter-btn.active.t-disruption  { background: rgba(239,68,68,.25); border-color: rgba(239,68,68,.4); }
+    .filter-btn.active.t-risk        { background: rgba(245,158,11,.2); border-color: rgba(245,158,11,.35); }
+    .filter-btn.active.t-price       { background: rgba(168,85,247,.2); border-color: rgba(168,85,247,.35); }
+    .filter-btn.active.t-inventory   { background: rgba(79,142,247,.2); border-color: rgba(79,142,247,.35); }
+    .filter-btn.active.t-mitigation  { background: rgba(34,197,94,.18); border-color: rgba(34,197,94,.35); }
+    .filter-sep { width: 1px; background: var(--border); align-self: stretch; margin: 0 .25rem; }
+    .filter-select {
+      font-size: .68rem; font-weight: 600; padding: .22rem .55rem;
+      border-radius: 5px; border: 1px solid var(--border);
+      background: var(--bg3); color: var(--muted2); cursor: pointer; font-family: inherit;
+    }
+    .filter-select:focus { outline: none; border-color: rgba(79,142,247,.4); }
+    .filter-count { font-size: .65rem; color: var(--muted); margin-left: auto; }
+
+    /* ── STAT STRIP ── */
+    .stat-strip {
+      display: flex; gap: .6rem; padding: .7rem 1.2rem;
+      border-bottom: 1px solid var(--border); flex-wrap: wrap;
+    }
+    .stat-chip {
+      display: flex; align-items: center; gap: .4rem;
+      font-size: .7rem; padding: .28rem .65rem;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
+    }
+    .stat-chip .val { font-weight: 800; font-size: .82rem; }
+    .stat-chip .lbl { color: var(--muted); }
+
+    /* ── PAGE LAYOUT ── */
+    .page-wrap { display: flex; flex-direction: column; gap: 0; }
+
+    /* ── GANTT ── */
+    .gantt-section {
+      padding: .8rem 1.2rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .gantt-header { display: flex; align-items: center; gap: .6rem; margin-bottom: .5rem; }
+    .gantt-title  { font-size: .65rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+    .gantt-legend { display: flex; gap: .7rem; flex-wrap: wrap; margin-left: auto; }
+    .gantt-legend-item { display: flex; align-items: center; gap: .3rem; font-size: .6rem; color: var(--muted2); }
+    .gantt-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+    .gantt-wrap { position: relative; }
+    #gantt-canvas { width: 100%; display: block; cursor: crosshair; }
+    #gantt-tooltip {
+      position: fixed; z-index: 500; pointer-events: none; display: none;
+      background: rgba(8,12,22,0.97); border: 1px solid rgba(255,255,255,.12);
+      border-radius: 7px; padding: .5rem .75rem; max-width: 260px;
+      font-size: .72rem; box-shadow: 0 8px 24px rgba(0,0,0,.5);
+    }
+    #gantt-tooltip .tt-title  { font-weight: 700; color: var(--text); margin-bottom: .2rem; }
+    #gantt-tooltip .tt-detail { color: var(--muted2); line-height: 1.45; }
+    #gantt-tooltip .tt-time   { color: var(--muted); font-size: .62rem; margin-top: .25rem; }
+
+    /* ── EVENT FEED ── */
+    .feed-section { padding: .9rem 1.2rem 3rem; }
+    .feed-title   { font-size: .65rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: .65rem; }
+    .event-list   { display: flex; flex-direction: column; gap: .45rem; }
+
+    .event-card {
+      display: flex; gap: .7rem; align-items: flex-start;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+      padding: .7rem .9rem; transition: border-color .15s;
+      animation: fadeInCard .3s ease;
+    }
+    @keyframes fadeInCard { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+    .event-card:hover { border-color: rgba(255,255,255,.13); }
+    .event-card.new { border-color: rgba(79,142,247,.3); background: rgba(79,142,247,.04); }
+
+    .ev-sev  { width: 3px; border-radius: 2px; flex-shrink: 0; align-self: stretch; min-height: 36px; }
+    .ev-sev.critical { background: var(--crit); }
+    .ev-sev.high     { background: var(--warn); }
+    .ev-sev.medium   { background: var(--blue); }
+    .ev-sev.low      { background: var(--muted); }
+    .ev-sev.resolved { background: var(--ok); }
+
+    .ev-icon { font-size: 1rem; line-height: 1; flex-shrink: 0; margin-top: .1rem; }
+    .ev-body { flex: 1; min-width: 0; }
+    .ev-top  { display: flex; align-items: flex-start; gap: .5rem; flex-wrap: wrap; }
+    .ev-type-badge {
+      font-size: .57rem; font-weight: 700; padding: .1rem .4rem; border-radius: 3px;
+      text-transform: uppercase; letter-spacing: .05em; flex-shrink: 0; margin-top: .06rem;
+    }
+    .ev-title { font-size: .78rem; font-weight: 700; color: var(--text); flex: 1; }
+    .ev-time  { font-size: .62rem; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+    .ev-detail { font-size: .68rem; color: var(--muted2); line-height: 1.5; margin-top: .2rem; }
+    .ev-footer { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .35rem; align-items: center; }
+    .ev-phase-pill {
+      font-size: .58rem; font-weight: 700; padding: .1rem .38rem; border-radius: 99px;
+      border: 1px solid; letter-spacing: .03em;
+    }
+    .ev-duration { font-size: .62rem; color: var(--muted); }
+    .ev-link { font-size: .62rem; color: var(--blue); text-decoration: none; margin-left: auto; }
+    .ev-link:hover { text-decoration: underline; }
+
+    /* type badge colors */
+    .badge-disruption { background:rgba(239,68,68,.15); color:#ef4444; border-color:rgba(239,68,68,.3); }
+    .badge-risk       { background:rgba(245,158,11,.12); color:#f59e0b; border-color:rgba(245,158,11,.3); }
+    .badge-price      { background:rgba(168,85,247,.14); color:#c084fc; border-color:rgba(168,85,247,.3); }
+    .badge-inventory  { background:rgba(79,142,247,.12); color:#7eb3ff; border-color:rgba(79,142,247,.3); }
+    .badge-mitigation { background:rgba(34,197,94,.12); color:#22c55e; border-color:rgba(34,197,94,.3); }
+    .badge-restored   { background:rgba(34,197,94,.1); color:#4ade80; border-color:rgba(34,197,94,.25); }
+
+    .empty-state { text-align:center; color:var(--muted); padding:3rem 1rem; font-size:.82rem; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo-icon">ST</div>
+  <span class="nav-title">Timeline &amp; Events</span>
+  <a href="graph.html"       class="nav-link">⬡ Graph</a>
+  <a href="globe.html"       class="nav-link">🌐 Globe</a>
+  <a href="disruption.html"  class="nav-link">⚡ Disruption</a>
+  <a href="market.html"      class="nav-link">📊 Markets</a>
+  <a href="supply-chain.html"class="nav-link">≡ Liste</a>
+  <a href="index.html"       class="nav-link">← Home</a>
+  <div id="api-badge" class="api-badge"><span class="dot"></span><span id="api-badge-text">API offline</span></div>
+</nav>
+
+<div class="filter-bar">
+  <div class="filter-group" id="type-filters">
+    <button class="filter-btn t-all active"        data-type="all">         Alle</button>
+    <button class="filter-btn t-disruption"        data-type="disruption">  🔴 Störung</button>
+    <button class="filter-btn t-risk"              data-type="risk">        🟡 Risiko</button>
+    <button class="filter-btn t-price"             data-type="price">       📊 Preis</button>
+    <button class="filter-btn t-inventory"         data-type="inventory">   📦 Inventar</button>
+    <button class="filter-btn t-mitigation"        data-type="mitigation">  ✅ Maßnahme</button>
+  </div>
+  <div class="filter-sep"></div>
+  <select class="filter-select" id="phase-filter">
+    <option value="all">Phase: Alle</option>
+    <option value="01">01 · HPQ Sand</option>
+    <option value="02">02 · Si-Metall</option>
+    <option value="03">03 · Polysilizium</option>
+    <option value="04">04 · Si-Wafer</option>
+    <option value="05">05 · EUV-Litho</option>
+    <option value="06">06 · Foundry</option>
+    <option value="07">07 · Chip-Design</option>
+    <option value="08">08 · Server</option>
+    <option value="09">09 · Hyper-DC</option>
+    <option value="10">10 · Energie</option>
+  </select>
+  <select class="filter-select" id="sev-filter">
+    <option value="all">Schwere: Alle</option>
+    <option value="critical">Kritisch</option>
+    <option value="high">Hoch</option>
+    <option value="medium">Mittel</option>
+    <option value="low">Niedrig</option>
+  </select>
+  <select class="filter-select" id="days-filter">
+    <option value="7">Letzte 7 Tage</option>
+    <option value="30" selected>Letzte 30 Tage</option>
+    <option value="60">Letzte 60 Tage</option>
+    <option value="90">Letzte 90 Tage</option>
+  </select>
+  <span class="filter-count" id="filter-count">— Ereignisse</span>
+</div>
+
+<div class="stat-strip" id="stat-strip">
+  <div class="stat-chip"><span class="val" id="s-total">—</span><span class="lbl">Ereignisse</span></div>
+  <div class="stat-chip"><span class="val" id="s-crit" style="color:var(--crit)">—</span><span class="lbl">Kritisch</span></div>
+  <div class="stat-chip"><span class="val" id="s-high" style="color:var(--warn)">—</span><span class="lbl">Hoch</span></div>
+  <div class="stat-chip"><span class="val" id="s-phases" style="color:var(--blue)">—</span><span class="lbl">Phasen betroffen</span></div>
+  <div class="stat-chip"><span class="val" id="s-active" style="color:var(--crit)">—</span><span class="lbl">Aktive Störungen</span></div>
+  <div class="stat-chip" id="sse-chip" style="display:none"><span class="val" style="color:var(--ok)">LIVE</span><span class="lbl">SSE aktiv</span></div>
+</div>
+
+<div class="page-wrap">
+  <!-- GANTT -->
+  <div class="gantt-section">
+    <div class="gantt-header">
+      <span class="gantt-title">Phase-Impact-Timeline</span>
+      <div class="gantt-legend">
+        <span class="gantt-legend-item"><span class="gantt-legend-dot" style="background:#ef4444"></span>Störung</span>
+        <span class="gantt-legend-item"><span class="gantt-legend-dot" style="background:#f59e0b"></span>Risiko</span>
+        <span class="gantt-legend-item"><span class="gantt-legend-dot" style="background:#a855f7"></span>Preis</span>
+        <span class="gantt-legend-item"><span class="gantt-legend-dot" style="background:#4f8ef7"></span>Inventar</span>
+        <span class="gantt-legend-item"><span class="gantt-legend-dot" style="background:#22c55e"></span>Maßnahme</span>
+      </div>
+    </div>
+    <div class="gantt-wrap">
+      <canvas id="gantt-canvas"></canvas>
+    </div>
+  </div>
+
+  <!-- EVENT FEED -->
+  <div class="feed-section">
+    <div class="feed-title" id="feed-title">Ereignis-Feed</div>
+    <div class="event-list" id="event-list"></div>
+  </div>
+</div>
+
+<div id="gantt-tooltip">
+  <div class="tt-title" id="tt-title"></div>
+  <div class="tt-detail" id="tt-detail"></div>
+  <div class="tt-time" id="tt-time"></div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════
+   CONSTANTS
+════════════════════════════════════════════════════ */
+const API_BASE = 'http://localhost:3001/api/v1';
+const DAY = 86400000;
+const NOW = Date.now();
+
+const PHASE_META = {
+  '01': { name:'HPQ Sand',     short:'Sand',    color:'#b45309', icon:'⛏️' },
+  '02': { name:'Si-Metall',    short:'SiMet',   color:'#c2410c', icon:'🏭' },
+  '03': { name:'Polysilizium', short:'PolySi',  color:'#d97706', icon:'⚗️' },
+  '04': { name:'Si-Wafer',     short:'Wafer',   color:'#2563eb', icon:'💿' },
+  '05': { name:'EUV-Litho',    short:'EUV',     color:'#dc2626', icon:'🔬' },
+  '06': { name:'Foundry',      short:'Foundry', color:'#7c3aed', icon:'🔲' },
+  '07': { name:'Chip-Design',  short:'Design',  color:'#6d28d9', icon:'🧠' },
+  '08': { name:'Server',       short:'Server',  color:'#0891b2', icon:'🖥️' },
+  '09': { name:'Hyper-DC',     short:'DC',      color:'#0d9488', icon:'🏗️' },
+  '10': { name:'Energie',      short:'Energie', color:'#16a34a', icon:'⚡' },
+};
+
+/* ════════════════════════════════════════════════════
+   MOCK EVENT DATA  (90 days of history)
+════════════════════════════════════════════════════ */
+function d(daysAgo) { return NOW - daysAgo * DAY; }
+
+const ALL_EVENTS = [
+  /* ── Major disruptions ── */
+  { id:'e001', type:'disruption', sev:'critical', phases:['05'],
+    icon:'🔴', title:'EUV-Lithographie Wartungsausfall — ASML Veldhoven',
+    detail:'Ungeplanter Shutdown eines EUV-Belichtungssystems NXE:3400C. Produktionsunterbrechung 21 Tage. TSMC-Kapazität um 8% reduziert.',
+    ts: d(71), duration: 21, resolved: true },
+  { id:'e002', type:'disruption', sev:'high', phases:['08'],
+    icon:'🔴', title:'Super Micro — Qualitäts-Hold Serienproduktion',
+    detail:'Batch-Rückruf nach Thermal-Interface-Material-Fehler. ~4.200 Einheiten betroffen. Produktion nach Nachuntersuchung gestoppt.',
+    ts: d(45), duration: 7, resolved: true },
+  { id:'e003', type:'disruption', sev:'high', phases:['04'],
+    icon:'🔴', title:'Hsinchu Fab — geplante Maintenance Window',
+    detail:'TSMC N3E-Produktionslinie für Reinraum-Upgrade abgeschaltet. Planmäßig; Kapazitätsbeeinträchtigung ~12% für 5 Tage.',
+    ts: d(28), duration: 5, resolved: true },
+  { id:'e004', type:'disruption', sev:'medium', phases:['01'],
+    icon:'🟠', title:'Spruce Pine NC — Bergbauunterbrechung durch Sturm',
+    detail:'Hurrikan-Ausläufer beschädigt Förderbandanlage. HPQ-Quarzproduktion 3 Tage reduziert. Backup-Vorräte aktiviert.',
+    ts: d(58), duration: 3, resolved: true },
+  { id:'e005', type:'disruption', sev:'high', phases:['03'],
+    icon:'🔴', title:'Daqo New Energy — Sicherheitsinspektions-Halt',
+    detail:'Regulatorische Inspektion der Siemens-Reaktoren in Shihezi. Vollständiger Produktionsstopp 8 Tage. DQ-Aktie −9,4%.',
+    ts: d(15), duration: 8, resolved: false },
+
+  /* ── Risk alerts ── */
+  { id:'r001', type:'risk', sev:'high', phases:['04','06'],
+    icon:'⚠️', title:'Geopolitisches Risikoerhöhung — Taiwan-Straße',
+    detail:'US-Verteidigungsministerium berichtet erhöhte Marinepräsenz. Taiwan-Risikoindex +18 Punkte. TSMC-Versicherungsprämien steigen.',
+    ts: d(75) },
+  { id:'r002', type:'risk', sev:'medium', phases:['06'],
+    icon:'⚠️', title:'TSMC Kapazitätskürzung Q1 wegen Energiekosten',
+    detail:'TSM reduziert N5/N7 Auslastung um 6% aufgrund Strompreisanstieg Taiwan. Betrifft hauptsächlich Legacy-Produkte.',
+    ts: d(87) },
+  { id:'r003', type:'risk', sev:'medium', phases:['03'],
+    icon:'⚠️', title:'Polysilizium-Knappheitswarnung — DQ Exportkontrolle',
+    detail:'Chinesisches MOFCOM prüft Exportbeschränkungen für Polysilizium. Lagerhaltung +15 Tage empfohlen. Daqo, GCL betroffen.',
+    ts: d(42) },
+  { id:'r004', type:'risk', sev:'medium', phases:['10'],
+    icon:'⚠️', title:'Texas Hitzewelle — ERCOT-Kapazitätswarnung',
+    detail:'ERCOT gibt Energiesparstufe 1 aus. Sweetwater TX Windparks laufen unterhalb Kapazität. Notfallreserven aktiviert.',
+    ts: d(38) },
+  { id:'r005', type:'risk', sev:'low', phases:['09'],
+    icon:'⚠️', title:'AWS us-east-1 Partialausfall — Ashburn VA',
+    detail:'2,5-stündiger Netzwerkausfall betrifft Edge-Kapazitäten. Keine Datenverluste; Failover auf us-east-2 erfolgreich.',
+    ts: d(21) },
+  { id:'r006', type:'risk', sev:'high', phases:['07'],
+    icon:'⚠️', title:'KI-Chip-Nachfrage Surge — Design-Queue-Überlastung',
+    detail:'NVDA Blackwell-Bestellungen +40% QoQ. Santa-Clara-Designzentrum 120% Auslastung. Einstellungswelle eingeleitet.',
+    ts: d(25) },
+  { id:'r007', type:'risk', sev:'medium', phases:['02'],
+    icon:'⚠️', title:'Ferroglobe Hamburg — Energiekosten kritisch',
+    detail:'Europäische Spotpreise für Strom +28% MoM. Ferroglobe erwägt temporäre Produktionsreduktion in Hamburg und Meiringen.',
+    ts: d(62) },
+  { id:'r008', type:'risk', sev:'low', phases:['10'],
+    icon:'⚠️', title:'Texas Wind-Curtailment Event',
+    detail:'Netzengpass führt zu 4-stündiger Abregelung von Windparks in Sweetwater. Energieinfrastruktur-KPI verschlechtert.',
+    ts: d(7) },
+
+  /* ── Price spikes ── */
+  { id:'p001', type:'price', sev:'high', phases:['08','09','10'],
+    icon:'📈', title:'Kupfer-Spike +4,2% — 52-Wochen-Hoch',
+    detail:'LME Kupfer durchbricht $4,75/lb. Treiber: chinesische Stimulus-Ankündigung + Bergbau-Streiks Chile. Phasen 08–10 betroffen.',
+    ts: d(85), commodity:'COPPER', chg:4.2 },
+  { id:'p002', type:'price', sev:'critical', phases:['02','03'],
+    icon:'📈', title:'Erdgas-Spike +6,8% — Polysilizium-Kosten steigen',
+    detail:'Henry Hub NG $3,92/MMBtu nach unerwarteten Pipeline-Wartungen Texas. Direkter Kostendruck auf Siemens-Prozess-Smelter.',
+    ts: d(62), commodity:'NATURAL_GAS', chg:6.8 },
+  { id:'p003', type:'price', sev:'medium', phases:['08','09','10'],
+    icon:'📈', title:'Kupfer +3,1% — Anhaltende Infrastruktur-Nachfrage',
+    detail:'US-Infrastrukturgesetz treibt Kupfernachfrage. LME-Lagerbestände auf 6-Jahres-Tief. Phasen 08/09/10 Kostendruck steigt.',
+    ts: d(48), commodity:'COPPER', chg:3.1 },
+  { id:'p004', type:'price', sev:'high', phases:['05','08'],
+    icon:'📈', title:'Zinn-Spike +5,4% — EUV-Quelle & PCB-Lötzinn',
+    detail:'LME Zinn $34.100/t nach Myanmarexport-Stopp. ASML EUV-Lichtquellen und PCB-Produktion kostenanfälliger.',
+    ts: d(33), commodity:'TIN', chg:5.4 },
+  { id:'p005', type:'price', sev:'medium', phases:['08','09'],
+    icon:'📉', title:'Aluminium −3,2% — Überangebot China',
+    detail:'Chinesische Aluminiumproduktion +8% YoY. LME-Kurse fallen auf 14-Monatssief. Günstig für Server- und DC-Infrastruktur.',
+    ts: d(10), commodity:'ALUMINUM', chg:-3.2 },
+  { id:'p006', type:'price', sev:'medium', phases:['08','09','10'],
+    icon:'📈', title:'Kupfer nahe 52W-Hoch — LME-Inventar knapp',
+    detail:'LME on-warrant Kupfer unter 50.000 Tonnen. Optionsmarkt preist erhöhtes Versorgungsrisiko ein. IV Kupfer-ETFs +18%.',
+    ts: d(3), commodity:'COPPER', chg:2.8 },
+  { id:'p007', type:'price', sev:'low', phases:['04','10'],
+    icon:'📈', title:'Silber-Nachfrage-Spike — Solar-Sektor',
+    detail:'BloombergNEF meldet Solarinstallationen +35% H1. Silberpastennachfrage steigt. SI-Futures +2,1% intraday.',
+    ts: d(1), commodity:'SILVER', chg:2.1 },
+
+  /* ── Inventory updates ── */
+  { id:'i001', type:'inventory', sev:'high', phases:['04'],
+    icon:'📦', title:'Phase 04 Inventar unter Safety-Stock-Niveau',
+    detail:'Wafer-Lagerbestand fällt unter 33-Tage-Puffer. Sofortbestellung bei Shin-Etsu ausgelöst. ETA: +12 Tage.',
+    ts: d(82) },
+  { id:'i002', type:'inventory', sev:'medium', phases:['03'],
+    icon:'📦', title:'Polysilizium-Buffer auf 12 Tage gefallen',
+    detail:'Wacker Chemie Lieferverschiebung aus Burghausen. Inventar 12 vs. 15 Tage Target. Expedite-Order initiiert.',
+    ts: d(55) },
+  { id:'i003', type:'inventory', sev:'low', phases:['09'],
+    icon:'📦', title:'Hyperscale-DC Spare-Parts-Inventar aufgestockt',
+    detail:'Ashburn VA Lager um 30% erhöht nach Q3-Kapazitätserweiterung. Kritische Ersatzteile auf 60-Tage-Puffer.',
+    ts: d(35) },
+  { id:'i004', type:'inventory', sev:'medium', phases:['05'],
+    icon:'📦', title:'EUV-Maskenbestand kritisch niedrig',
+    icon:'📦', title:'EUV-Photomasken Restbestand — Bestellauslösung',
+    detail:'Lagerbestand EUV-Masken bei 18 Tagen (Target: 90). Eilbestellung bei Hoya Corp und AGC Mask ausgelöst.',
+    ts: d(69) },
+  { id:'i005', type:'inventory', sev:'low', phases:['02'],
+    icon:'📦', title:'Si-Metall Quarterly-Reorder — Hamburg',
+    detail:'Routinebestellung Ferroglobe Hamburg: 2.400t Si-Metall für Q3. Lieferzeit 14 Tage. Kein Engpass erwartet.',
+    ts: d(22) },
+  { id:'i006', type:'inventory', sev:'high', phases:['01'],
+    icon:'📦', title:'HPQ-Sand Puffer auf 28 Tage — Sturmfolgen',
+    detail:'Produktionsstopp Spruce Pine reduziert verfügbaren Quarzpuffer. Notreserve angezapft. Lieferant Sibelco kontaktiert.',
+    ts: d(56) },
+  { id:'i007', type:'inventory', sev:'low', phases:['10'],
+    icon:'📦', title:'Windturbinen-Ersatzteile aufgefüllt',
+    detail:'GE-Renewables liefert 48 Getriebe-Sets nach Sweetwater TX. Maintenance-Backlog auf 8 Wochen reduziert.',
+    ts: d(14) },
+
+  /* ── Mitigations ── */
+  { id:'m001', type:'mitigation', sev:'resolved', phases:['05'],
+    icon:'✅', title:'EUV-Backup-Kapazität aktiviert — ASML Veldhoven',
+    detail:'Redundanter EUV-Scanner NXE:3400B übernimmt Produktion. Kapazitätsverlust auf 3% begrenzt. Wartung läuft parallel.',
+    ts: d(68) },
+  { id:'m002', type:'mitigation', sev:'resolved', phases:['04','06'],
+    icon:'✅', title:'Geopolitik-Hedge — Dual-Source Foundry aktiviert',
+    detail:'Samsung Austin und PSMC als Backup-Lieferanten für N5-Äquivalent aktiviert. Abhängigkeit von TSMC auf 68% reduziert.',
+    ts: d(72) },
+  { id:'m003', type:'mitigation', sev:'resolved', phases:['03'],
+    icon:'✅', title:'Polysilizium Safety-Stock erhöht — 45-Tage-Puffer',
+    detail:'Wacker Chemie Langzeitliefervertrag unterzeichnet. Lagererweiterung Burghausen +800t. DQ-Risiko teilweise gehedgt.',
+    ts: d(40) },
+  { id:'m004', type:'mitigation', sev:'resolved', phases:['09'],
+    icon:'✅', title:'Hyperscale-DC Kapazitätserweiterung Ashburn',
+    detail:'Neuer 45MW-Campusblock geht online. Gesamtkapazität Ashburn auf 380MW erhöht. Redundanzgrad +12%.',
+    ts: d(2) },
+  { id:'m005', type:'mitigation', sev:'resolved', phases:['08'],
+    icon:'✅', title:'SMCI Qualitätsproblem behoben — Produktion läuft',
+    detail:'TIM-Qualitätsproblem behoben, ISO-9001-Audit bestanden. Betroffene Batch vollständig ausgetauscht. Produktion +15% Nachholeffekt.',
+    ts: d(38) },
+  { id:'m006', type:'mitigation', sev:'resolved', phases:['04'],
+    icon:'✅', title:'Hsinchu Maintenance abgeschlossen — volle Kapazität',
+    detail:'Reinraum-Upgrade N3E-Linie abgeschlossen. Ausbeute nach Upgrade-Prognose auf 94,2% (vorher 91,8%). Produktion normalisiert.',
+    ts: d(23) },
+];
+
+/* ════════════════════════════════════════════════════
+   FILTER STATE
+════════════════════════════════════════════════════ */
+let activeType = 'all';
+let activePhase = 'all';
+let activeSev   = 'all';
+let activeDays  = 30;
+
+// Live events prepended from SSE
+const liveEvents = [];
+
+function allEvents() { return [...liveEvents, ...ALL_EVENTS]; }
+
+function filteredEvents() {
+  const cutoff = NOW - activeDays * DAY;
+  return allEvents().filter(e => {
+    if (e.ts < cutoff) return false;
+    if (activeType !== 'all' && e.type !== activeType) return false;
+    if (activePhase !== 'all') {
+      const ep = e.phases || [];
+      if (!ep.includes(activePhase)) return false;
+    }
+    if (activeSev !== 'all' && e.sev !== activeSev) return false;
+    return true;
+  }).sort((a, b) => b.ts - a.ts);
+}
+
+/* ════════════════════════════════════════════════════
+   RENDER EVENT CARD
+════════════════════════════════════════════════════ */
+const TYPE_CONFIG = {
+  disruption: { label:'Störung',  cls:'badge-disruption' },
+  risk:        { label:'Risiko',   cls:'badge-risk' },
+  price:       { label:'Preis',    cls:'badge-price' },
+  inventory:   { label:'Inventar', cls:'badge-inventory' },
+  mitigation:  { label:'Maßnahme',cls:'badge-mitigation' },
+  restored:    { label:'Behoben',  cls:'badge-restored' },
+};
+
+function relTime(ts) {
+  const h = (NOW - ts) / 3600000;
+  if (h < 1)   return 'Gerade eben';
+  if (h < 24)  return `vor ${Math.round(h)}h`;
+  const d = Math.round(h / 24);
+  if (d < 7)   return `vor ${d}d`;
+  if (d < 30)  return `vor ${Math.round(d/7)}W`;
+  return `vor ${Math.round(d/30)} Mo.`;
+}
+
+function absTime(ts) {
+  return new Date(ts).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+
+function renderEventCard(ev, isNew = false) {
+  const tc = TYPE_CONFIG[ev.type] || TYPE_CONFIG.risk;
+  const phases = (ev.phases || []).map(pid => {
+    const pm = PHASE_META[pid];
+    if (!pm) return '';
+    return `<span class="ev-phase-pill" style="color:${pm.color};border-color:${pm.color}40">${pm.icon} ${pid}</span>`;
+  }).join('');
+
+  const dur = ev.duration
+    ? `<span class="ev-duration">Dauer: ${ev.duration}d${ev.resolved ? ' · ✓ Behoben' : ' · ⏳ Aktiv'}</span>`
+    : '';
+
+  const chg = ev.chg != null
+    ? `<span style="color:${ev.chg>=0?'#22c55e':'#ef4444'};font-size:.62rem;font-weight:700">${ev.chg>=0?'+':''}${ev.chg.toFixed(1)}%</span>`
+    : '';
+
+  const links = (ev.phases || []).length > 0
+    ? `<a href="detail.html?phase=${ev.phases[0]}" class="ev-link">→ Phase ${ev.phases[0]}</a>`
+    : '';
+
+  return `
+    <div class="event-card${isNew ? ' new' : ''}">
+      <div class="ev-sev ${ev.sev}"></div>
+      <div class="ev-icon">${ev.icon}</div>
+      <div class="ev-body">
+        <div class="ev-top">
+          <span class="ev-type-badge ${tc.cls}">${tc.label}</span>
+          <span class="ev-title">${ev.title}</span>
+          ${chg}
+          <span class="ev-time" title="${absTime(ev.ts)}">${relTime(ev.ts)}</span>
+        </div>
+        <div class="ev-detail">${ev.detail}</div>
+        <div class="ev-footer">${phases}${dur}${links}</div>
+      </div>
+    </div>`;
+}
+
+/* ════════════════════════════════════════════════════
+   STATS
+════════════════════════════════════════════════════ */
+function updateStats(events) {
+  const crit   = events.filter(e => e.sev === 'critical').length;
+  const high   = events.filter(e => e.sev === 'high').length;
+  const phases = new Set(events.flatMap(e => e.phases || [])).size;
+  const active = events.filter(e => e.type === 'disruption' && !e.resolved).length;
+
+  document.getElementById('s-total').textContent  = events.length;
+  document.getElementById('s-crit').textContent   = crit;
+  document.getElementById('s-high').textContent   = high;
+  document.getElementById('s-phases').textContent = phases;
+  document.getElementById('s-active').textContent = active;
+  document.getElementById('filter-count').textContent = `${events.length} Ereignis${events.length !== 1 ? 'se' : ''}`;
+}
+
+/* ════════════════════════════════════════════════════
+   GANTT CANVAS
+════════════════════════════════════════════════════ */
+const GANTT_LABEL_W = 90;
+const GANTT_ROW_H   = 26;
+const GANTT_HEADER  = 22;
+const PHASE_ORDER   = ['01','02','03','04','05','06','07','08','09','10'];
+
+const TYPE_COLOR = {
+  disruption: '#ef4444',
+  risk:       '#f59e0b',
+  price:      '#a855f7',
+  inventory:  '#4f8ef7',
+  mitigation: '#22c55e',
+  restored:   '#4ade80',
+};
+
+let ganttEvents = [];
+let ganttDays   = 30;
+let ganttHitboxes = [];
+
+function drawGantt(events, days) {
+  ganttEvents = events;
+  ganttDays   = days;
+  ganttHitboxes = [];
+
+  const canvas = document.getElementById('gantt-canvas');
+  const cw = canvas.parentElement.offsetWidth;
+  const ch = GANTT_HEADER + PHASE_ORDER.length * GANTT_ROW_H + 4;
+  canvas.width  = cw;
+  canvas.height = ch;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, cw, ch);
+
+  const plotW = cw - GANTT_LABEL_W - 12;
+  const cutoff = NOW - days * DAY;
+  const dayPx  = plotW / days;
+
+  function tsToX(ts) {
+    return GANTT_LABEL_W + Math.max(0, (ts - cutoff) / DAY) * dayPx;
+  }
+
+  // ── Background rows ──
+  PHASE_ORDER.forEach((pid, ri) => {
+    const y = GANTT_HEADER + ri * GANTT_ROW_H;
+    ctx.fillStyle = ri % 2 === 0 ? 'rgba(255,255,255,.025)' : 'transparent';
+    ctx.fillRect(GANTT_LABEL_W, y, plotW, GANTT_ROW_H);
+  });
+
+  // ── Date grid lines ──
+  ctx.strokeStyle = 'rgba(255,255,255,.05)';
+  ctx.lineWidth = 1;
+  const tickInterval = days <= 7 ? 1 : days <= 30 ? 5 : days <= 60 ? 10 : 15;
+  for (let d = 0; d <= days; d += tickInterval) {
+    const x = GANTT_LABEL_W + d * dayPx;
+    ctx.beginPath(); ctx.moveTo(x, GANTT_HEADER); ctx.lineTo(x, ch); ctx.stroke();
+    const lbl = new Date(cutoff + d * DAY).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit' });
+    ctx.fillStyle = 'rgba(90,99,128,.8)';
+    ctx.font = '9px Segoe UI, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(lbl, x, 14);
+  }
+
+  // ── "Today" line ──
+  const todayX = GANTT_LABEL_W + plotW;
+  ctx.strokeStyle = 'rgba(79,142,247,.5)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath(); ctx.moveTo(todayX, GANTT_HEADER); ctx.lineTo(todayX, ch); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ── Phase labels ──
+  PHASE_ORDER.forEach((pid, ri) => {
+    const pm = PHASE_META[pid];
+    const y = GANTT_HEADER + ri * GANTT_ROW_H + GANTT_ROW_H / 2;
+    ctx.fillStyle = pm.color;
+    ctx.font = 'bold 9.5px Segoe UI, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${pid} ${pm.short}`, 4, y + 3);
+  });
+
+  // ── Events ──
+  events.forEach(ev => {
+    if (ev.ts < cutoff) return;
+    const clr = TYPE_COLOR[ev.type] || '#888';
+
+    (ev.phases || []).forEach(pid => {
+      const ri = PHASE_ORDER.indexOf(pid);
+      if (ri < 0) return;
+      const ry = GANTT_HEADER + ri * GANTT_ROW_H;
+      const cy = ry + GANTT_ROW_H / 2;
+
+      if (ev.duration && ev.type === 'disruption') {
+        // Duration bar
+        const x1 = tsToX(ev.ts);
+        const endTs = ev.resolved ? ev.ts + ev.duration * DAY : NOW;
+        const x2 = Math.min(tsToX(endTs), GANTT_LABEL_W + plotW);
+        const bw = Math.max(4, x2 - x1);
+        const bh = 10;
+
+        ctx.fillStyle = clr + 'cc';
+        ctx.beginPath();
+        ctx.roundRect(x1, cy - bh/2, bw, bh, 3);
+        ctx.fill();
+
+        if (!ev.resolved) {
+          ctx.strokeStyle = clr;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.roundRect(x1, cy - bh/2, bw, bh, 3);
+          ctx.stroke();
+        }
+
+        ganttHitboxes.push({ x: x1, y: cy - bh/2 - 2, w: bw, h: bh + 4, ev, pid });
+      } else {
+        // Point marker
+        const x = tsToX(ev.ts);
+        const r = 5;
+        ctx.fillStyle = clr + 'cc';
+        ctx.beginPath();
+        if (ev.type === 'mitigation') {
+          ctx.moveTo(x, cy - r); ctx.lineTo(x + r, cy + r); ctx.lineTo(x - r, cy + r);
+          ctx.closePath();
+        } else if (ev.type === 'price') {
+          ctx.moveTo(x, cy - r); ctx.lineTo(x + r, cy); ctx.lineTo(x, cy + r); ctx.lineTo(x - r, cy); ctx.closePath();
+        } else {
+          ctx.arc(x, cy, r, 0, Math.PI * 2);
+        }
+        ctx.fill();
+        ganttHitboxes.push({ x: x - r - 2, y: cy - r - 2, w: r * 2 + 4, h: r * 2 + 4, ev, pid });
+      }
+    });
+
+    // Price spike: show on all affected phases as thin vertical line
+    if (ev.type === 'price' && (!ev.phases || ev.phases.length === 0)) {
+      const x = tsToX(ev.ts);
+      ctx.strokeStyle = TYPE_COLOR.price + '66';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, GANTT_HEADER); ctx.lineTo(x, ch); ctx.stroke();
+    }
+  });
+}
+
+/* ── Gantt tooltip / hover ── */
+document.getElementById('gantt-canvas').addEventListener('mousemove', e => {
+  const canvas = document.getElementById('gantt-canvas');
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+  const hit = ganttHitboxes.find(h => mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h);
+  const tt = document.getElementById('gantt-tooltip');
+
+  if (hit) {
+    canvas.style.cursor = 'pointer';
+    document.getElementById('tt-title').textContent  = hit.ev.title;
+    document.getElementById('tt-detail').textContent = hit.ev.detail.substring(0, 100) + '…';
+    document.getElementById('tt-time').textContent   = absTime(hit.ev.ts) + (hit.ev.duration ? ` · ${hit.ev.duration}d` : '');
+    tt.style.display = 'block';
+    tt.style.left = Math.min(e.clientX + 12, window.innerWidth - 280) + 'px';
+    tt.style.top  = (e.clientY - 60) + 'px';
+  } else {
+    canvas.style.cursor = 'crosshair';
+    tt.style.display = 'none';
+  }
+});
+
+document.getElementById('gantt-canvas').addEventListener('mouseleave', () => {
+  document.getElementById('gantt-tooltip').style.display = 'none';
+});
+
+document.getElementById('gantt-canvas').addEventListener('click', e => {
+  const canvas = document.getElementById('gantt-canvas');
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+  const hit = ganttHitboxes.find(h => mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h);
+  if (hit) window.location.href = `detail.html?phase=${hit.ev.phases?.[0] || hit.pid}`;
+});
+
+/* ════════════════════════════════════════════════════
+   FULL RENDER
+════════════════════════════════════════════════════ */
+function renderAll() {
+  const events = filteredEvents();
+  updateStats(events);
+
+  // Feed
+  const list = document.getElementById('event-list');
+  if (events.length === 0) {
+    list.innerHTML = '<div class="empty-state">Keine Ereignisse für die gewählten Filter.</div>';
+  } else {
+    list.innerHTML = events.map((e, i) => renderEventCard(e, i < liveEvents.length)).join('');
+  }
+
+  // Gantt — use activeDays scope but all events (for fuller chart)
+  const ganttScope = allEvents().filter(e => e.ts >= NOW - activeDays * DAY);
+  drawGantt(ganttScope, activeDays);
+
+  document.getElementById('feed-title').textContent = `Ereignis-Feed · ${events.length} Einträge`;
+}
+
+/* ════════════════════════════════════════════════════
+   FILTER WIRING
+════════════════════════════════════════════════════ */
+document.getElementById('type-filters').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  activeType = btn.dataset.type;
+  document.querySelectorAll('#type-filters .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
+});
+
+document.getElementById('phase-filter').addEventListener('change', e => {
+  activePhase = e.target.value; renderAll();
+});
+document.getElementById('sev-filter').addEventListener('change', e => {
+  activeSev = e.target.value; renderAll();
+});
+document.getElementById('days-filter').addEventListener('change', e => {
+  activeDays = +e.target.value; renderAll();
+});
+
+/* ════════════════════════════════════════════════════
+   SSE  (local API)
+════════════════════════════════════════════════════ */
+function connectSSE() {
+  try {
+    const es = new EventSource(`${API_BASE}/events?types=inventory.updated,risk.alert,disruption.detected,price.spike`);
+
+    es.addEventListener('open', () => {
+      const badge = document.getElementById('api-badge');
+      badge.classList.add('live');
+      document.getElementById('api-badge-text').textContent = 'API live';
+      document.getElementById('sse-chip').style.display = 'flex';
+    });
+
+    const SSE_TYPE_MAP = {
+      'inventory.updated':    'inventory',
+      'risk.alert':           'risk',
+      'disruption.detected':  'disruption',
+      'price.spike':          'price',
+    };
+
+    const SSE_ICON_MAP = {
+      inventory: '📦', risk: '⚠️', disruption: '🔴', price: '📈',
+    };
+
+    ['inventory.updated','risk.alert','disruption.detected','price.spike'].forEach(evType => {
+      es.addEventListener(evType, e => {
+        try {
+          const d = JSON.parse(e.data);
+          const type = SSE_TYPE_MAP[evType];
+          const ev = {
+            id: `live-${Date.now()}`,
+            type,
+            sev: d.severity || 'medium',
+            phases: d.phases || (d.phase ? [d.phase.toString().padStart(2,'0')] : []),
+            icon: SSE_ICON_MAP[type] || '📡',
+            title: d.message || d.title || evType,
+            detail: d.detail || JSON.stringify(d).substring(0, 120),
+            ts: Date.now(),
+            isLive: true,
+          };
+          liveEvents.unshift(ev);
+          if (liveEvents.length > 50) liveEvents.pop();
+          renderAll();
+        } catch {}
+      });
+    });
+
+    es.onerror = () => {
+      document.getElementById('api-badge').classList.remove('live');
+      document.getElementById('api-badge-text').textContent = 'API offline';
+    };
+  } catch {}
+}
+
+/* ════════════════════════════════════════════════════
+   BOOT
+════════════════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', () => {
+  renderAll();
+  connectSSE();
+  window.addEventListener('resize', () => {
+    const ganttScope = allEvents().filter(e => e.ts >= NOW - activeDays * DAY);
+    drawGantt(ganttScope, activeDays);
+  });
+});
+</script>
+</body>
+</html>
