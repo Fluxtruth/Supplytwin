@@ -559,6 +559,32 @@
     .api-badge .dot { width:6px;height:6px;border-radius:50%;background:var(--muted); }
     .api-badge.live .dot { background:#22c55e;box-shadow:0 0 5px #22c55e; }
     .api-badge.live { color:#4ade80;border-color:rgba(34,197,94,.25); }
+    /* ── Cam tiles ── */
+    .cam-viz-wrap { position:relative;width:100%;height:130px;background:#020802;border-radius:6px;overflow:hidden;cursor:default; }
+    .cam-canvas { position:absolute;inset:0;width:100%;height:100%;display:block; }
+    .cam-stream-img { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.65; }
+    .cam-hint-btn { position:absolute;bottom:5px;right:6px;font-size:.55rem;color:#4ade80;cursor:pointer;
+      background:rgba(0,15,0,.8);padding:.15rem .4rem;border-radius:3px;border:1px solid rgba(74,222,128,.25);z-index:3; }
+    .cam-hint-box { display:none;position:absolute;bottom:26px;right:4px;background:#081208;
+      border:1px solid rgba(74,222,128,.3);border-radius:7px;padding:.65rem .75rem;font-size:.58rem;
+      color:#86efac;width:210px;z-index:10;line-height:1.6;box-shadow:0 8px 24px rgba(0,0,0,.7); }
+    .cam-hint-box.open { display:block; }
+    .cam-hint-box a { color:#4ade80;text-decoration:none; }
+    .cam-hint-box a:hover { text-decoration:underline; }
+    .cam-hint-title { font-size:.6rem;font-weight:700;color:#4ade80;margin-bottom:.3rem;display:block; }
+    /* ── Map tiles ── */
+    .map-viz-wrap { position:relative;width:100%;height:175px;background:#0a0f1a;border-radius:6px;overflow:hidden; }
+    .map-canvas { position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair; }
+    .map-iframe { position:absolute;inset:0;width:100%;height:100%;border:none;display:none; }
+    .map-iframe.active { display:block; }
+    .map-satellite-bar { position:absolute;top:6px;left:6px;right:6px;display:flex;gap:4px;z-index:5;flex-wrap:wrap; }
+    .map-sat-btn { font-size:.55rem;padding:.18rem .45rem;border-radius:4px;cursor:pointer;font-family:inherit;font-weight:600;
+      background:rgba(10,15,26,.85);border:1px solid rgba(255,255,255,.15);color:#8490b8;backdrop-filter:blur(4px); }
+    .map-sat-btn.active { background:rgba(79,142,247,.2);border-color:rgba(79,142,247,.5);color:#7eb3ff; }
+    .map-sat-btn:hover { border-color:rgba(255,255,255,.3);color:#c4ccf0; }
+    .map-coord-bar { position:absolute;bottom:5px;left:6px;font-size:.58rem;color:rgba(255,255,255,.4);
+      font-family:monospace;z-index:5;pointer-events:none; }
+    .map-api-note { position:absolute;bottom:5px;right:6px;font-size:.55rem;color:rgba(255,255,255,.28);z-index:5; }
   </style>
   <script src="api-config.js"></script>
 </head>
@@ -645,6 +671,20 @@
       </div>
       <button class="settings-save-btn" id="settings-save-key">Speichern</button>
       <div class="settings-error" id="settings-error-msg" style="display:none"></div>
+    </div>
+    <div class="settings-sec">
+      <div class="settings-sec-lbl">Mapbox API-Key (Karten)</div>
+      <div class="settings-key-row">
+        <input class="cfg-input masked" id="settings-mapbox-key" type="password"
+               placeholder="pk.eyJ1Ijoi..." autocomplete="off" />
+        <button class="settings-vis-btn" id="settings-mapbox-vis" title="Anzeigen/Verstecken">👁</button>
+      </div>
+      <div class="settings-key-hint">
+        Für Mapbox Satellite · OSM/Topo/Google sind kostenlos ·
+        <a href="https://account.mapbox.com/access-tokens/" target="_blank"
+           rel="noopener" style="color:#7eb3ff">Mapbox Token holen →</a>
+      </div>
+      <button class="settings-save-btn" id="settings-save-mapbox">Speichern</button>
     </div>
     <div class="settings-sec">
       <div class="settings-sec-lbl">Aktive Connectors</div>
@@ -1445,6 +1485,14 @@ const TWINS = {
     { id:'klima',     icon:'🌩️', name:'Klimarisiko Monitor', viz:'status',
       statuses:[['Hurrikan ATL','FERN','ok'],['I-26 Flood','KEIN','ok'],['Waldbrand','GERING','ok'],['Erdbeben','INAKTIV','ok'],['NOAA Sturm','FERN','ok'],['Strg. Mitchell Co.','OK','ok']],
       footer:'NOAA API · NWS Alerts · Live', data:['NOAA Weather API','NWS Alert Feed','USGS Seismic REST','Satellite Flood Detect'] },
+    { id:'map-01', icon:'🗺️', name:'Standort-Karte — Spruce Pine, NC', viz:'map',
+      mapId:'MAP-01-NC', mapLat:35.9192, mapLng:-82.0643, mapZoom:13,
+      footer:'OSM / Google / Mapbox · klickbar', data:['Mapbox Satellite API','Google Maps Tiles','OpenStreetMap','Leaflet.js embed'] },
+    { id:'cam-01', icon:'📷', name:'Mine Site Kamera — Spruce Pine', viz:'cam',
+      camId:'CAM-01-NC-A', label:'Spruce Pine, NC — Mine Perimeter', lat:'35.9°N', lng:'82.1°W',
+      streamUrl: null,
+      streamHint: 'NC DOT Live-Kameras (Mitchell County, I-26/US-19E): <a href="https://www.ncdot.gov/travel-maps/cameras/" target="_blank">ncdot.gov/cameras</a>. Für RTSP-Kamera-Feeds: Industriebereich benötigt VPN-Zugang.',
+      footer:'CCTV-Simulation · 20fps', data:['IP-Kamera RTSP','Perimeter CCTV','Drohnen-Feed API','Sicherheitssystem VMS'] },
   ],
   '02': [
     { id:'furnace',   icon:'🔥', name:'Lichtbogenofen Monitor', viz:'gauge',
@@ -1461,6 +1509,14 @@ const TWINS = {
       sparkVals:[4.2,4.0,3.8,3.9,4.1,3.7,3.6,3.8], sparkColor:'#22c55e',
       sparkLabel:'t CO₂/t Si (Ø)', sparkCurrent:'3.8', footer:'EU-ETS · Batch täglich',
       data:['EU-ETS Registry API','CBAM-Reporting REST','Emissionsscanner Kamin','ESG-Reporting Platform'] },
+    { id:'map-02', icon:'🗺️', name:'Standort-Karte — Hamburg Hafen', viz:'map',
+      mapId:'MAP-02-HH', mapLat:53.5396, mapLng:9.9897, mapZoom:13,
+      footer:'OSM / Google / Mapbox · klickbar', data:['Mapbox Satellite API','Google Maps Tiles','OpenStreetMap','AIS Port Vessel Feed'] },
+    { id:'cam-02', icon:'📷', name:'Hafenkamera — Hamburg Süd', viz:'cam',
+      camId:'CAM-02-HH-A', label:'Hamburg Industriehafen — Si-Metall Umschlag', lat:'53.5°N', lng:'10.0°E',
+      streamUrl: null,
+      streamHint: 'Hamburg Port Authority (HPA) Live-Webcams: <a href="https://www.hamburg-port-authority.de/service/live-cams/" target="_blank">hamburg-port-authority.de</a>. Rotterdam Port Cam: <a href="https://www.portofrotterdam.com/en/port-experience/webcam" target="_blank">portofrotterdam.com</a>',
+      footer:'CCTV-Simulation · 20fps', data:['Hafenkamera RTSP','AIS Schiffsortung API','Terminal-CCTV VMS','Güterumschlag SCADA'] },
   ],
   '03': [
     { id:'reaktor',   icon:'🧪', name:'Siemens-Reaktor Monitor', viz:'gauge',
@@ -1478,6 +1534,14 @@ const TWINS = {
       bars:[['Siemens-Reaktor','80 kWh/kg',.67,'#d97706'],['CVD-Anlage','12 kWh/kg',.1,'#d97706'],['Destillation','8 kWh/kg',.067,'#d97706'],['Utilities','5 kWh/kg',.042,'#d97706']],
       barColor:'#d97706', footer:'Energiezähler · 5min',
       data:['Lastgangzähler M-Bus','Stromlieferant-API','Wärmerückgewinnung SCADA','CO₂-Rechner intern'] },
+    { id:'map-03', icon:'🗺️', name:'Standort-Karte — Burghausen Chemiepark', viz:'map',
+      mapId:'MAP-03-BY', mapLat:48.1614, mapLng:12.8347, mapZoom:14,
+      footer:'OSM / Google / Mapbox · klickbar', data:['Mapbox Satellite API','Google Maps Tiles','OpenStreetMap','Bayern Geodaten WMS'] },
+    { id:'cam-03', icon:'📷', name:'Werksgelände Kamera — Burghausen', viz:'cam',
+      camId:'CAM-03-BY-A', label:'Burghausen Chemiepark — Wacker Poly', lat:'48.1°N', lng:'12.8°E',
+      streamUrl: null,
+      streamHint: 'Bayern Verkehrskameras (nahe Autobahn A94): <a href="https://www.verkehr.bayern.de/webcam" target="_blank">verkehr.bayern.de</a>. Innkam Webcam Burghausen: <a href="https://www.burghausen.de/webcam" target="_blank">burghausen.de/webcam</a>',
+      footer:'CCTV-Simulation · 20fps', data:['Werks-CCTV RTSP','Perimeter IP-Kamera','Anlagensicherheit VMS','Chemiepark Access Control'] },
   ],
   '04': [
     { id:'crystal',   icon:'💎', name:'Czochralski Kristallzucht', viz:'gauge',
@@ -1494,6 +1558,14 @@ const TWINS = {
     { id:'liefertrack', icon:'📦', name:'Liefertracking', viz:'status',
       statuses:[['Shin-Etsu Lieferzeit','12 Wo.','warn'],['SUMCO Status','OK','ok'],['GlobalWafers','16 Wo.','warn'],['Siltronic','OK','ok'],['Bestand TQC','42d','ok'],['Expressversand','AKTIV','ok']],
       footer:'Lieferanten-Portal · täglich', data:['EDI X12 Lieferanten','Spediteur-Tracking REST','Zoll-API (CBP)','Lager-WMS WebSocket'] },
+    { id:'map-04', icon:'🗺️', name:'Standort-Karte — Hsinchu Science Park', viz:'map',
+      mapId:'MAP-04-HC', mapLat:24.7845, mapLng:120.9980, mapZoom:14,
+      footer:'OSM / Google / Mapbox · klickbar', data:['Mapbox Satellite API','Google Maps Tiles','OpenStreetMap','Taiwan MOTC GIS API'] },
+    { id:'cam-04', icon:'📷', name:'Fab-Perimeter Kamera — Hsinchu', viz:'cam',
+      camId:'CAM-04-HC-A', label:'Hsinchu Science Park — Wafer-Fab Gate', lat:'24.8°N', lng:'120.9°E',
+      streamUrl: null,
+      streamHint: 'Taiwan MOTC Verkehrskameras (Hsinchu): <a href="https://tisvcloud.freeway.gov.tw/history/TDCS_M06A/" target="_blank">freeway.gov.tw</a>. Öffentliche Livecams Taiwan (Windy): <a href="https://www.windy.com/webcams/map?24.798,120.971,10" target="_blank">windy.com</a>',
+      footer:'CCTV-Simulation · 20fps', data:['Fab-Gate CCTV RTSP','MOTC Traffic Cam API','Perimeter-Sensor VMS','Sicherheitsschleuse IP-Cam'] },
   ],
   '05': [
     { id:'asml-uptime', icon:'🔬', name:'ASML EUV Uptime', viz:'gauge',
@@ -1510,6 +1582,14 @@ const TWINS = {
       bars:[['ASML Preventive','Q3 2026',.15,'#dc2626'],['TEL Coater PM','aktuell',.9,'#22c55e'],['AMAT CVD PM','2 Wo.',.75,'#f59e0b'],['KLA Inspektor PM','OK',.85,'#22c55e']],
       barColor:'#dc2626', footer:'CMMS Maximo · täglich',
       data:['IBM Maximo CMMS REST','ASML Predictive Maint.','SAP PM Modul','Ersatzteil-Lager RFID'] },
+    { id:'map-05', icon:'🗺️', name:'Standort-Karte — ASML Campus Veldhoven', viz:'map',
+      mapId:'MAP-05-NL', mapLat:51.4178, mapLng:5.4476, mapZoom:15,
+      footer:'OSM / Google / Mapbox · klickbar', data:['Mapbox Satellite API','Google Maps Tiles','OpenStreetMap','PDOK Netherlands WMS'] },
+    { id:'cam-05', icon:'📷', name:'Campus-Kamera — ASML Veldhoven', viz:'cam',
+      camId:'CAM-05-NL-A', label:'Veldhoven Campus — ASML EUV-Werk', lat:'51.4°N', lng:'5.4°E',
+      streamUrl: null,
+      streamHint: 'NDW Verkehrskameras (A2/A67 nahe Eindhoven): <a href="https://www.ndw.nu/pagina/nl/7/extra_materiaal/1/webcams" target="_blank">ndw.nu/webcams</a>. Eindhoven Stad Livecam: <a href="https://www.windy.com/webcams/map?51.438,5.478,12" target="_blank">windy.com</a>',
+      footer:'CCTV-Simulation · 20fps', data:['Campus IP-Cam RTSP','NDW Traffic Cam API','ASML Visitor Cam','Perimeter-VMS Axis'] },
   ],
   '06': [
     { id:'fab-wip',   icon:'🏭', name:'Fab WIP (Work-in-Progress)', viz:'heatmap',
@@ -1527,6 +1607,14 @@ const TWINS = {
       bars:[['Wasserreservoir','142 d',.78,'#22c55e'],['Strombedarf','~8% TW',.8,'#f59e0b'],['PUE','1.22',.61,'#22c55e'],['Erneuerbar','42%',.42,'#22c55e']],
       barColor:'#7c3aed', footer:'Taiwan Utilities · täglich',
       data:['TWPC Wasserverbrauch API','Taipower Strom-API','TSMC Sustainability REST','Wetter-Prognose CWBS'] },
+    { id:'map-06', icon:'🗺️', name:'Standort-Karte — TSMC Tainan Science Park', viz:'map',
+      mapId:'MAP-06-TN', mapLat:23.0177, mapLng:120.2358, mapZoom:14,
+      footer:'OSM / Google / Mapbox · klickbar', data:['Mapbox Satellite API','Google Maps Tiles','OpenStreetMap','Taiwan MOTC GIS API'] },
+    { id:'cam-06', icon:'📷', name:'Fab-Tor Kamera — TSMC Tainan', viz:'cam',
+      camId:'CAM-06-TN-A', label:'Tainan Science Park — TSMC Fab 18', lat:'23.0°N', lng:'120.3°E',
+      streamUrl: null,
+      streamHint: 'Taiwan MOTC Live-Kameras (Tainan): <a href="https://tisvcloud.freeway.gov.tw/" target="_blank">tisvcloud.freeway.gov.tw</a>. Tainan Stadtcams (Windy): <a href="https://www.windy.com/webcams/map?23.012,120.232,12" target="_blank">windy.com</a>',
+      footer:'CCTV-Simulation · 20fps', data:['Fab-Gate CCTV RTSP','Science Park VMS','Reinraum-Zugangskontrolle','AMS IP-Cam Axis'] },
   ],
   '07': [
     { id:'design-sim', icon:'🧠', name:'Design Simulation KPIs', viz:'sparkline',
@@ -1543,6 +1631,14 @@ const TWINS = {
       sparkVals:[32,30,29,28,27,28,28,28], sparkColor:'#f59e0b',
       sparkLabel:'H100 Spot USD (k)', sparkCurrent:'$28k', footer:'Reseller-Aggregator · täglich',
       data:['GPU-Marktplatz API','Bloomberg Terminal','NVIDIA OEM Preisliste REST','Cloud-Spot-Preis-APIs'] },
+    { id:'map-07', icon:'🗺️', name:'Standort-Karte — NVIDIA / AMD Santa Clara', viz:'map',
+      mapId:'MAP-07-SV', mapLat:37.3688, mapLng:-121.9624, mapZoom:14,
+      footer:'OSM / Google / Mapbox · klickbar', data:['Mapbox Satellite API','Google Maps Tiles','OpenStreetMap','US Census TIGER GIS'] },
+    { id:'cam-07', icon:'📷', name:'Campus-Kamera — Silicon Valley', viz:'cam',
+      camId:'CAM-07-SV-A', label:'Santa Clara Campus — NVIDIA/AMD HQ', lat:'37.3°N', lng:'121.9°W',
+      streamUrl: null,
+      streamHint: 'Caltrans D4 Live-Kameras (US-101 / I-880 Santa Clara): <a href="https://cwwp2.dot.ca.gov/vm/streamedmedia.htm" target="_blank">cwwp2.dot.ca.gov</a>. SFO Webcams & Bay Area Livecams: <a href="https://www.windy.com/webcams/map?37.354,-121.955,12" target="_blank">windy.com</a>',
+      footer:'CCTV-Simulation · 20fps', data:['Campus IP-Cam RTSP','Caltrans Traffic API','HQ Perimeter CCTV','Badge-Reader API'] },
   ],
   '08': [
     { id:'montage',   icon:'🔧', name:'Montage-Linie Status', viz:'bars',
@@ -1559,6 +1655,14 @@ const TWINS = {
       sparkVals:[380,420,410,450,480,460,490,400], sparkColor:'#0891b2',
       sparkLabel:'Server-Auslieferungen / Tag', sparkCurrent:'400/d', footer:'Order Mgmt · täglich',
       data:['CRM Salesforce REST','Order Mgmt ERP SAP','Logistics Oracle TMS','Kundenzufriedenheit API'] },
+    { id:'map-08', icon:'🗺️', name:'Standort-Karte — Supermicro San Jose', viz:'map',
+      mapId:'MAP-08-SJ', mapLat:37.3337, mapLng:-121.9007, mapZoom:15,
+      footer:'OSM / Google / Mapbox · klickbar', data:['Mapbox Satellite API','Google Maps Tiles','OpenStreetMap','US Census TIGER GIS'] },
+    { id:'cam-08', icon:'📷', name:'Montage-Hallen Kamera — San Jose', viz:'cam',
+      camId:'CAM-08-SJ-A', label:'San Jose — Supermicro Server Assembly', lat:'37.3°N', lng:'121.9°W',
+      streamUrl: null,
+      streamHint: 'Caltrans D4 Live-Kameras (I-880 / US-101 San Jose): <a href="https://cwwp2.dot.ca.gov/vm/streamedmedia.htm" target="_blank">cwwp2.dot.ca.gov</a>. Silicon Valley Webcams: <a href="https://www.windy.com/webcams/map?37.383,-121.983,12" target="_blank">windy.com</a>',
+      footer:'CCTV-Simulation · 20fps', data:['Montage-CCTV RTSP','WMS Lager-Kamera','QC-Linie IP-Cam','Versandhof-Kamera'] },
   ],
   '09': [
     { id:'pue',       icon:'⚡', name:'DC Infrastruktur PUE', viz:'gauge',
@@ -1575,6 +1679,14 @@ const TWINS = {
     { id:'security',  icon:'🔒', name:'Security Posture', viz:'status',
       statuses:[['DDoS-Schutz','AKTIV','ok'],['Perimeter','GESICHERT','ok'],['Patching','<48h','ok'],['Anomalie-Detect.','OK','ok'],['Compliance NIST','OK','ok'],['SOC Status','24/7','ok']],
       footer:'SIEM · Echtzeit', data:['SIEM Splunk REST','Firewall-Log API','Vulnerability Scanner','CIS Benchmark Monitor'] },
+    { id:'map-09', icon:'🗺️', name:'Standort-Karte — Ashburn Data Center Corridor', viz:'map',
+      mapId:'MAP-09-VA', mapLat:39.0438, mapLng:-77.4874, mapZoom:13,
+      footer:'OSM / Google / Mapbox · klickbar', data:['Mapbox Satellite API','Google Maps Tiles','OpenStreetMap','VDOT GIS API'] },
+    { id:'cam-09', icon:'📷', name:'Rechenzentrum Kamera — Ashburn VA', viz:'cam',
+      camId:'CAM-09-VA-A', label:'Ashburn, VA — Hyperscaler Campus', lat:'39.0°N', lng:'77.5°W',
+      streamUrl: null,
+      streamHint: 'VDOT SmartTraffic Kameras (Loudoun County / Route 7): <a href="https://www.511virginia.org/cameras" target="_blank">511virginia.org/cameras</a>. DC-Area Webcams: <a href="https://www.windy.com/webcams/map?39.043,-77.487,12" target="_blank">windy.com</a>',
+      footer:'CCTV-Simulation · 20fps', data:['Perimeter IP-Cam DCIM','Zufahrts-CCTV VMS','Külhturm-Kamera','Generator-Hof IP-Cam'] },
   ],
   '10': [
     { id:'netzstatus', icon:'🔆', name:'Netzstatus & Frequenz', viz:'sparkline',
@@ -1592,6 +1704,14 @@ const TWINS = {
       sparkVals:[380,400,420,445,470,490,520,550], sparkColor:'#16a34a',
       sparkLabel:'GWh/d KI-DC Bedarf (proj.)', sparkCurrent:'+40%/a', footer:'EIA Prognose · wöchentlich',
       data:['EIA STEO Prognose API','Hyperscaler CAPEX Filings','Grid-Expansion Tracker','ML-Nachfragemodell intern'] },
+    { id:'map-10', icon:'🗺️', name:'Standort-Karte — NextEra Wind Farm TX', viz:'map',
+      mapId:'MAP-10-TX', mapLat:32.5125, mapLng:-100.4081, mapZoom:12,
+      footer:'OSM / Google / Mapbox · klickbar', data:['Mapbox Satellite API','Google Maps Tiles','OpenStreetMap','EIA GIS Wind Layer'] },
+    { id:'cam-10', icon:'📷', name:'Windpark Kamera — Texas / Iowa', viz:'cam',
+      camId:'CAM-10-TX-A', label:'Sweetwater, TX — NextEra Wind Farm', lat:'32.5°N', lng:'100.4°W',
+      streamUrl: null,
+      streamHint: 'TxDOT Live-Kameras (I-20 Sweetwater TX): <a href="https://www.txdot.gov/data-maps/tools/camera-library.html" target="_blank">txdot.gov/cameras</a>. Windpark-Webcams Iowa (MidAmerican): <a href="https://www.windy.com/webcams/map?41.878,-93.098,7" target="_blank">windy.com Iowa</a>',
+      footer:'CCTV-Simulation · 20fps', data:['Windpark IP-Cam RTSP','SCADA Turm-Kameras','Perimeter-CCTV VMS','Drohnen-Inspect. API'] },
   ],
 };
 
@@ -1884,8 +2004,326 @@ function renderViz(twin) {
       return heatmapHTML(twin.hmCols, twin.hmRows);
     case 'status':
       return statusGridHTML(twin.statuses);
+    case 'cam':
+      return renderCamViz(twin);
+    case 'map':
+      return renderMapViz(twin);
     default: return '';
   }
+}
+
+function renderCamViz(twin) {
+  const sid = `cam-${twin.camId.replace(/[^a-z0-9]/gi, '-')}`;
+  const imgTag = twin.streamUrl
+    ? `<img class="cam-stream-img" id="${sid}-img" src="${twin.streamUrl}" onerror="this.style.display='none'" />`
+    : '';
+  return `
+    <div class="cam-viz-wrap">
+      <canvas class="cam-canvas" id="${sid}"
+        data-label="${twin.label}" data-lat="${twin.lat}" data-lng="${twin.lng}"
+        data-camid="${twin.camId}"></canvas>
+      ${imgTag}
+      <div class="cam-hint-btn" onclick="event.stopPropagation();this.nextElementSibling.classList.toggle('open')">📡 Stream-Tipp</div>
+      <div class="cam-hint-box">
+        <span class="cam-hint-title">Echtzeit-Stream einbinden</span>
+        ${twin.streamHint}
+      </div>
+    </div>`;
+}
+
+const _camTimers = {};
+
+function startCamAnimations() {
+  document.querySelectorAll('.cam-canvas').forEach(canvas => {
+    if (_camTimers[canvas.id]) return;
+    canvas.width  = canvas.offsetWidth  || 300;
+    canvas.height = canvas.offsetHeight || 130;
+    const ctx    = canvas.getContext('2d');
+    const label  = canvas.dataset.label || 'FACILITY';
+    const lat    = canvas.dataset.lat   || '';
+    const lng    = canvas.dataset.lng   || '';
+    const camId  = canvas.dataset.camid || 'CAM';
+    let frame = 0;
+
+    function draw() {
+      const W = canvas.width, H = canvas.height;
+
+      // Dark scene background
+      ctx.fillStyle = '#020802';
+      ctx.fillRect(0, 0, W, H);
+
+      // Subtle grid
+      ctx.strokeStyle = 'rgba(40,90,40,.18)';
+      ctx.lineWidth = .5;
+      for (let x = 0; x < W; x += 22) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+      for (let y = 0; y < H; y += 22) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+      // Noise particles
+      for (let i = 0; i < 55; i++) {
+        const a = Math.random() * .22 + .04;
+        ctx.fillStyle = `rgba(160,220,160,${a})`;
+        ctx.fillRect(Math.random()*W, Math.random()*H, 1, 1);
+      }
+
+      // Moving scan line
+      const scanY = (frame * 1.3) % H;
+      const grad = ctx.createLinearGradient(0, scanY-5, 0, scanY+5);
+      grad.addColorStop(0,   'rgba(74,222,128,0)');
+      grad.addColorStop(.5,  'rgba(74,222,128,.09)');
+      grad.addColorStop(1,   'rgba(74,222,128,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, scanY-5, W, 10);
+
+      // Scanline interlace overlay
+      ctx.fillStyle = 'rgba(0,0,0,.15)';
+      for (let y = 0; y < H; y += 2) ctx.fillRect(0, y, W, 1);
+
+      // Corner brackets
+      ctx.strokeStyle = 'rgba(74,222,128,.75)';
+      ctx.lineWidth = 1.5;
+      const bl = 11;
+      [[6,6],[W-6,6],[6,H-6],[W-6,H-6]].forEach(([cx,cy]) => {
+        const sx = cx === 6 ? 1 : -1, sy = cy === 6 ? 1 : -1;
+        ctx.beginPath(); ctx.moveTo(cx, cy+sy*bl); ctx.lineTo(cx, cy); ctx.lineTo(cx+sx*bl, cy); ctx.stroke();
+      });
+
+      // REC indicator (blink ~1/s at 20fps)
+      if (Math.floor(frame / 10) % 2 === 0) {
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath(); ctx.arc(W-14, 11, 3.5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = 'rgba(239,68,68,.18)';
+        ctx.beginPath(); ctx.arc(W-14, 11, 6.5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#f87171';
+        ctx.font = 'bold 6.5px monospace';
+        ctx.fillText('REC', W-30, 14.5);
+      }
+
+      // Timestamp (top-left)
+      const ts = new Date().toISOString().replace('T',' ').slice(0,19)+' UTC';
+      ctx.fillStyle = 'rgba(74,222,128,.85)';
+      ctx.font = '6.5px monospace';
+      ctx.fillText(ts, 9, 13);
+
+      // Camera ID (bottom-left)
+      ctx.fillStyle = 'rgba(74,222,128,.9)';
+      ctx.font = 'bold 6.5px monospace';
+      ctx.fillText(camId, 9, H-16);
+      ctx.font = '6px monospace';
+      ctx.fillStyle = 'rgba(74,222,128,.55)';
+      ctx.fillText(label, 9, H-8);
+
+      // Coordinates (bottom-right)
+      if (lat && lng) {
+        const coords = `${lat}  ${lng}`;
+        ctx.font = '6px monospace';
+        ctx.fillStyle = 'rgba(74,222,128,.45)';
+        ctx.fillText(coords, W - ctx.measureText(coords).width - 8, H-8);
+      }
+
+      // Signal strength bars (top, after timestamp)
+      const bars = 4;
+      for (let b = 0; b < bars; b++) {
+        const bH = 4 + b * 2, bW = 3, bX = W - 42 + b * 5, bY = 18 - bH;
+        ctx.fillStyle = b < 3 ? 'rgba(74,222,128,.7)' : 'rgba(74,222,128,.2)';
+        ctx.fillRect(bX, bY, bW, bH);
+      }
+
+      frame++;
+    }
+
+    _camTimers[canvas.id] = setInterval(draw, 50); // 20 fps
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   MAP TILES
+═══════════════════════════════════════════════════ */
+
+// Satellite layer definitions.  url is a tile URL template with {z}/{x}/{y}.
+// When a Mapbox/Google/Esri token is configured we swap in the real layer.
+const MAP_LAYERS = [
+  { id:'osm',      label:'🗺️ OSM',      url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',         key:false, attr:'© OpenStreetMap' },
+  { id:'topo',     label:'⛰️ Topo',     url:'https://tile.opentopomap.org/{z}/{x}/{y}.png',           key:false, attr:'© OpenTopoMap' },
+  { id:'satellite',label:'🛰️ Satellite',url:'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',    key:false, attr:'© Google' },
+  { id:'hybrid',   label:'🌐 Hybrid',   url:'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',    key:false, attr:'© Google' },
+  { id:'mapbox',   label:'📍 Mapbox',   url:'https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/256/{z}/{x}/{y}?access_token={key}', key:'mapbox', attr:'© Mapbox' },
+];
+
+function renderMapViz(twin) {
+  const mid = `map-${twin.mapId.replace(/[^a-z0-9]/gi,'-')}`;
+  const btnHtml = MAP_LAYERS.map((l,i) =>
+    `<button class="map-sat-btn${i===0?' active':''}" data-layer="${l.id}" onclick="switchMapLayer('${mid}','${l.id}',this)">${l.label}</button>`
+  ).join('');
+  return `
+    <div class="map-viz-wrap" id="${mid}-wrap">
+      <canvas class="map-canvas" id="${mid}-canvas"
+        data-lat="${twin.mapLat}" data-lng="${twin.mapLng}" data-zoom="${twin.mapZoom||13}"></canvas>
+      <iframe class="map-iframe" id="${mid}-iframe" allowfullscreen loading="lazy" referrerpolicy="no-referrer"></iframe>
+      <div class="map-satellite-bar">${btnHtml}</div>
+      <div class="map-coord-bar">${twin.mapLat}, ${twin.mapLng} · z${twin.mapZoom||13}</div>
+      <div class="map-api-note" id="${mid}-attr">Mock-Karte</div>
+    </div>`;
+}
+
+// Convert lat/lng + zoom to tile numbers (Slippy Map)
+function latLngToTile(lat, lng, z) {
+  const n = Math.pow(2, z);
+  const x = Math.floor((lng + 180) / 360 * n);
+  const latRad = lat * Math.PI / 180;
+  const y = Math.floor((1 - Math.log(Math.tan(latRad) + 1/Math.cos(latRad)) / Math.PI) / 2 * n);
+  return { x, y };
+}
+
+function drawMockMap(canvas, lat, lng, zoom) {
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  // Background: ocean/land fill gradient
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#0d1b2a'); bg.addColorStop(1, '#1a2840');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+  // Simulated road grid (scale-sensitive)
+  const spacing = Math.max(12, 60 - zoom * 3);
+  ctx.strokeStyle = 'rgba(60,80,120,.35)'; ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += spacing) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y = 0; y < H; y += spacing) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  // Major roads (diagonal/straight highlight)
+  ctx.strokeStyle = 'rgba(100,130,180,.45)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, H*.4); ctx.lineTo(W, H*.38); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W*.3, 0); ctx.lineTo(W*.35, H); ctx.stroke();
+  ctx.strokeStyle = 'rgba(80,110,160,.35)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0, H*.65); ctx.lineTo(W, H*.62); ctx.stroke();
+
+  // Land patches
+  ctx.fillStyle = 'rgba(30,50,30,.5)';
+  [[.15,.2,.25,.3],[.55,.1,.2,.25],[.7,.6,.18,.22],[.1,.7,.22,.18]].forEach(([px,py,pw,ph])=>{
+    ctx.beginPath();
+    ctx.roundRect(px*W, py*H, pw*W, ph*H, 6);
+    ctx.fill();
+  });
+
+  // Water feature
+  ctx.fillStyle = 'rgba(15,40,80,.6)';
+  ctx.beginPath(); ctx.ellipse(W*.8, H*.75, W*.15, H*.1, -.2, 0, Math.PI*2); ctx.fill();
+
+  // Buildings (zoom-sensitive density)
+  const bCount = Math.min(40, zoom * 3);
+  for (let i = 0; i < bCount; i++) {
+    const bx = (.1 + Math.random()*.8)*W, by = (.1 + Math.random()*.8)*H;
+    const bw = 4 + Math.random()*8, bh = 3 + Math.random()*6;
+    ctx.fillStyle = `rgba(${60+Math.random()*40},${80+Math.random()*40},${120+Math.random()*40},.7)`;
+    ctx.fillRect(bx, by, bw, bh);
+  }
+
+  // Crosshair at center
+  const cx = W/2, cy = H/2;
+  ctx.strokeStyle = 'rgba(248,113,113,.9)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(cx-12,cy); ctx.lineTo(cx+12,cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx,cy-12); ctx.lineTo(cx,cy+12); ctx.stroke();
+  ctx.fillStyle = '#ef4444';
+  ctx.beginPath(); ctx.arc(cx, cy, 3.5, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = 'rgba(239,68,68,.3)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(cx, cy, 10, 0, Math.PI*2); ctx.stroke();
+
+  // Lat/lng label near crosshair
+  ctx.font = '6.5px monospace'; ctx.fillStyle = 'rgba(255,255,255,.6)';
+  ctx.fillText(`${lat.toFixed(4)}°, ${lng.toFixed(4)}°`, cx+14, cy-4);
+
+  // Scale bar
+  ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(W-60, H-18, 40, 2);
+  ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.font = '6px monospace';
+  const scaleKm = (40075 / Math.pow(2, zoom) * (40/W)).toFixed(1);
+  ctx.fillText(`~${scaleKm}km`, W-60, H-22);
+
+  // "MOCK" watermark
+  ctx.font = 'bold 9px monospace'; ctx.fillStyle = 'rgba(255,255,255,.06)';
+  ctx.fillText('MOCK MAP', W/2 - 28, H/2 + 30);
+}
+
+function initMapTiles() {
+  document.querySelectorAll('.map-canvas').forEach(canvas => {
+    canvas.width  = canvas.offsetWidth  || 300;
+    canvas.height = canvas.offsetHeight || 175;
+    const lat  = parseFloat(canvas.dataset.lat)  || 0;
+    const lng  = parseFloat(canvas.dataset.lng)  || 0;
+    const zoom = parseInt(canvas.dataset.zoom)   || 13;
+    drawMockMap(canvas, lat, lng, zoom);
+  });
+}
+
+function switchMapLayer(mid, layerId, btn) {
+  // Update active button
+  const bar = document.querySelector(`#${mid}-wrap .map-satellite-bar`);
+  bar.querySelectorAll('.map-sat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const layer  = MAP_LAYERS.find(l => l.id === layerId);
+  const canvas = document.getElementById(`${mid}-canvas`);
+  const iframe = document.getElementById(`${mid}-iframe`);
+  const attr   = document.getElementById(`${mid}-attr`);
+  const lat    = parseFloat(canvas.dataset.lat);
+  const lng    = parseFloat(canvas.dataset.lng);
+  const zoom   = parseInt(canvas.dataset.zoom);
+
+  if (layerId === 'mapbox') {
+    const mbKey = (() => { try { return localStorage.getItem('supplytwin_mapbox_key') || ''; } catch { return ''; } })();
+    if (!mbKey) {
+      attr.textContent = '🔑 Mapbox-Key in ⚙️ Einstellungen eintragen';
+      return;
+    }
+    const url = layer.url.replace('{key}', mbKey);
+    openTileIframe(iframe, canvas, url, lat, lng, zoom, attr, layer.attr);
+    return;
+  }
+
+  if (layerId === 'osm' || layerId === 'topo') {
+    openTileIframe(iframe, canvas, layer.url, lat, lng, zoom, attr, layer.attr);
+    return;
+  }
+
+  // Google tiles — often blocked by CORS when used in img, use iframe with HTML wrapper
+  openTileIframe(iframe, canvas, layer.url, lat, lng, zoom, attr, layer.attr);
+}
+
+function openTileIframe(iframe, canvas, tileUrlTpl, lat, lng, zoom, attrEl, attrText) {
+  const { x, y } = latLngToTile(lat, lng, zoom);
+  // Build a small HTML page that shows 3×3 tiles centered on the location
+  const tiles = [];
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+    const url = tileUrlTpl
+      .replace('{z}', zoom).replace('{x}', x+dx).replace('{y}', y+dy);
+    tiles.push({ url, dx, dy });
+  }
+  const W = canvas.width, H = canvas.height;
+  const tileSize = 256;
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>*{margin:0;padding:0;overflow:hidden}body{width:${W}px;height:${H}px;background:#0d1b2a;position:relative}
+img{position:absolute;width:${tileSize}px;height:${tileSize}px;image-rendering:auto}
+.cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:9}
+.cross svg{display:block}</style></head><body>
+${tiles.map(t => {
+  const px = Math.round(W/2 - tileSize/2 + t.dx*tileSize);
+  const py = Math.round(H/2 - tileSize/2 + t.dy*tileSize);
+  return `<img src="${t.url}" style="left:${px}px;top:${py}px" crossorigin="anonymous">`;
+}).join('')}
+<div class="cross"><svg width="24" height="24" viewBox="0 0 24 24">
+  <circle cx="12" cy="12" r="3" fill="#ef4444"/>
+  <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(239,68,68,.5)" stroke-width="1.5"/>
+  <line x1="0" y1="12" x2="24" y2="12" stroke="rgba(239,68,68,.8)" stroke-width="1.5"/>
+  <line x1="12" y1="0" x2="12" y2="24" stroke="rgba(239,68,68,.8)" stroke-width="1.5"/>
+</svg></div>
+</body></html>`;
+
+  const blob = new Blob([html], { type:'text/html' });
+  const oldUrl = iframe.src;
+  iframe.src = URL.createObjectURL(blob);
+  if (oldUrl && oldUrl.startsWith('blob:')) URL.revokeObjectURL(oldUrl);
+  iframe.classList.add('active');
+  canvas.style.display = 'none';
+  if (attrEl) attrEl.textContent = attrText;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -2430,6 +2868,7 @@ function populateSettingsLiveList() {
 
 document.getElementById('nav-settings-btn').addEventListener('click', () => {
   document.getElementById('settings-fmp-key').value = getFmpKey();
+  try { document.getElementById('settings-mapbox-key').value = localStorage.getItem('supplytwin_mapbox_key') || ''; } catch {}
   document.getElementById('settings-error-msg').style.display = 'none';
   populateSettingsLiveList();
   settingsOverlay.classList.add('open');
@@ -2454,6 +2893,20 @@ document.getElementById('settings-save-key').addEventListener('click', () => {
   for (const id of liveIds) {
     if (id.startsWith('fmp-')) fetchFMPPhaseData(id, key);
   }
+});
+
+document.getElementById('settings-mapbox-vis').addEventListener('click', () => {
+  const inp = document.getElementById('settings-mapbox-key');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+});
+
+document.getElementById('settings-save-mapbox').addEventListener('click', () => {
+  const key = document.getElementById('settings-mapbox-key').value.trim();
+  if (!key) return;
+  try { localStorage.setItem('supplytwin_mapbox_key', key); } catch {}
+  const btn = document.getElementById('settings-save-mapbox');
+  btn.textContent = 'Gespeichert ✓';
+  setTimeout(() => { btn.textContent = 'Speichern'; }, 1800);
 });
 
 document.getElementById('settings-reset').addEventListener('click', () => {
@@ -2527,6 +2980,8 @@ const phase = new URLSearchParams(window.location.search).get('phase') || '01';
 renderDetail(phase.padStart(2, '0'));
 loadLiveStockData(phase.padStart(2, '0'));
 loadLiveEnergyPrice(phase.padStart(2, '0'));
+startCamAnimations();
+initMapTiles();
 
 /* ── Restore connector state from localStorage ── */
 document.addEventListener('DOMContentLoaded', () => {
