@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KPI-Scorecard — Supply Chain Twin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080c16; --bg2: #0d1220; --bg3: #111828;
+      --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+      --text: #e0e4f0; --muted: #5a6380; --muted2: #8490b8;
+      --ok: #22c55e; --warn: #f59e0b; --crit: #ef4444; --blue: #4f8ef7;
+    }
+    html, body { min-height: 100vh; background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 200;
+      display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+      padding: .6rem 1.2rem;
+      background: rgba(8,12,22,.96); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo-icon { width: 24px; height: 24px; background: linear-gradient(135deg,#4f8ef7,#a855f7); border-radius: 5px; display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:#fff;flex-shrink:0; }
+    .nav-title  { font-size:.88rem; font-weight:600; color:#c8cfe8; }
+    .nav-link   { font-size:.72rem; color:var(--muted2); text-decoration:none; padding:.25rem .65rem; border:1px solid var(--border); border-radius:5px; transition:color .2s,border-color .2s; }
+    .nav-link:hover { color:var(--text); border-color:rgba(255,255,255,.18); }
+
+    /* TIME RANGE */
+    .time-bar {
+      padding: .6rem 1.2rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: .4rem; flex-wrap: wrap;
+    }
+    .time-lbl { font-size: .62rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; margin-right: .3rem; }
+    .time-btn {
+      font-size: .7rem; font-weight: 700; padding: .25rem .7rem;
+      border-radius: 5px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted2); cursor: pointer; font-family: inherit;
+      transition: all .15s;
+    }
+    .time-btn:hover  { color: var(--text); border-color: rgba(255,255,255,.2); }
+    .time-btn.active { background: rgba(79,142,247,.15); color: var(--blue); border-color: rgba(79,142,247,.35); }
+    .updated-at { font-size: .62rem; color: var(--muted); margin-left: auto; }
+
+    /* SUMMARY STRIP */
+    .summary-strip {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr));
+      gap: 0; border-bottom: 1px solid var(--border);
+    }
+    .sum-item {
+      padding: .8rem 1.2rem; border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: .2rem;
+    }
+    .sum-item:last-child { border-right: none; }
+    .sum-rag   { display: flex; align-items: center; gap: .3rem; font-size: .6rem; font-weight: 700; letter-spacing: .06em; }
+    .sum-val   { font-size: 1.5rem; font-weight: 800; line-height: 1.1; }
+    .sum-label { font-size: .62rem; color: var(--muted2); }
+    .sum-trend { font-size: .65rem; margin-top: .05rem; }
+    .rag-dot   { width: 7px; height: 7px; border-radius: 50%; }
+    .rag-green { color: var(--ok); }  .rag-green .rag-dot { background: var(--ok); box-shadow: 0 0 4px var(--ok); }
+    .rag-amber { color: var(--warn); } .rag-amber .rag-dot { background: var(--warn); }
+    .rag-red   { color: var(--crit); } .rag-red .rag-dot { background: var(--crit); box-shadow: 0 0 4px var(--crit); }
+    .rag-blue  { color: var(--blue); } .rag-blue .rag-dot { background: var(--blue); }
+    .trend-up   { color: #22c55e; }
+    .trend-down { color: #ef4444; }
+    .trend-flat { color: var(--muted); }
+
+    /* KPI GRID */
+    .kpi-section { padding: .9rem 1.2rem; }
+    .section-title { font-size: .6rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: .65rem; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: .65rem; }
+
+    .kpi-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 9px;
+      padding: .85rem; display: flex; flex-direction: column; gap: .5rem;
+    }
+    .kpi-card.rag-red   { border-color: rgba(239,68,68,.25); }
+    .kpi-card.rag-amber { border-color: rgba(245,158,11,.2); }
+    .kpi-card.rag-green { border-color: rgba(34,197,94,.2); }
+
+    .kpi-header { display: flex; align-items: flex-start; gap: .5rem; }
+    .kpi-icon   { font-size: 1rem; }
+    .kpi-name   { font-size: .72rem; font-weight: 700; flex: 1; }
+    .kpi-rag-pill { font-size: .58rem; font-weight: 800; padding: .1rem .42rem; border-radius: 99px; text-transform: uppercase; letter-spacing: .05em; flex-shrink: 0; }
+    .pill-red   { background: rgba(239,68,68,.15); color: var(--crit); border: 1px solid rgba(239,68,68,.3); }
+    .pill-amber { background: rgba(245,158,11,.12); color: var(--warn); border: 1px solid rgba(245,158,11,.3); }
+    .pill-green { background: rgba(34,197,94,.1); color: var(--ok);  border: 1px solid rgba(34,197,94,.25); }
+    .pill-blue  { background: rgba(79,142,247,.1); color: var(--blue); border: 1px solid rgba(79,142,247,.25); }
+
+    .kpi-value-row { display: flex; align-items: baseline; gap: .4rem; }
+    .kpi-val    { font-size: 1.7rem; font-weight: 800; line-height: 1; }
+    .kpi-unit   { font-size: .72rem; color: var(--muted2); }
+    .kpi-trend-arrow { font-size: .8rem; }
+
+    .kpi-target { display: flex; align-items: center; gap: .4rem; font-size: .65rem; color: var(--muted2); }
+    .kpi-target-bar { flex: 1; height: 4px; background: rgba(255,255,255,.06); border-radius: 2px; overflow: hidden; }
+    .kpi-target-fill { height: 100%; border-radius: 2px; }
+    .kpi-target-pct  { font-size: .62rem; font-weight: 700; width: 32px; text-align: right; }
+
+    .kpi-sparkline-wrap { position: relative; height: 40px; }
+    .kpi-sparkline-wrap canvas { width: 100%; height: 40px; display: block; }
+
+    .kpi-footer { display: flex; align-items: center; gap: .4rem; font-size: .6rem; color: var(--muted); }
+    .kpi-delta  { font-weight: 700; }
+
+    /* BOTTOM GRID */
+    .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; padding: 0 1.2rem 3rem; }
+    @media (max-width: 700px) { .bottom-grid { grid-template-columns: 1fr; } }
+
+    /* PHASE HEATMAP */
+    .heatmap-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 9px; padding: .85rem; }
+    .heatmap-title { font-size: .62rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: .65rem; }
+    .heatmap-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; }
+    .hm-cell {
+      border-radius: 7px; padding: .55rem .65rem;
+      display: flex; align-items: center; gap: .5rem; cursor: pointer;
+      transition: opacity .15s;
+    }
+    .hm-cell:hover { opacity: .8; }
+    .hm-icon { font-size: .85rem; }
+    .hm-info { flex: 1; min-width: 0; }
+    .hm-phase { font-size: .6rem; font-weight: 800; letter-spacing: .04em; color: rgba(255,255,255,.5); }
+    .hm-name  { font-size: .65rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hm-score { font-size: .82rem; font-weight: 800; color: #fff; }
+
+    /* TOP RISKS */
+    .risks-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 9px; padding: .85rem; }
+    .risks-title { font-size: .62rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: .65rem; }
+    .risk-item { display: flex; align-items: center; gap: .6rem; padding: .5rem 0; border-bottom: 1px solid var(--border); }
+    .risk-item:last-child { border-bottom: none; }
+    .risk-rank { font-size: .65rem; font-weight: 800; color: var(--muted); width: 16px; flex-shrink: 0; }
+    .risk-body { flex: 1; min-width: 0; }
+    .risk-driver { font-size: .72rem; font-weight: 700; }
+    .risk-phase  { font-size: .6rem; color: var(--muted2); margin-top: .05rem; }
+    .risk-score-bar { width: 80px; flex-shrink: 0; }
+    .risk-score-track { height: 4px; background: rgba(255,255,255,.07); border-radius: 2px; margin-bottom: .18rem; overflow: hidden; }
+    .risk-score-fill  { height: 100%; border-radius: 2px; }
+    .risk-score-val   { font-size: .62rem; font-weight: 700; text-align: right; display: block; }
+    .risk-arrow { font-size: .7rem; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo-icon">ST</div>
+  <span class="nav-title">KPI-Scorecard</span>
+  <a href="graph.html"       class="nav-link">⬡ Graph</a>
+  <a href="globe.html"       class="nav-link">🌐 Globe</a>
+  <a href="disruption.html"  class="nav-link">⚡ Disruption</a>
+  <a href="market.html"      class="nav-link">📊 Markets</a>
+  <a href="timeline.html"    class="nav-link">📋 Timeline</a>
+  <a href="supplier.html"    class="nav-link">🏭 Lieferanten</a>
+  <a href="index.html"       class="nav-link">← Home</a>
+</nav>
+
+<div class="time-bar">
+  <span class="time-lbl">Zeitraum:</span>
+  <button class="time-btn" data-range="mtd">MTD</button>
+  <button class="time-btn" data-range="qtd">QTD</button>
+  <button class="time-btn active" data-range="ytd">YTD</button>
+  <button class="time-btn" data-range="12m">12M</button>
+  <span class="updated-at">Aktualisiert: <span id="updated-ts">—</span></span>
+</div>
+
+<!-- SUMMARY STRIP -->
+<div class="summary-strip" id="summary-strip">
+  <!-- filled by JS -->
+</div>
+
+<!-- KPI GRID -->
+<div class="kpi-section">
+  <div class="section-title">Kern-KPIs</div>
+  <div class="kpi-grid" id="kpi-grid">
+    <!-- filled by JS -->
+  </div>
+</div>
+
+<!-- BOTTOM: HEATMAP + RISK DRIVERS -->
+<div class="bottom-grid">
+  <div class="heatmap-card">
+    <div class="heatmap-title">Phasen-Risiko-Heatmap</div>
+    <div class="heatmap-grid" id="heatmap-grid"></div>
+  </div>
+  <div class="risks-card">
+    <div class="risks-title">Top Risikotreiber</div>
+    <div id="risk-drivers"></div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════
+   DATA  (12-month trailing series, index 0 = oldest)
+════════════════════════════════════════════ */
+const RANGES = {
+  mtd: { label:'MTD',  slice: 1 },
+  qtd: { label:'QTD',  slice: 3 },
+  ytd: { label:'YTD',  slice: 12 },
+  '12m':{ label:'12M', slice: 12 },
+};
+
+const KPI_DEFS = [
+  {
+    id:'otif', icon:'🚚', name:'OTIF (On-Time In-Full)',
+    unit:'%', decimals:1, rag:'red',
+    values:  [97.2, 96.8, 97.1, 96.4, 95.8, 96.2, 95.5, 95.1, 94.8, 94.5, 94.3, 94.2],
+    target:  98, targetDir:'up',
+    higher_better: true,
+    summary: '94.2%', summaryUnit:'%',
+    trend: 'down', delta: '−0.3 MoM',
+  },
+  {
+    id:'invturn', icon:'🔄', name:'Inventarumschlag',
+    unit:'x', decimals:1, rag:'amber',
+    values:  [9.8, 9.5, 9.7, 9.2, 8.9, 9.1, 8.8, 8.5, 8.6, 8.4, 8.3, 8.3],
+    target:  10, targetDir:'up',
+    higher_better: true,
+    summary: '8.3', summaryUnit:'x/J',
+    trend: 'flat', delta: '±0 MoM',
+  },
+  {
+    id:'resilience', icon:'🛡️', name:'Resilienz-Score',
+    unit:'/100', decimals:0, rag:'amber',
+    values:  [74, 72, 73, 71, 70, 69, 70, 68, 67, 67, 67, 67],
+    target:  80, targetDir:'up',
+    higher_better: true,
+    summary: '67', summaryUnit:'/100',
+    trend: 'flat', delta: '±0 MoM',
+  },
+  {
+    id:'leadtime', icon:'⏱️', name:'Lieferverzug (Ø Tage)',
+    unit:'d', decimals:1, rag:'red',
+    values:  [1.8, 2.0, 1.9, 2.2, 2.5, 2.8, 3.2, 3.5, 3.8, 4.0, 4.1, 4.2],
+    target:  2, targetDir:'down',
+    higher_better: false,
+    summary: '4.2', summaryUnit:'d',
+    trend: 'down', delta: '+0.1 MoM',
+  },
+  {
+    id:'otd', icon:'📦', name:'Lieferanten OTD',
+    unit:'%', decimals:1, rag:'red',
+    values:  [93.5, 92.8, 93.2, 92.0, 91.5, 90.8, 90.2, 89.5, 89.0, 88.8, 88.5, 88.4],
+    target:  95, targetDir:'up',
+    higher_better: true,
+    summary: '88.4%', summaryUnit:'%',
+    trend: 'down', delta: '−0.1 MoM',
+  },
+  {
+    id:'co2', icon:'🌿', name:'CO₂-Intensität',
+    unit:'t/unit', decimals:2, rag:'amber',
+    values:  [0.48, 0.47, 0.46, 0.46, 0.45, 0.44, 0.44, 0.43, 0.43, 0.43, 0.42, 0.42],
+    target:  0.38, targetDir:'down',
+    higher_better: false,
+    summary: '0.42', summaryUnit:'tCO₂e',
+    trend: 'up', delta: '±0 MoM',
+  },
+  {
+    id:'disruptions', icon:'⚡', name:'Aktive Störungen',
+    unit:'', decimals:0, rag:'red',
+    values:  [1, 0, 1, 1, 2, 1, 2, 2, 3, 2, 3, 3],
+    target:  0, targetDir:'down',
+    higher_better: false,
+    summary: '3', summaryUnit:'aktiv',
+    trend: 'down', delta: '±0 MoM',
+  },
+  {
+    id:'revenuerisk', icon:'💰', name:'Risiko-adj. Umsatzrisiko',
+    unit:'B USD', decimals:1, rag:'info',
+    values:  [1.2, 1.3, 1.4, 1.6, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.4],
+    target:  null, targetDir:null,
+    higher_better: false,
+    summary: '$2.4B', summaryUnit:'USD',
+    trend: 'flat', delta: '±0 MoM',
+  },
+];
+
+const PHASE_RISKS = [
+  { phase:'01', name:'HPQ Sand',     icon:'⛏️',  risk:42 },
+  { phase:'02', name:'Si-Metall',    icon:'🏭',  risk:58 },
+  { phase:'03', name:'Polysilizium', icon:'⚗️',  risk:78 },
+  { phase:'04', name:'Si-Wafer',     icon:'💿',  risk:52 },
+  { phase:'05', name:'EUV-Litho',    icon:'🔬',  risk:68 },
+  { phase:'06', name:'Foundry',      icon:'🔲',  risk:72 },
+  { phase:'07', name:'Chip-Design',  icon:'🧠',  risk:45 },
+  { phase:'08', name:'Server',       icon:'🖥️',  risk:62 },
+  { phase:'09', name:'Hyper-DC',     icon:'🏗️',  risk:35 },
+  { phase:'10', name:'Energie',      icon:'⚡',  risk:48 },
+];
+
+const TOP_RISKS = [
+  { driver:'TSMC Taiwan Geopolitik',         phase:'06', score:88, trend:'up' },
+  { driver:'Daqo Regulatorische Inspektion', phase:'03', score:82, trend:'up' },
+  { driver:'ASML Single-Source EUV',         phase:'05', score:76, trend:'flat' },
+  { driver:'Kupfer-Preisspike',              phase:'08-10', score:68, trend:'up' },
+  { driver:'Ferroglobe Energiekosten',       phase:'02', score:62, trend:'flat' },
+  { driver:'SMCI Qualitätsrisiko',           phase:'08', score:58, trend:'down' },
+  { driver:'Lead-Time Drift +4.2d',          phase:'04-06', score:52, trend:'up' },
+];
+
+/* ════════════════════════════════════════════
+   SPARKLINE
+════════════════════════════════════════════ */
+function drawSparkline(canvas, values, color, fillColor) {
+  const dpr = window.devicePixelRatio || 1;
+  const w   = canvas.offsetWidth  || 220;
+  const h   = canvas.offsetHeight || 40;
+  canvas.width  = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  if (values.length < 2) return;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const pad = 3;
+  const pts = values.map((v, i) => ({
+    x: pad + (i / (values.length - 1)) * (w - pad * 2),
+    y: h - pad - ((v - min) / range) * (h - pad * 2),
+  }));
+
+  // Fill
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, h - pad);
+  pts.forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.lineTo(pts[pts.length-1].x, h - pad);
+  ctx.closePath();
+  ctx.fillStyle = fillColor;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // Last dot
+  const last = pts[pts.length - 1];
+  ctx.beginPath();
+  ctx.arc(last.x, last.y, 3, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+/* ════════════════════════════════════════════
+   HELPERS
+════════════════════════════════════════════ */
+const RAG_PILL = {
+  red:   ['pill-red',   'ROT'],
+  amber: ['pill-amber', 'GELB'],
+  green: ['pill-green', 'GRÜN'],
+  info:  ['pill-blue',  'INFO'],
+};
+
+function ragClass(rag) { return `rag-${rag}`; }
+function pillHtml(rag) {
+  const [cls, lbl] = RAG_PILL[rag] || RAG_PILL.info;
+  return `<span class="kpi-rag-pill ${cls}">${lbl}</span>`;
+}
+
+function trendIcon(trend, higherBetter) {
+  if (trend === 'flat') return '<span class="trend-flat">→</span>';
+  const good = (trend === 'up') === higherBetter;
+  return good
+    ? `<span class="trend-up">↑</span>`
+    : `<span class="trend-down">↓</span>`;
+}
+
+function arrowIcon(trend, higherBetter) {
+  if (trend === 'flat') return '→';
+  const good = (trend === 'up') === higherBetter;
+  return good ? '↑' : '↓';
+}
+
+function ragColor(rag) {
+  return { red:'#ef4444', amber:'#f59e0b', green:'#22c55e', info:'#4f8ef7' }[rag] || '#888';
+}
+
+function riskColor(r) {
+  if (r <= 40) return '#22c55e';
+  if (r <= 65) return '#f59e0b';
+  return '#ef4444';
+}
+
+function riskBg(r) {
+  if (r <= 40) return 'rgba(34,197,94,.18)';
+  if (r <= 65) return 'rgba(245,158,11,.18)';
+  return 'rgba(239,68,68,.18)';
+}
+
+/* ════════════════════════════════════════════
+   RENDER
+════════════════════════════════════════════ */
+let activeRange = 'ytd';
+
+function slicedValues(kpi) {
+  const n = RANGES[activeRange].slice;
+  return kpi.values.slice(-n);
+}
+
+function currentVal(kpi) {
+  const v = slicedValues(kpi);
+  return v[v.length - 1];
+}
+
+function renderSummary() {
+  const strip = document.getElementById('summary-strip');
+  const topKPIs = KPI_DEFS.slice(0, 6);
+  strip.innerHTML = topKPIs.map(k => {
+    const rc = ragClass(k.rag);
+    const trend = trendIcon(k.trend, k.higher_better);
+    const cv = currentVal(k);
+    const fv = cv.toFixed(k.decimals);
+    return `
+      <div class="sum-item">
+        <div class="sum-rag ${rc}"><span class="rag-dot"></span>${RAG_PILL[k.rag]?.[1] || ''}</div>
+        <div class="sum-val" style="color:${ragColor(k.rag)}">${fv}<span style="font-size:.7rem;font-weight:400;color:var(--muted2)">${k.unit}</span></div>
+        <div class="sum-label">${k.name}</div>
+        <div class="sum-trend">${trend} <span style="font-size:.6rem;color:var(--muted)">${k.delta}</span></div>
+      </div>`;
+  }).join('');
+}
+
+function renderKpiGrid() {
+  const grid = document.getElementById('kpi-grid');
+  grid.innerHTML = KPI_DEFS.map(k => {
+    const color = ragColor(k.rag);
+    const fillColor = color + '18';
+    const cv = currentVal(k);
+    const fv = cv.toFixed(k.decimals);
+
+    let targetPct = 0, targetColor = color;
+    if (k.target != null) {
+      targetPct = k.higher_better
+        ? Math.min(100, (cv / k.target) * 100)
+        : Math.min(100, (k.target / Math.max(cv, 0.001)) * 100);
+      targetColor = targetPct >= 95 ? '#22c55e' : targetPct >= 80 ? '#f59e0b' : '#ef4444';
+    }
+
+    const trendArrow = k.trend === 'flat' ? '→'
+      : (k.trend === 'up') === k.higher_better ? '↑' : '↓';
+
+    const trendCss = k.trend === 'flat' ? 'color:var(--muted)'
+      : ((k.trend === 'up') === k.higher_better ? 'color:#22c55e' : 'color:#ef4444');
+
+    const targetHtml = k.target != null ? `
+      <div class="kpi-target">
+        <span>Ziel: ${k.target.toFixed(k.decimals)}${k.unit}</span>
+        <div class="kpi-target-bar"><div class="kpi-target-fill" style="width:${Math.round(targetPct)}%;background:${targetColor}"></div></div>
+        <span class="kpi-target-pct" style="color:${targetColor}">${Math.round(targetPct)}%</span>
+      </div>` : '';
+
+    return `
+      <div class="kpi-card ${ragClass(k.rag)}">
+        <div class="kpi-header">
+          <span class="kpi-icon">${k.icon}</span>
+          <span class="kpi-name">${k.name}</span>
+          ${pillHtml(k.rag)}
+        </div>
+        <div class="kpi-value-row">
+          <span class="kpi-val" style="color:${color}">${fv}</span>
+          <span class="kpi-unit">${k.unit}</span>
+          <span class="kpi-trend-arrow" style="${trendCss}">${trendArrow}</span>
+        </div>
+        ${targetHtml}
+        <div class="kpi-sparkline-wrap"><canvas id="spark-${k.id}"></canvas></div>
+        <div class="kpi-footer">
+          <span class="kpi-delta" style="${trendCss}">${k.delta}</span>
+          <span style="margin-left:auto">${slicedValues(k).length} Monate</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  requestAnimationFrame(() => {
+    KPI_DEFS.forEach(k => {
+      const canvas = document.getElementById(`spark-${k.id}`);
+      if (!canvas) return;
+      const color    = ragColor(k.rag);
+      const fillColor = color + '18';
+      drawSparkline(canvas, slicedValues(k), color, fillColor);
+    });
+  });
+}
+
+function renderHeatmap() {
+  const grid = document.getElementById('heatmap-grid');
+  grid.innerHTML = PHASE_RISKS.map(p => {
+    const r = p.risk;
+    const bg   = riskBg(r);
+    const clr  = riskColor(r);
+    return `
+      <div class="hm-cell" style="background:${bg}" onclick="location.href='detail.html?phase=${p.phase}'">
+        <span class="hm-icon">${p.icon}</span>
+        <div class="hm-info">
+          <div class="hm-phase">Phase ${p.phase}</div>
+          <div class="hm-name">${p.name}</div>
+        </div>
+        <span class="hm-score" style="color:${clr}">${r}</span>
+      </div>`;
+  }).join('');
+}
+
+function renderRiskDrivers() {
+  const el = document.getElementById('risk-drivers');
+  el.innerHTML = TOP_RISKS.map((r, i) => {
+    const clr = riskColor(r.score);
+    const trendHtml = r.trend === 'up' ? '↑' : r.trend === 'down' ? '↓' : '→';
+    const trendCss  = r.trend === 'up' ? 'color:#ef4444' : r.trend === 'down' ? 'color:#22c55e' : 'color:var(--muted)';
+    return `
+      <div class="risk-item">
+        <span class="risk-rank">${i+1}</span>
+        <div class="risk-body">
+          <div class="risk-driver">${r.driver}</div>
+          <div class="risk-phase">Phase ${r.phase}</div>
+        </div>
+        <div class="risk-score-bar">
+          <div class="risk-score-track"><div class="risk-score-fill" style="width:${r.score}%;background:${clr}"></div></div>
+          <span class="risk-score-val" style="color:${clr}">${r.score}</span>
+        </div>
+        <span class="risk-arrow" style="${trendCss}">${trendHtml}</span>
+      </div>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════════════
+   TIME RANGE TOGGLE
+════════════════════════════════════════════ */
+document.querySelectorAll('.time-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeRange = btn.dataset.range;
+    document.querySelectorAll('.time-btn').forEach(b => b.classList.toggle('active', b === btn));
+    renderSummary();
+    renderKpiGrid();
+  });
+});
+
+/* ════════════════════════════════════════════
+   BOOT
+════════════════════════════════════════════ */
+document.getElementById('updated-ts').textContent =
+  new Date().toLocaleString('de-DE', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+
+renderSummary();
+renderKpiGrid();
+renderHeatmap();
+renderRiskDrivers();
+
+window.addEventListener('resize', () => {
+  KPI_DEFS.forEach(k => {
+    const canvas = document.getElementById(`spark-${k.id}`);
+    if (canvas) drawSparkline(canvas, slicedValues(k), ragColor(k.rag), ragColor(k.rag) + '18');
+  });
+});
+</script>
+</body>
+</html>

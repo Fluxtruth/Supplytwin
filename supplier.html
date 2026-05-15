@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lieferanten — Supply Chain Twin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080c16; --bg2: #0d1220; --bg3: #111828;
+      --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+      --text: #e0e4f0; --muted: #5a6380; --muted2: #8490b8;
+      --ok: #22c55e; --warn: #f59e0b; --crit: #ef4444; --blue: #4f8ef7;
+    }
+    html, body { min-height: 100vh; background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 200;
+      display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+      padding: .6rem 1.2rem;
+      background: rgba(8,12,22,.96); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo-icon { width: 24px; height: 24px; background: linear-gradient(135deg,#4f8ef7,#a855f7); border-radius: 5px; display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:#fff;flex-shrink:0; }
+    .nav-title  { font-size:.88rem; font-weight:600; color:#c8cfe8; }
+    .nav-link   { font-size:.72rem; color:var(--muted2); text-decoration:none; padding:.25rem .65rem; border:1px solid var(--border); border-radius:5px; transition:color .2s,border-color .2s; }
+    .nav-link:hover { color:var(--text); border-color:rgba(255,255,255,.18); }
+
+    /* FILTER BAR */
+    .filter-bar {
+      position: sticky; top: 46px; z-index: 190;
+      background: rgba(8,12,22,.95); backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: .5rem 1.2rem; display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+    }
+    .filter-select {
+      font-size: .68rem; font-weight: 600; padding: .22rem .55rem;
+      border-radius: 5px; border: 1px solid var(--border);
+      background: var(--bg3); color: var(--muted2); cursor: pointer; font-family: inherit;
+    }
+    .filter-select:focus { outline: none; border-color: rgba(79,142,247,.4); }
+    .view-toggle { display:flex; gap:.25rem; margin-left:auto; }
+    .view-btn {
+      font-size:.68rem; font-weight:600; padding:.22rem .6rem;
+      border-radius:5px; border:1px solid var(--border);
+      background:transparent; color:var(--muted2); cursor:pointer; font-family:inherit;
+      transition:all .15s;
+    }
+    .view-btn.active { background:rgba(79,142,247,.15); color:var(--blue); border-color:rgba(79,142,247,.3); }
+    .filter-count { font-size:.65rem; color:var(--muted); }
+
+    /* STAT STRIP */
+    .stat-strip { display:flex; gap:.6rem; padding:.7rem 1.2rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+    .stat-chip  { display:flex; align-items:center; gap:.4rem; font-size:.7rem; padding:.28rem .65rem; background:var(--bg2); border:1px solid var(--border); border-radius:6px; }
+    .stat-chip .val { font-weight:800; font-size:.82rem; }
+    .stat-chip .lbl { color:var(--muted); }
+
+    /* SOLE-SOURCE BANNER */
+    .sole-source-banner {
+      margin: .8rem 1.2rem 0;
+      background: rgba(239,68,68,.07); border: 1px solid rgba(239,68,68,.25);
+      border-radius: 8px; padding: .6rem .9rem;
+      display: flex; align-items: center; gap: .6rem; font-size: .72rem; color: #fca5a5;
+    }
+    .sole-source-banner strong { color: var(--crit); }
+
+    /* PHASE GROUP */
+    .phase-groups { padding: .8rem 1.2rem 3rem; display: flex; flex-direction: column; gap: 1.4rem; }
+
+    .phase-group {}
+    .phase-header {
+      display: flex; align-items: center; gap: .6rem; margin-bottom: .6rem; flex-wrap: wrap;
+    }
+    .ph-phase-badge {
+      font-size: .6rem; font-weight: 800; padding: .18rem .55rem;
+      border-radius: 4px; letter-spacing: .05em;
+      background: var(--bg3); border: 1px solid var(--border2);
+    }
+    .ph-name { font-size: .78rem; font-weight: 700; }
+    .ph-risk-bar { flex: 1; max-width: 120px; height: 4px; background: rgba(255,255,255,.08); border-radius: 2px; }
+    .ph-risk-fill { height: 100%; border-radius: 2px; }
+    .ph-risk-val { font-size: .65rem; color: var(--muted2); }
+    .ph-count { font-size: .62rem; color: var(--muted); }
+    .ph-sole-tag { font-size: .58rem; font-weight: 700; color: var(--crit); background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.25); padding: .1rem .38rem; border-radius: 3px; }
+
+    .supplier-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: .65rem; }
+
+    /* SUPPLIER CARD */
+    .supplier-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 9px;
+      padding: .85rem; display: flex; flex-direction: column; gap: .55rem;
+      transition: border-color .15s, transform .1s;
+    }
+    .supplier-card:hover { border-color: rgba(255,255,255,.14); transform: translateY(-1px); }
+    .supplier-card.status-critical { border-color: rgba(239,68,68,.3); background: rgba(239,68,68,.03); }
+    .supplier-card.status-watch    { border-color: rgba(245,158,11,.2); }
+    .supplier-card.status-sole     { border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.04); }
+
+    .sc-top { display: flex; align-items: flex-start; gap: .5rem; }
+    .sc-flag { font-size: 1.2rem; line-height: 1; }
+    .sc-name-block { flex: 1; min-width: 0; }
+    .sc-name   { font-size: .78rem; font-weight: 700; color: var(--text); }
+    .sc-city   { font-size: .62rem; color: var(--muted2); margin-top: .08rem; }
+    .sc-status { display: flex; align-items: center; gap: .3rem; flex-shrink: 0; }
+    .sc-status-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .sc-status-lbl { font-size: .6rem; font-weight: 700; letter-spacing: .03em; }
+    .status-active   .sc-status-dot { background: var(--ok); box-shadow:0 0 4px var(--ok); }
+    .status-active   .sc-status-lbl { color: var(--ok); }
+    .status-watch    .sc-status-dot { background: var(--warn); }
+    .status-watch    .sc-status-lbl { color: var(--warn); }
+    .status-critical .sc-status-dot { background: var(--crit); box-shadow:0 0 4px var(--crit); }
+    .status-critical .sc-status-lbl { color: var(--crit); }
+    .status-sole     .sc-status-dot { background: var(--crit); box-shadow:0 0 6px var(--crit); }
+    .status-sole     .sc-status-lbl { color: var(--crit); }
+
+    /* Risk score */
+    .sc-risk { display: flex; align-items: center; gap: .5rem; }
+    .sc-risk-lbl { font-size: .6rem; color: var(--muted); width: 36px; flex-shrink: 0; }
+    .sc-risk-track { flex: 1; height: 5px; background: rgba(255,255,255,.07); border-radius: 3px; overflow: hidden; }
+    .sc-risk-fill  { height: 100%; border-radius: 3px; transition: width .3s; }
+    .sc-risk-val   { font-size: .7rem; font-weight: 800; width: 32px; text-align: right; }
+
+    /* Meta grid */
+    .sc-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .3rem; }
+    .sc-meta-item { background: var(--bg3); border-radius: 5px; padding: .3rem .45rem; }
+    .sc-meta-val  { font-size: .72rem; font-weight: 700; }
+    .sc-meta-key  { font-size: .56rem; color: var(--muted); margin-top: .06rem; }
+
+    /* Risk breakdown */
+    .sc-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: .25rem; }
+    .sc-bd-item { display: flex; flex-direction: column; gap: .12rem; }
+    .sc-bd-row  { display: flex; align-items: center; gap: .3rem; }
+    .sc-bd-lbl  { font-size: .55rem; color: var(--muted); width: 24px; }
+    .sc-bd-bar  { flex: 1; height: 3px; background: rgba(255,255,255,.06); border-radius: 2px; overflow: hidden; }
+    .sc-bd-fill { height: 100%; border-radius: 2px; }
+    .sc-bd-val  { font-size: .55rem; color: var(--muted2); width: 18px; text-align: right; }
+
+    /* Certs */
+    .sc-certs { display: flex; flex-wrap: wrap; gap: .25rem; }
+    .sc-cert   { font-size: .55rem; font-weight: 600; padding: .1rem .38rem; background: rgba(79,142,247,.1); color: #7eb3ff; border: 1px solid rgba(79,142,247,.2); border-radius: 3px; }
+
+    /* Warning */
+    .sc-warning { font-size: .63rem; color: #fbbf24; background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.2); border-radius: 5px; padding: .3rem .5rem; display: flex; align-items: center; gap: .35rem; }
+
+    .sc-footer { display: flex; align-items: center; gap: .4rem; margin-top: auto; }
+    .sc-type-badge {
+      font-size: .55rem; font-weight: 700; padding: .1rem .38rem; border-radius: 3px;
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+    .type-primary     { background:rgba(79,142,247,.12); color:#7eb3ff; border:1px solid rgba(79,142,247,.25); }
+    .type-backup      { background:rgba(34,197,94,.1); color:#4ade80; border:1px solid rgba(34,197,94,.2); }
+    .type-sole-source { background:rgba(239,68,68,.12); color:#fca5a5; border:1px solid rgba(239,68,68,.25); }
+    .type-subcomponent{ background:rgba(168,85,247,.1); color:#c084fc; border:1px solid rgba(168,85,247,.2); }
+    .type-emerging    { background:rgba(245,158,11,.1); color:#fbbf24; border:1px solid rgba(245,158,11,.2); }
+    .sc-link { font-size:.62rem; color:var(--blue); text-decoration:none; margin-left:auto; }
+    .sc-link:hover { text-decoration:underline; }
+
+    /* TABLE VIEW */
+    .table-wrap { padding: .8rem 1.2rem 3rem; overflow-x: auto; }
+    .supplier-table { width: 100%; border-collapse: collapse; font-size: .72rem; }
+    .supplier-table th {
+      text-align: left; padding: .5rem .75rem; font-size: .6rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em; color: var(--muted);
+      border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer;
+      user-select: none;
+    }
+    .supplier-table th:hover { color: var(--muted2); }
+    .supplier-table th.sort-asc::after  { content: ' ↑'; color: var(--blue); }
+    .supplier-table th.sort-desc::after { content: ' ↓'; color: var(--blue); }
+    .supplier-table td { padding: .5rem .75rem; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: middle; }
+    .supplier-table tr:hover td { background: rgba(255,255,255,.025); }
+    .t-risk-badge { display:inline-block; font-size:.65rem; font-weight:700; padding:.1rem .4rem; border-radius:4px; }
+    .t-status { display:inline-flex; align-items:center; gap:.3rem; font-size:.65rem; font-weight:700; }
+    .t-status-dot { width:6px; height:6px; border-radius:50%; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo-icon">ST</div>
+  <span class="nav-title">Lieferanten</span>
+  <a href="graph.html"       class="nav-link">⬡ Graph</a>
+  <a href="globe.html"       class="nav-link">🌐 Globe</a>
+  <a href="disruption.html"  class="nav-link">⚡ Disruption</a>
+  <a href="market.html"      class="nav-link">📊 Markets</a>
+  <a href="timeline.html"    class="nav-link">📋 Timeline</a>
+  <a href="kpi.html"         class="nav-link">📈 KPIs</a>
+  <a href="index.html"       class="nav-link">← Home</a>
+</nav>
+
+<div class="filter-bar">
+  <select class="filter-select" id="phase-filter">
+    <option value="all">Phase: Alle</option>
+    <option value="01">01 · HPQ Sand</option>
+    <option value="02">02 · Si-Metall</option>
+    <option value="03">03 · Polysilizium</option>
+    <option value="04">04 · Si-Wafer</option>
+    <option value="05">05 · EUV-Litho</option>
+    <option value="06">06 · Foundry</option>
+    <option value="07">07 · Chip-Design</option>
+    <option value="08">08 · Server</option>
+    <option value="09">09 · Hyper-DC</option>
+    <option value="10">10 · Energie</option>
+  </select>
+  <select class="filter-select" id="status-filter">
+    <option value="all">Status: Alle</option>
+    <option value="active">Aktiv</option>
+    <option value="watch">Beobachtung</option>
+    <option value="critical">Kritisch</option>
+    <option value="sole-source">Single Source</option>
+  </select>
+  <select class="filter-select" id="risk-filter">
+    <option value="all">Risiko: Alle</option>
+    <option value="low">Niedrig (0–35)</option>
+    <option value="medium">Mittel (36–60)</option>
+    <option value="high">Hoch (61+)</option>
+  </select>
+  <select class="filter-select" id="tier-filter">
+    <option value="all">Tier: Alle</option>
+    <option value="1">Tier 1</option>
+    <option value="2">Tier 2</option>
+  </select>
+  <span class="filter-count" id="filter-count">— Lieferanten</span>
+  <div class="view-toggle">
+    <button class="view-btn active" data-view="cards">⊞ Karten</button>
+    <button class="view-btn"        data-view="table">☰ Tabelle</button>
+  </div>
+</div>
+
+<div class="stat-strip">
+  <div class="stat-chip"><span class="val" id="s-total">—</span><span class="lbl">Lieferanten</span></div>
+  <div class="stat-chip"><span class="val" id="s-avg-risk" style="color:var(--warn)">—</span><span class="lbl">Ø Risiko</span></div>
+  <div class="stat-chip"><span class="val" id="s-critical" style="color:var(--crit)">—</span><span class="lbl">Kritisch</span></div>
+  <div class="stat-chip"><span class="val" id="s-sole" style="color:var(--crit)">—</span><span class="lbl">Single Source Phasen</span></div>
+  <div class="stat-chip"><span class="val" id="s-watch" style="color:var(--warn)">—</span><span class="lbl">Beobachtung</span></div>
+</div>
+
+<div id="sole-banner" class="sole-source-banner">
+  <span>⚠️</span>
+  <span><strong>Single-Source-Risiko:</strong> Phase 05 (EUV-Lithographie) ist zu 100% von ASML abhängig — kein alternativer Lieferant für EUV-Systeme existiert weltweit.</span>
+</div>
+
+<div id="cards-view" class="phase-groups"></div>
+
+<div id="table-view" class="table-wrap hidden">
+  <table class="supplier-table" id="sup-table">
+    <thead>
+      <tr>
+        <th data-col="phase">Phase</th>
+        <th data-col="name">Lieferant</th>
+        <th data-col="country">Land</th>
+        <th data-col="risk">Risiko ↕</th>
+        <th data-col="share">Anteil</th>
+        <th data-col="leadtime">Vorlaufzeit</th>
+        <th data-col="tier">Tier</th>
+        <th data-col="status">Status</th>
+        <th data-col="contract">Vertrag</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="sup-tbody"></tbody>
+  </table>
+</div>
+
+<script>
+/* ════════════════════════════════════════════
+   DATA
+════════════════════════════════════════════ */
+const PHASE_META = {
+  '01':{ name:'HPQ Sand',     icon:'⛏️',  color:'#b45309' },
+  '02':{ name:'Si-Metall',    icon:'🏭',  color:'#c2410c' },
+  '03':{ name:'Polysilizium', icon:'⚗️',  color:'#d97706' },
+  '04':{ name:'Si-Wafer',     icon:'💿',  color:'#2563eb' },
+  '05':{ name:'EUV-Litho',    icon:'🔬',  color:'#dc2626' },
+  '06':{ name:'Foundry',      icon:'🔲',  color:'#7c3aed' },
+  '07':{ name:'Chip-Design',  icon:'🧠',  color:'#6d28d9' },
+  '08':{ name:'Server',       icon:'🖥️',  color:'#0891b2' },
+  '09':{ name:'Hyper-DC',     icon:'🏗️',  color:'#0d9488' },
+  '10':{ name:'Energie',      icon:'⚡',  color:'#16a34a' },
+};
+
+const SUPPLIERS = [
+  // 01
+  { id:'s01a', phase:'01', name:'Sibelco', flag:'🇧🇪', city:'Antwerpen, Belgien',         risk:28, share:35, leadtime:21, contract:'LTA 2026', tier:1, type:'primary',      status:'active',   certs:['ISO 9001','ISO 14001'],            bd:{geo:15,fin:25,esg:35,ops:30} },
+  { id:'s01b', phase:'01', name:'The Quartz Corp', flag:'🇺🇸', city:'Spruce Pine NC, USA', risk:42, share:45, leadtime:18, contract:'LTA 2025', tier:1, type:'primary',      status:'watch',    certs:['ISO 9001'],                        bd:{geo:45,fin:40,esg:45,ops:38}, warning:'Sturmrisiko NC — Bergbau exponiert' },
+  { id:'s01c', phase:'01', name:'Momentive Performance', flag:'🇺🇸', city:'Waterford NY, USA', risk:35, share:20, leadtime:24, contract:'Spot', tier:2, type:'backup',       status:'active',   certs:['ISO 9001','OSHA 18001'],            bd:{geo:30,fin:55,esg:30,ops:25} },
+
+  // 02
+  { id:'s02a', phase:'02', name:'Ferroglobe', flag:'🇪🇸', city:'Madrid / Hamburg',          risk:58, share:42, leadtime:14, contract:'LTA 2026', tier:1, type:'primary',      status:'watch',    certs:['ISO 9001','ISO 14001','ISO 50001'], bd:{geo:40,fin:75,esg:50,ops:62}, warning:'Energiekosten kritisch — Produktionsreduktion möglich' },
+  { id:'s02b', phase:'02', name:'Elkem', flag:'🇳🇴', city:'Oslo / Fiskaa, Norwegen',        risk:22, share:38, leadtime:16, contract:'LTA 2027', tier:1, type:'primary',      status:'active',   certs:['ISO 9001','ISO 14001','ISCC+'],     bd:{geo:12,fin:28,esg:22,ops:25} },
+  { id:'s02c', phase:'02', name:'REC Silicon', flag:'🇳🇴', city:'Butte MT / Porsgrunn',    risk:48, share:20, leadtime:20, contract:'Framework', tier:2, type:'backup',       status:'watch',    certs:['ISO 9001'],                        bd:{geo:35,fin:65,esg:40,ops:50}, warning:'Produktionspause Butte MT möglich' },
+
+  // 03
+  { id:'s03a', phase:'03', name:'Wacker Chemie', flag:'🇩🇪', city:'Burghausen, Deutschland', risk:30, share:38, leadtime:12, contract:'LTA 2028', tier:1, type:'primary',     status:'active',   certs:['ISO 9001','ISO 14001','IATF 16949'],bd:{geo:18,fin:32,esg:28,ops:35} },
+  { id:'s03b', phase:'03', name:'Daqo New Energy', flag:'🇨🇳', city:'Shihezi, Xinjiang',    risk:82, share:40, leadtime:35, contract:'LTA 2025', tier:1, type:'primary',      status:'critical', certs:['ISO 9001'],                        bd:{geo:90,fin:55,esg:95,ops:65}, warning:'Regulatorische Inspektion aktiv — Produktionsstopp' },
+  { id:'s03c', phase:'03', name:'GCL Tech', flag:'🇨🇳', city:'Jiangsu, China',              risk:75, share:22, leadtime:40, contract:'Spot',    tier:2, type:'backup',        status:'watch',    certs:['ISO 9001','ISO 14001'],             bd:{geo:88,fin:58,esg:82,ops:70} },
+
+  // 04
+  { id:'s04a', phase:'04', name:'Shin-Etsu Chemical', flag:'🇯🇵', city:'Futtsu / Naoetsu, Japan', risk:32, share:45, leadtime:28, contract:'LTA 2027', tier:1, type:'primary', status:'active',  certs:['ISO 9001','ISO 14001','IATF 16949'],bd:{geo:28,fin:25,esg:30,ops:38} },
+  { id:'s04b', phase:'04', name:'SUMCO Corporation', flag:'🇯🇵', city:'Imari / Saga, Japan',    risk:35, share:35, leadtime:30, contract:'LTA 2026', tier:1, type:'primary',   status:'active',   certs:['ISO 9001','ISO 14001'],             bd:{geo:30,fin:35,esg:32,ops:40} },
+  { id:'s04c', phase:'04', name:'Siltronic', flag:'🇩🇪', city:'München / Burghausen',          risk:28, share:20, leadtime:18, contract:'Framework', tier:2, type:'backup',    status:'active',   certs:['ISO 9001','ISO 14001','ISO 50001'], bd:{geo:18,fin:30,esg:22,ops:28} },
+
+  // 05
+  { id:'s05a', phase:'05', name:'ASML Holding', flag:'🇳🇱', city:'Veldhoven, Niederlande',     risk:68, share:100, leadtime:0, contract:'Capital Equipment', tier:1, type:'sole-source', status:'sole-source', certs:['ISO 9001','ISO 14001','ISAE 3402'], bd:{geo:42,fin:15,esg:45,ops:78}, warning:'100% Single Source — einziger EUV-Hersteller weltweit' },
+  { id:'s05b', phase:'05', name:'Carl Zeiss SMT', flag:'🇩🇪', city:'Oberkochen, Deutschland',   risk:55, share:100, leadtime:180, contract:'Subkomponent',   tier:2, type:'subcomponent', status:'watch',      certs:['ISO 9001','ITAR'],               bd:{geo:20,fin:22,esg:38,ops:85}, warning:'EUV-Optik Subkomponent — indirekte Abhängigkeit von ASML' },
+
+  // 06
+  { id:'s06a', phase:'06', name:'TSMC', flag:'🇹🇼', city:'Hsinchu / Tainan, Taiwan',           risk:72, share:68, leadtime:90, contract:'Foundry Agreement', tier:1, type:'primary',     status:'watch',    certs:['ISO 9001','ISO 14001','IATF 16949'],bd:{geo:88,fin:18,esg:55,ops:62}, warning:'Geopolitisches Taiwan-Risiko erhöht' },
+  { id:'s06b', phase:'06', name:'Samsung Foundry', flag:'🇰🇷', city:'Hwaseong / Austin TX',    risk:42, share:22, leadtime:75, contract:'Foundry Agreement', tier:1, type:'backup',      status:'active',   certs:['ISO 9001','ISO 14001'],             bd:{geo:35,fin:20,esg:48,ops:52} },
+  { id:'s06c', phase:'06', name:'Intel Foundry Services', flag:'🇺🇸', city:'Chandler AZ',      risk:55, share:10, leadtime:60, contract:'Pilot Agreement',   tier:2, type:'emerging',    status:'watch',    certs:['ISO 9001'],                        bd:{geo:15,fin:62,esg:45,ops:68}, warning:'Ramping — Yield noch nicht bewiesen (Pilot)' },
+
+  // 07
+  { id:'s07a', phase:'07', name:'NVIDIA', flag:'🇺🇸', city:'Santa Clara CA, USA',              risk:38, share:55, leadtime:0, contract:'Design License',    tier:1, type:'primary',      status:'active',   certs:['ISO 9001','ISO 14001'],             bd:{geo:15,fin:12,esg:40,ops:48} },
+  { id:'s07b', phase:'07', name:'AMD', flag:'🇺🇸', city:'Santa Clara CA, USA',                 risk:32, share:30, leadtime:0, contract:'Supply Agreement',  tier:1, type:'primary',      status:'active',   certs:['ISO 9001'],                        bd:{geo:15,fin:28,esg:35,ops:35} },
+  { id:'s07c', phase:'07', name:'Intel', flag:'🇺🇸', city:'Hillsboro OR, USA',                 risk:45, share:15, leadtime:0, contract:'Supply Agreement',  tier:2, type:'backup',       status:'watch',    certs:['ISO 9001','ISO 14001'],             bd:{geo:15,fin:55,esg:40,ops:45} },
+
+  // 08
+  { id:'s08a', phase:'08', name:'Super Micro Computer', flag:'🇺🇸', city:'San Jose CA, USA',   risk:62, share:42, leadtime:45, contract:'MSA 2025',         tier:1, type:'primary',      status:'watch',    certs:['ISO 9001','ISO 14001'],             bd:{geo:15,fin:68,esg:52,ops:72}, warning:'Qualitätsproblem Q4 — ISO-Audit läuft' },
+  { id:'s08b', phase:'08', name:'Dell Technologies', flag:'🇺🇸', city:'Round Rock TX, USA',    risk:28, share:35, leadtime:35, contract:'MSA 2027',         tier:1, type:'primary',      status:'active',   certs:['ISO 9001','ISO 14001','ISO 27001'], bd:{geo:15,fin:22,esg:32,ops:30} },
+  { id:'s08c', phase:'08', name:'Hewlett Packard Enterprise', flag:'🇺🇸', city:'Houston TX, USA', risk:35, share:23, leadtime:40, contract:'Framework',    tier:2, type:'backup',       status:'active',   certs:['ISO 9001','ISO 14001','ISO 27001'], bd:{geo:15,fin:35,esg:38,ops:38} },
+
+  // 09
+  { id:'s09a', phase:'09', name:'Amazon Web Services', flag:'🇺🇸', city:'Ashburn VA / us-east-1', risk:32, share:48, leadtime:0, contract:'Enterprise Agreement', tier:1, type:'primary', status:'active',  certs:['ISO 27001','SOC 2','FedRAMP'],      bd:{geo:15,fin:10,esg:45,ops:38} },
+  { id:'s09b', phase:'09', name:'Microsoft Azure', flag:'🇺🇸', city:'Boydton VA / East US',    risk:28, share:35, leadtime:0, contract:'Enterprise Agreement', tier:1, type:'primary',   status:'active',   certs:['ISO 27001','SOC 2','FedRAMP','ISO 14001'], bd:{geo:15,fin:10,esg:38,ops:32} },
+  { id:'s09c', phase:'09', name:'Google Cloud', flag:'🇺🇸', city:'Council Bluffs IA, USA',     risk:30, share:17, leadtime:0, contract:'Framework',         tier:2, type:'backup',       status:'active',   certs:['ISO 27001','SOC 2','ISO 14001'],    bd:{geo:15,fin:12,esg:32,ops:35} },
+
+  // 10
+  { id:'s10a', phase:'10', name:'GE Vernova', flag:'🇺🇸', city:'Cambridge MA / Sweetwater TX', risk:45, share:48, leadtime:365, contract:'O&M Contract',    tier:1, type:'primary',      status:'watch',    certs:['ISO 9001','ISO 14001','ISO 55001'], bd:{geo:25,fin:52,esg:35,ops:55}, warning:'GE-Vernova Restrukturierung — Lieferrisiko mittel' },
+  { id:'s10b', phase:'10', name:'Vestas Wind Systems', flag:'🇩🇰', city:'Aarhus / Sweetwater TX', risk:30, share:32, leadtime:270, contract:'LTA 2027',    tier:1, type:'primary',      status:'active',   certs:['ISO 9001','ISO 14001','ISO 45001'], bd:{geo:20,fin:35,esg:22,ops:38} },
+  { id:'s10c', phase:'10', name:'NextEra Energy Resources', flag:'🇺🇸', city:'Juno Beach FL', risk:25, share:20, leadtime:0, contract:'PPA 2035',            tier:2, type:'backup',       status:'active',   certs:['ISO 14001','ISO 50001'],            bd:{geo:15,fin:18,esg:28,ops:30} },
+];
+
+const PHASE_ORDER = ['01','02','03','04','05','06','07','08','09','10'];
+
+/* ════════════════════════════════════════════
+   HELPERS
+════════════════════════════════════════════ */
+function riskColor(r) {
+  if (r <= 35) return '#22c55e';
+  if (r <= 60) return '#f59e0b';
+  return '#ef4444';
+}
+
+function riskBg(r) {
+  if (r <= 35) return 'rgba(34,197,94,.18)';
+  if (r <= 60) return 'rgba(245,158,11,.18)';
+  return 'rgba(239,68,68,.18)';
+}
+
+function statusLabel(s) {
+  return { active:'AKTIV', watch:'BEOB.', critical:'KRITISCH', 'sole-source':'SOLE SRC' }[s] || s.toUpperCase();
+}
+
+function typeLabel(t) {
+  return { primary:'Primär', backup:'Backup', 'sole-source':'Single Source', subcomponent:'Subkomp.', emerging:'Emerging' }[t] || t;
+}
+
+/* ════════════════════════════════════════════
+   FILTER STATE
+════════════════════════════════════════════ */
+let fPhase  = 'all';
+let fStatus = 'all';
+let fRisk   = 'all';
+let fTier   = 'all';
+
+function filtered() {
+  return SUPPLIERS.filter(s => {
+    if (fPhase  !== 'all' && s.phase   !== fPhase)  return false;
+    if (fStatus !== 'all') {
+      if (fStatus === 'sole-source' && s.type !== 'sole-source') return false;
+      if (fStatus !== 'sole-source' && s.status !== fStatus)     return false;
+    }
+    if (fRisk !== 'all') {
+      if (fRisk === 'low'    && s.risk > 35)               return false;
+      if (fRisk === 'medium' && (s.risk < 36 || s.risk > 60)) return false;
+      if (fRisk === 'high'   && s.risk <= 60)              return false;
+    }
+    if (fTier !== 'all' && String(s.tier) !== fTier) return false;
+    return true;
+  });
+}
+
+/* ════════════════════════════════════════════
+   RENDER: SUPPLIER CARD
+════════════════════════════════════════════ */
+function renderCard(s) {
+  const rc = riskColor(s.risk);
+  const bdBars = ['geo','fin','esg','ops'].map((k,i) => {
+    const colors = ['#ef4444','#f59e0b','#22c55e','#4f8ef7'];
+    const labels = ['Geo','Fin','ESG','Ops'];
+    return `<div class="sc-bd-row">
+      <span class="sc-bd-lbl">${labels[i]}</span>
+      <div class="sc-bd-bar"><div class="sc-bd-fill" style="width:${s.bd[k]}%;background:${colors[i]}aa"></div></div>
+      <span class="sc-bd-val">${s.bd[k]}</span>
+    </div>`;
+  }).join('');
+
+  const certs = s.certs.map(c => `<span class="sc-cert">${c}</span>`).join('');
+  const warnHtml = s.warning
+    ? `<div class="sc-warning">⚠️ ${s.warning}</div>`
+    : '';
+
+  const lt = s.leadtime === 0 ? 'On-demand' : s.leadtime >= 180 ? `${Math.round(s.leadtime/30)} Mo.` : `${s.leadtime}d`;
+
+  return `
+    <div class="supplier-card status-${s.status}">
+      <div class="sc-top">
+        <span class="sc-flag">${s.flag}</span>
+        <div class="sc-name-block">
+          <div class="sc-name">${s.name}</div>
+          <div class="sc-city">${s.city}</div>
+        </div>
+        <div class="sc-status">
+          <span class="sc-status-dot"></span>
+          <span class="sc-status-lbl">${statusLabel(s.status)}</span>
+        </div>
+      </div>
+
+      <div class="sc-risk">
+        <span class="sc-risk-lbl">Risiko</span>
+        <div class="sc-risk-track"><div class="sc-risk-fill" style="width:${s.risk}%;background:${rc}"></div></div>
+        <span class="sc-risk-val" style="color:${rc}">${s.risk}</span>
+      </div>
+
+      <div class="sc-meta">
+        <div class="sc-meta-item"><div class="sc-meta-val">${s.share}%</div><div class="sc-meta-key">Anteil</div></div>
+        <div class="sc-meta-item"><div class="sc-meta-val">${lt}</div><div class="sc-meta-key">Vorlaufzeit</div></div>
+        <div class="sc-meta-item"><div class="sc-meta-val" style="font-size:.62rem">${s.contract}</div><div class="sc-meta-key">Vertrag</div></div>
+      </div>
+
+      <div class="sc-breakdown">${bdBars}</div>
+
+      ${warnHtml}
+
+      <div class="sc-certs">${certs}</div>
+
+      <div class="sc-footer">
+        <span class="sc-type-badge type-${s.type}">${typeLabel(s.type)}</span>
+        <span style="font-size:.6rem;color:var(--muted)">Tier ${s.tier}</span>
+        <a href="detail.html?phase=${s.phase}" class="sc-link">→ Phase ${s.phase}</a>
+      </div>
+    </div>`;
+}
+
+/* ════════════════════════════════════════════
+   RENDER: CARDS VIEW
+════════════════════════════════════════════ */
+function renderCards(suppliers) {
+  const byPhase = {};
+  PHASE_ORDER.forEach(p => byPhase[p] = []);
+  suppliers.forEach(s => { if (byPhase[s.phase]) byPhase[s.phase].push(s); });
+
+  let html = '';
+  PHASE_ORDER.forEach(pid => {
+    const list = byPhase[pid];
+    if (list.length === 0) return;
+
+    const pm = PHASE_META[pid];
+    const avgRisk = Math.round(list.reduce((a,s) => a+s.risk, 0) / list.length);
+    const isSole  = list.some(s => s.type === 'sole-source');
+
+    html += `
+      <div class="phase-group">
+        <div class="phase-header">
+          <span class="ph-phase-badge" style="color:${pm.color};border-color:${pm.color}40">${pm.icon} Phase ${pid}</span>
+          <span class="ph-name">${pm.name}</span>
+          <div class="ph-risk-bar"><div class="ph-risk-fill" style="width:${avgRisk}%;background:${riskColor(avgRisk)}"></div></div>
+          <span class="ph-risk-val">Ø ${avgRisk}</span>
+          <span class="ph-count">${list.length} Lieferant${list.length!==1?'en':''}</span>
+          ${isSole ? '<span class="ph-sole-tag">⚠ SOLE SOURCE</span>' : ''}
+        </div>
+        <div class="supplier-grid">${list.map(renderCard).join('')}</div>
+      </div>`;
+  });
+
+  document.getElementById('cards-view').innerHTML = html || '<div style="padding:2rem;color:var(--muted);text-align:center">Keine Lieferanten für die gewählten Filter.</div>';
+}
+
+/* ════════════════════════════════════════════
+   RENDER: TABLE VIEW
+════════════════════════════════════════════ */
+let sortCol = 'risk';
+let sortDir = 'desc';
+
+function renderTable(suppliers) {
+  const sorted = [...suppliers].sort((a, b) => {
+    let av = a[sortCol] ?? '', bv = b[sortCol] ?? '';
+    if (typeof av === 'string') av = av.toLowerCase(), bv = bv.toLowerCase();
+    return sortDir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
+  });
+
+  document.getElementById('sup-tbody').innerHTML = sorted.map(s => {
+    const rc = riskColor(s.risk);
+    const lt = s.leadtime === 0 ? 'On-demand' : s.leadtime >= 180 ? `${Math.round(s.leadtime/30)} Mo.` : `${s.leadtime}d`;
+    const statusDotColor = {active:'#22c55e', watch:'#f59e0b', critical:'#ef4444', 'sole-source':'#ef4444'}[s.status] || '#888';
+    const pm = PHASE_META[s.phase];
+    return `<tr>
+      <td><span style="font-size:.65rem;color:${pm.color};font-weight:700">${pm.icon} ${s.phase}</span></td>
+      <td><strong>${s.flag} ${s.name}</strong></td>
+      <td style="color:var(--muted2)">${s.city.split(',')[1]?.trim() || s.city.split('/')[0].trim()}</td>
+      <td><span class="t-risk-badge" style="background:${riskBg(s.risk)};color:${rc}">${s.risk}</span></td>
+      <td style="font-weight:700">${s.share}%</td>
+      <td style="color:var(--muted2)">${lt}</td>
+      <td style="color:var(--muted)">Tier ${s.tier}</td>
+      <td><span class="t-status"><span class="t-status-dot" style="background:${statusDotColor}"></span>${statusLabel(s.status)}</span></td>
+      <td style="color:var(--muted2);font-size:.65rem">${s.contract}</td>
+      <td><a href="detail.html?phase=${s.phase}" style="font-size:.62rem;color:var(--blue);text-decoration:none">→</a></td>
+    </tr>`;
+  }).join('');
+
+  // Update sort indicators
+  document.querySelectorAll('.supplier-table th').forEach(th => {
+    th.classList.remove('sort-asc','sort-desc');
+    if (th.dataset.col === sortCol) th.classList.add(`sort-${sortDir}`);
+  });
+}
+
+/* ════════════════════════════════════════════
+   STATS
+════════════════════════════════════════════ */
+function updateStats(suppliers) {
+  const avgRisk  = Math.round(suppliers.reduce((a,s) => a+s.risk, 0) / (suppliers.length || 1));
+  const critical = suppliers.filter(s => s.status === 'critical').length;
+  const sole     = new Set(suppliers.filter(s => s.type === 'sole-source').map(s => s.phase)).size;
+  const watch    = suppliers.filter(s => s.status === 'watch').length;
+  document.getElementById('s-total').textContent    = suppliers.length;
+  document.getElementById('s-avg-risk').textContent = avgRisk;
+  document.getElementById('s-critical').textContent = critical;
+  document.getElementById('s-sole').textContent     = sole;
+  document.getElementById('s-watch').textContent    = watch;
+  document.getElementById('filter-count').textContent = `${suppliers.length} Lieferant${suppliers.length!==1?'en':''}`;
+}
+
+/* ════════════════════════════════════════════
+   VIEW TOGGLE
+════════════════════════════════════════════ */
+let activeView = 'cards';
+document.querySelectorAll('.view-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeView = btn.dataset.view;
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b === btn));
+    document.getElementById('cards-view').classList.toggle('hidden', activeView !== 'cards');
+    document.getElementById('table-view').classList.toggle('hidden', activeView !== 'table');
+    renderAll();
+  });
+});
+
+/* ════════════════════════════════════════════
+   TABLE SORT
+════════════════════════════════════════════ */
+document.getElementById('sup-table').addEventListener('click', e => {
+  const th = e.target.closest('th[data-col]');
+  if (!th) return;
+  if (sortCol === th.dataset.col) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortCol = th.dataset.col;
+    sortDir = 'asc';
+  }
+  renderTable(filtered());
+});
+
+/* ════════════════════════════════════════════
+   FILTER WIRING
+════════════════════════════════════════════ */
+document.getElementById('phase-filter').addEventListener('change',  e => { fPhase  = e.target.value; renderAll(); });
+document.getElementById('status-filter').addEventListener('change', e => { fStatus = e.target.value; renderAll(); });
+document.getElementById('risk-filter').addEventListener('change',   e => { fRisk   = e.target.value; renderAll(); });
+document.getElementById('tier-filter').addEventListener('change',   e => { fTier   = e.target.value; renderAll(); });
+
+/* ════════════════════════════════════════════
+   RENDER ALL
+════════════════════════════════════════════ */
+function renderAll() {
+  const suppliers = filtered();
+  updateStats(suppliers);
+  if (activeView === 'cards') renderCards(suppliers);
+  else renderTable(suppliers);
+
+  const hasSole = suppliers.some(s => s.type === 'sole-source');
+  document.getElementById('sole-banner').style.display = hasSole ? 'flex' : 'none';
+}
+
+renderAll();
+</script>
+</body>
+</html>
