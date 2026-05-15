@@ -554,6 +554,11 @@
     .cfg-test-result { font-size: .7rem; margin-top: .5rem; min-height: 1rem; }
     .cfg-test-result.ok   { color: #4ade80; }
     .cfg-test-result.fail { color: #f87171; }
+    .api-badge { display:flex;align-items:center;gap:.35rem;font-size:.65rem;padding:.2rem .55rem;
+      border-radius:4px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--muted2); }
+    .api-badge .dot { width:6px;height:6px;border-radius:50%;background:var(--muted); }
+    .api-badge.live .dot { background:#22c55e;box-shadow:0 0 5px #22c55e; }
+    .api-badge.live { color:#4ade80;border-color:rgba(34,197,94,.25); }
   </style>
   <script src="api-config.js"></script>
 </head>
@@ -568,6 +573,9 @@
     <span id="nav-phase-name">Phase</span>
   </div>
   <button class="nav-settings-btn" id="nav-settings-btn" title="Einstellungen">⚙️</button>
+  <div id="api-badge" class="api-badge" title="Supply Chain Twin API">
+    <span class="dot"></span><span id="api-badge-text">API offline</span>
+  </div>
 </nav>
 
 <div class="phase-hero" id="phase-hero"></div>
@@ -1959,6 +1967,51 @@ function applyLiveInventory(coId, days, source) {
   elSrc.style.borderColor = 'rgba(34,197,94,.3)';
 }
 
+async function refreshFromAPI(phaseNum) {
+  const API_BASE = 'http://localhost:3001/api/v1';
+  const id = phaseNum.replace(/^0/, '') === phaseNum ? phaseNum : phaseNum; // already padded
+  try {
+    const [invRes, riskRes] = await Promise.allSettled([
+      fetch(`${API_BASE}/phases/${phaseNum}/inventory`, { signal: AbortSignal.timeout(3000) }),
+      fetch(`${API_BASE}/phases/${phaseNum}/risk`,      { signal: AbortSignal.timeout(3000) }),
+    ]);
+
+    let anySuccess = false;
+
+    if (invRes.status === 'fulfilled' && invRes.value.ok) {
+      const json = await invRes.value.json();
+      if (json.ok && json.data.companies) {
+        json.data.companies.forEach(c => {
+          if (c.days !== null && INVENTORY[c.companyId]) {
+            applyLiveInventory(c.companyId, c.days, '🟢 API Live');
+          }
+        });
+        anySuccess = true;
+      }
+    }
+
+    if (riskRes.status === 'fulfilled' && riskRes.value.ok) {
+      const json = await riskRes.value.json();
+      if (json.ok && json.data.risk) {
+        const { score, level } = json.data.risk;
+        const scoreEl = document.querySelector('.risk-score-big');
+        const fillEl  = document.querySelector('.gauge-fill');
+        if (scoreEl && score !== undefined) {
+          const color = level === 'critical' ? '#dc2626' : level === 'high' ? '#ea580c' : level === 'medium' ? '#ca8a04' : '#16a34a';
+          scoreEl.textContent = score;
+          scoreEl.style.color = color;
+          if (fillEl) { fillEl.style.width = `${(score / 10 * 100).toFixed(0)}%`; fillEl.style.background = color; }
+        }
+        anySuccess = true;
+      }
+    }
+
+    return anySuccess;
+  } catch {
+    return false;
+  }
+}
+
 function markConnectorError(id, msg) {
   const card = document.getElementById(`conn-card-${id}`);
   if (!card) return;
@@ -2496,6 +2549,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const key = cfg.key || fmpKey;
       if (key) fetchFMPPhaseData(c.id, key);
     }
+  });
+
+  refreshFromAPI(phaseNum).then(live => {
+    const badge    = document.getElementById('api-badge');
+    const badgeTxt = document.getElementById('api-badge-text');
+    if (live && badge) { badge.classList.add('live'); badgeTxt.textContent = 'API live'; }
   });
 });
 

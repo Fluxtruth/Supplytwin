@@ -171,6 +171,17 @@
       color:#ef4444 !important;
       border-color:rgba(239,68,68,.55) !important;
     }
+    .api-badge { display:flex;align-items:center;gap:.35rem;font-size:.65rem;padding:.2rem .55rem;
+      border-radius:4px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--muted2); }
+    .api-badge .dot { width:6px;height:6px;border-radius:50%;background:var(--muted); }
+    .api-badge.live .dot { background:#22c55e;box-shadow:0 0 5px #22c55e; }
+    .api-badge.live { color:#4ade80;border-color:rgba(34,197,94,.25); }
+    .event-ticker { overflow:hidden;max-height:54px;width:200px;display:none;flex-direction:column; }
+    .api-badge.live ~ .event-ticker { display:flex; }
+    .ticker-item { font-size:.6rem;color:var(--muted2);white-space:nowrap;overflow:hidden;
+      text-overflow:ellipsis;padding:.05rem 0;animation:tickin .3s ease; }
+    .ticker-item.crit{color:#f87171}.ticker-item.warn{color:#fbbf24}.ticker-item.ok{color:#4ade80}
+    @keyframes tickin { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:none} }
   </style>
 </head>
 <body>
@@ -191,6 +202,10 @@
     <a href="supply-chain.html" class="nav-link">≡ Listen-Ansicht</a>
     <a href="index.html" class="nav-link">← Startseite</a>
     <button id="g-settings-btn" title="Einstellungen" style="padding:.28rem .6rem;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--muted2);cursor:pointer;font-size:.82rem;font-family:inherit">⚙️</button>
+    <div id="api-badge" class="api-badge" title="Supply Chain Twin API">
+      <span class="dot"></span><span id="api-badge-text">API offline</span>
+    </div>
+    <div class="event-ticker" id="event-ticker"></div>
   </div>
 </nav>
 
@@ -1012,9 +1027,105 @@ document.getElementById('disruption-btn').addEventListener('click', () => {
   btn.textContent = disruptionOn ? '✕ Störung aktiv' : '⚡ Störung simulieren';
 });
 
+/* ── API Integration ── */
+const API_BASE = 'http://localhost:3001/api/v1';
+
+async function initFromAPI() {
+  try {
+    const res = await fetch(`${API_BASE}/graph?companies=true`, { signal: AbortSignal.timeout(3000) });
+    if (!res.ok) return false;
+    const json = await res.json();
+    if (!json.ok) return false;
+    const { nodes, edges } = json.data;
+
+    nodes.forEach(apiPhase => {
+      const stage = STAGES.find(s => s.id === apiPhase.id);
+      if (!stage) return;
+      if (apiPhase.risk) {
+        stage.risk = apiPhase.risk.score ?? stage.risk;
+        stage.riskCls = apiPhase.risk.level ?? stage.riskCls;
+      }
+      if (apiPhase.companies && stage.companies) {
+        apiPhase.companies.forEach(apiCo => {
+          const co = stage.companies.find(c => c.id === apiCo.id);
+          if (co && apiCo.health) co.health = H[apiCo.health] || co.health;
+        });
+      }
+    });
+
+    edges.forEach(apiEdge => {
+      const edge = EDGES.find(e => e.from === apiEdge.from && e.to === apiEdge.to);
+      if (!edge || !apiEdge.vol) return;
+      if (apiEdge.vol.day)   edge.vol.tag   = apiEdge.vol.day;
+      if (apiEdge.vol.month) edge.vol.monat = apiEdge.vol.month;
+      if (apiEdge.vol.year)  edge.vol.jahr  = apiEdge.vol.year;
+    });
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function formatTickerMsg(ev) {
+  switch (ev.type) {
+    case 'inventory.updated': {
+      const sign = ev.payload.delta >= 0 ? '+' : '';
+      return `📦 ${ev.payload.companyName}: ${sign}${ev.payload.delta}d → ${ev.payload.currentDays}d`;
+    }
+    case 'risk.alert':
+      return `⚠️ ${ev.payload.phaseName}: Risiko ${ev.payload.currentScore}/10 (${ev.payload.level})`;
+    case 'disruption.detected':
+      return `⚡ ${ev.payload.from}→${ev.payload.to} ${ev.payload.material} +${ev.payload.estimatedDelayDays}d`;
+    case 'price.spike':
+      return `💹 ${ev.payload.commodity}: ${ev.payload.changePct > 0 ? '+' : ''}${ev.payload.changePct}%`;
+    default:
+      return `${ev.type}`;
+  }
+}
+
+function connectSSETicker() {
+  const badge   = document.getElementById('api-badge');
+  const badgeTxt = document.getElementById('api-badge-text');
+  const ticker  = document.getElementById('event-ticker');
+
+  const es = new EventSource(`${API_BASE}/events?types=inventory.updated,risk.alert,disruption.detected,price.spike`);
+
+  es.onopen = () => {
+    badge.classList.add('live');
+    badgeTxt.textContent = 'API live';
+  };
+
+  es.addEventListener('inventory.updated', onMsg);
+  es.addEventListener('risk.alert', onMsg);
+  es.addEventListener('disruption.detected', onMsg);
+  es.addEventListener('price.spike', onMsg);
+
+  function onMsg(e) {
+    try {
+      const ev = JSON.parse(e.data);
+      const sev = (ev.payload?.level === 'critical' || ev.payload?.severity === 'crit') ? 'crit'
+                : (ev.payload?.level === 'high' || ev.payload?.alert) ? 'warn' : 'ok';
+      const item = document.createElement('div');
+      item.className = `ticker-item ${sev}`;
+      item.textContent = formatTickerMsg(ev);
+      ticker.insertBefore(item, ticker.firstChild);
+      while (ticker.children.length > 3) ticker.removeChild(ticker.lastChild);
+    } catch {}
+  }
+
+  es.onerror = () => {
+    badge.classList.remove('live');
+    badgeTxt.textContent = 'API offline';
+  };
+}
+
 /* ── Boot ── */
-renderGraph();
-applyTransform();
+initFromAPI().then(live => {
+  renderGraph();
+  applyTransform();
+  if (live) connectSSETicker();
+});
 </script>
 <script src="api-config.js"></script>
 </body>
