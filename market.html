@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Market Intelligence — Supply Chain Twin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:  #080c16; --bg2: #0d1220; --bg3: #111828;
+      --border: rgba(255,255,255,0.07);
+      --text: #e0e4f0; --muted: #5a6380; --muted2: #8490b8;
+      --ok: #22c55e; --warn: #f59e0b; --crit: #ef4444;
+      --blue: #4f8ef7; --purple: #a855f7;
+    }
+    html, body { min-height: 100vh; background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 200;
+      display: flex; align-items: center; gap: 0.7rem;
+      padding: 0.6rem 1.2rem;
+      background: rgba(8,12,22,0.96); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .logo-icon { width: 24px; height: 24px; background: linear-gradient(135deg,#4f8ef7,#a855f7); border-radius: 5px; display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:#fff;flex-shrink:0; }
+    .nav-title  { font-size:.88rem; font-weight:600; color:#c8cfe8; }
+    .nav-link   { font-size:.72rem; color:var(--muted2); text-decoration:none; padding:.25rem .65rem; border:1px solid var(--border); border-radius:5px; transition:color .2s,border-color .2s; white-space:nowrap; }
+    .nav-link:hover { color:var(--text); border-color:rgba(255,255,255,.18); }
+    .api-badge  { display:flex; align-items:center; gap:.35rem; font-size:.68rem; padding:.22rem .6rem; border-radius:4px; background:rgba(255,255,255,.04); border:1px solid var(--border); color:var(--muted); margin-left:auto; white-space:nowrap; }
+    .api-badge .dot { width:6px; height:6px; border-radius:50%; background:var(--muted); flex-shrink:0; }
+    .api-badge.live { color:#22c55e; border-color:rgba(34,197,94,.3); background:rgba(34,197,94,.07); }
+    .api-badge.live .dot { background:#22c55e; box-shadow:0 0 5px #22c55e; }
+
+    /* ── TICKER STRIP ── */
+    .ticker-wrap {
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      overflow: hidden; height: 32px; position: relative;
+    }
+    .ticker-inner {
+      display: flex; align-items: center; gap: 0; height: 100%;
+      animation: tickerScroll 40s linear infinite;
+      width: max-content;
+    }
+    .ticker-wrap:hover .ticker-inner { animation-play-state: paused; }
+    @keyframes tickerScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    .ticker-item {
+      display: inline-flex; align-items: center; gap: .35rem;
+      padding: 0 1.4rem; font-size: .72rem; white-space: nowrap;
+      border-right: 1px solid var(--border); height: 100%;
+    }
+    .ticker-sym  { color: var(--muted2); font-weight: 600; letter-spacing: .04em; }
+    .ticker-px   { color: var(--text);   font-weight: 700; font-variant-numeric: tabular-nums; }
+    .ticker-chg.up   { color: var(--ok); }
+    .ticker-chg.dn   { color: var(--crit); }
+    .ticker-chg.flat { color: var(--muted); }
+
+    /* ── LAYOUT ── */
+    .page-wrap {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 1rem;
+      padding: 1rem 1.2rem 3rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .section-title {
+      font-size: .65rem; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: .75rem;
+      padding-bottom: .4rem; border-bottom: 1px solid var(--border);
+    }
+
+    /* ── COMMODITY CARDS ── */
+    .commodity-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: .75rem; margin-bottom: 1.25rem;
+    }
+    .commodity-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: .6rem;
+      transition: border-color .2s;
+    }
+    .commodity-card:hover { border-color: rgba(255,255,255,.14); }
+    .commodity-card.spike { border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.04); }
+    .commodity-card.spike-warn { border-color: rgba(245,158,11,.3); background: rgba(245,158,11,.03); }
+    .cc-header { display:flex; align-items:center; gap:.6rem; }
+    .cc-icon   { font-size: 1.3rem; line-height: 1; }
+    .cc-name   { font-size: .82rem; font-weight: 700; color: var(--text); }
+    .cc-unit   { font-size: .65rem; color: var(--muted); margin-left: auto; }
+    .cc-price-row { display:flex; align-items:baseline; gap:.5rem; }
+    .cc-price  { font-size: 1.4rem; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+    .cc-change { font-size: .8rem; font-weight: 700; padding: .15rem .4rem; border-radius: 4px; }
+    .cc-change.up { color: var(--ok); background: rgba(34,197,94,.1); }
+    .cc-change.dn { color: var(--crit); background: rgba(239,68,68,.1); }
+    .cc-change.flat { color: var(--muted); background: rgba(255,255,255,.05); }
+    .cc-range  { font-size: .65rem; color: var(--muted); margin-left: auto; }
+    .cc-sparkline { width: 100%; height: 44px; display: block; border-radius: 4px; }
+    .cc-phases { display:flex; gap:.3rem; flex-wrap:wrap; }
+    .cc-phase-pill {
+      font-size: .6rem; font-weight: 700; padding: .12rem .42rem;
+      border-radius: 99px; border: 1px solid; letter-spacing: .03em;
+    }
+    .cc-desc { font-size: .68rem; color: var(--muted); line-height: 1.5; }
+    .cc-spike-badge {
+      display: inline-flex; align-items: center; gap: .3rem;
+      font-size: .62rem; font-weight: 700; padding: .15rem .45rem;
+      border-radius: 4px; background: rgba(239,68,68,.15); color: var(--crit);
+      border: 1px solid rgba(239,68,68,.3); align-self: flex-start;
+    }
+    .cc-spike-badge.warn { background: rgba(245,158,11,.12); color: var(--warn); border-color: rgba(245,158,11,.25); }
+
+    /* ── PHASE EXPOSURE MATRIX ── */
+    .matrix-wrap {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 1rem 1.1rem; overflow-x: auto;
+    }
+    .matrix-table { width: 100%; border-collapse: collapse; font-size: .65rem; }
+    .matrix-table th { color: var(--muted); font-weight: 600; text-align: center; padding: .3rem .4rem; }
+    .matrix-table th.phase-col { text-align: left; min-width: 90px; }
+    .matrix-table td { text-align: center; padding: .28rem .4rem; border-top: 1px solid var(--border); }
+    .matrix-table td.phase-label { text-align: left; color: var(--muted2); font-weight: 600; white-space: nowrap; }
+    .matrix-cell {
+      display: inline-block; width: 18px; height: 18px; border-radius: 4px;
+      line-height: 18px; font-size: .6rem;
+    }
+    .matrix-cell.high   { background: rgba(239,68,68,.55); }
+    .matrix-cell.medium { background: rgba(245,158,11,.4); }
+    .matrix-cell.low    { background: rgba(255,255,255,.08); }
+    .matrix-cell.none   { background: transparent; }
+
+    /* ── RIGHT COLUMN ── */
+    .right-col { display: flex; flex-direction: column; gap: 1rem; }
+
+    /* ── ALERT FEED ── */
+    .alert-feed { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; }
+    .alert-item {
+      display: flex; gap: .6rem; padding: .6rem 0;
+      border-bottom: 1px solid rgba(255,255,255,.04); align-items: flex-start;
+    }
+    .alert-item:last-child { border-bottom: none; }
+    .alert-icon { font-size: 1rem; line-height: 1; flex-shrink: 0; margin-top: .1rem; }
+    .alert-body { flex: 1; min-width: 0; }
+    .alert-headline { font-size: .75rem; font-weight: 700; color: var(--text); margin-bottom: .15rem; }
+    .alert-detail   { font-size: .65rem; color: var(--muted2); line-height: 1.45; }
+    .alert-time     { font-size: .6rem; color: var(--muted); white-space: nowrap; }
+    .alert-sev { width: 4px; flex-shrink: 0; border-radius: 2px; align-self: stretch; }
+    .alert-sev.crit { background: var(--crit); }
+    .alert-sev.warn { background: var(--warn); }
+    .alert-sev.info { background: var(--blue); }
+
+    /* ── OPTIONS IV TABLE ── */
+    .iv-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; }
+    .iv-row {
+      display: grid; grid-template-columns: 1fr 48px 52px 1fr auto;
+      gap: .4rem; align-items: center;
+      padding: .5rem 0; border-bottom: 1px solid rgba(255,255,255,.04);
+      font-size: .72rem;
+    }
+    .iv-row:last-child { border-bottom: none; }
+    .iv-sym  { font-weight: 700; color: var(--text); }
+    .iv-name { font-size: .6rem; color: var(--muted); }
+    .iv-pct  { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+    .iv-rank-wrap { }
+    .iv-rank-bar {
+      height: 5px; border-radius: 3px; background: rgba(255,255,255,.08);
+      margin-bottom: 2px;
+    }
+    .iv-rank-fill { height: 100%; border-radius: 3px; transition: width .5s; }
+    .iv-rank-lbl { font-size: .55rem; color: var(--muted); }
+    .iv-status { font-size: .65rem; font-weight: 700; padding: .12rem .38rem; border-radius: 4px; white-space: nowrap; }
+    .iv-status.ok   { color:#22c55e; background:rgba(34,197,94,.1); }
+    .iv-status.warn { color:var(--warn); background:rgba(245,158,11,.1); }
+    .iv-status.crit { color:var(--crit); background:rgba(239,68,68,.1); }
+    .iv-phases { display:flex; gap:.25rem; flex-wrap:wrap; }
+    .iv-phase-dot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+      display: inline-block;
+    }
+    .iv-note { font-size: .62rem; color: var(--muted); margin-top: .5rem; font-style: italic; }
+
+    /* ── OPTIONS DETAIL TOGGLE ── */
+    .iv-stock-row { cursor: pointer; }
+    .iv-stock-row:hover .iv-sym { color: #7eb3ff; }
+
+    /* ── STAT CARDS ROW ── */
+    .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: .65rem; margin-bottom: 1rem; }
+    .stat-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+      padding: .7rem .9rem;
+    }
+    .stat-label { font-size: .6rem; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: .25rem; }
+    .stat-value { font-size: 1.1rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .stat-sub   { font-size: .65rem; color: var(--muted2); margin-top: .15rem; }
+
+    /* ── LOADING ── */
+    .loading-overlay {
+      position: fixed; inset: 0; background: var(--bg); z-index: 999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .8rem;
+    }
+    .loading-spinner {
+      width: 32px; height: 32px; border: 3px solid rgba(79,142,247,.2);
+      border-top-color: #4f8ef7; border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: .82rem; color: var(--muted); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .page-wrap { grid-template-columns: 1fr; }
+      .stat-row  { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<div id="loading-overlay" class="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loading-text">Marktdaten werden geladen…</div>
+</div>
+
+<nav>
+  <div class="logo-icon">ST</div>
+  <span class="nav-title">Market Intelligence</span>
+  <a href="graph.html"       class="nav-link">⬡ Graph</a>
+  <a href="globe.html"       class="nav-link">🌐 Globe</a>
+  <a href="disruption.html"  class="nav-link">⚡ Disruption</a>
+  <a href="supply-chain.html"class="nav-link">≡ Liste</a>
+  <a href="index.html"       class="nav-link">← Home</a>
+  <div id="api-badge" class="api-badge" title="Supply Chain Twin API">
+    <span class="dot"></span><span id="api-badge-text">API offline</span>
+  </div>
+</nav>
+
+<div class="ticker-wrap">
+  <div class="ticker-inner" id="ticker-inner"><!-- filled by JS --></div>
+</div>
+
+<div class="page-wrap">
+
+  <!-- LEFT: commodities + matrix -->
+  <div>
+    <div class="stat-row" id="stat-row">
+      <div class="stat-card"><div class="stat-label">Commodities</div><div class="stat-value" id="stat-commodities">6</div><div class="stat-sub">überwacht</div></div>
+      <div class="stat-card"><div class="stat-label">Spike-Alerts</div><div class="stat-value" id="stat-spikes" style="color:var(--crit)">—</div><div class="stat-sub">≥ 2% Tagesänderung</div></div>
+      <div class="stat-card"><div class="stat-label">IV-Alerts</div><div class="stat-value" id="stat-iv-alerts" style="color:var(--warn)">—</div><div class="stat-sub">IVR ≥ 70</div></div>
+      <div class="stat-card"><div class="stat-label">Datenquelle</div><div class="stat-value" id="stat-source" style="font-size:.75rem">Mock</div><div class="stat-sub" id="stat-source-sub">FMP-Key erforderlich</div></div>
+    </div>
+
+    <div class="section-title">Rohstoffpreise</div>
+    <div class="commodity-grid" id="commodity-grid"><!-- filled by JS --></div>
+
+    <div class="section-title" style="margin-top:1.2rem">Expositions-Matrix: Phasen × Rohstoffe</div>
+    <div class="matrix-wrap">
+      <table class="matrix-table" id="matrix-table"><!-- filled by JS --></table>
+    </div>
+  </div>
+
+  <!-- RIGHT: alerts + IV -->
+  <div class="right-col">
+    <div class="alert-feed">
+      <div class="section-title">Markt-Alerts</div>
+      <div id="alert-list"><!-- filled by JS --></div>
+    </div>
+
+    <div class="iv-panel">
+      <div class="section-title">Options-Implizite Volatilität</div>
+      <div id="iv-table"><!-- filled by JS --></div>
+      <div class="iv-note" id="iv-note">* Historische Volatilität als IV-Proxy. Echte IV mit FMP-Key + Premium-Tier.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════
+   CONSTANTS
+════════════════════════════════════════════════════ */
+const FMP_BASE = 'https://financialmodelingprep.com/api';
+const API_BASE = 'http://localhost:3001/api/v1';
+
+const PHASE_META = {
+  '01': { name:'HPQ Sand',     color:'#b45309', icon:'⛏️' },
+  '02': { name:'Si-Metall',    color:'#c2410c', icon:'🏭' },
+  '03': { name:'Polysilizium', color:'#d97706', icon:'⚗️' },
+  '04': { name:'Si-Wafer',     color:'#2563eb', icon:'💿' },
+  '05': { name:'EUV-Litho',    color:'#dc2626', icon:'🔬' },
+  '06': { name:'Foundry',      color:'#7c3aed', icon:'🔲' },
+  '07': { name:'Chip-Design',  color:'#6d28d9', icon:'🧠' },
+  '08': { name:'Server',       color:'#0891b2', icon:'🖥️' },
+  '09': { name:'Hyper-DC',     color:'#0d9488', icon:'🏗️' },
+  '10': { name:'Energie',      color:'#16a34a', icon:'⚡' },
+};
+
+// Exposure levels per commodity × phase: 'high'|'medium'|'low'|''
+const EXPOSURE = {
+  COPPER:        { '08':'high', '09':'high', '10':'high', '02':'medium', '04':'low' },
+  NATURAL_GAS:   { '03':'high', '02':'high', '01':'medium' },
+  SILVER:        { '04':'high', '10':'medium' },
+  TIN:           { '05':'high', '08':'medium', '04':'low' },
+  ALUMINUM:      { '08':'high', '09':'medium', '10':'low' },
+  CRUDE_OIL_WTI: { '09':'medium', '10':'medium', '01':'low', '03':'low' },
+};
+
+const COMMODITIES = [
+  { id:'COPPER',        name:'Kupfer',       unit:'$/lb',    icon:'🔶', mockPx:4.52,   mockChg:1.24, mockVol:0.022, mockHi:4.68,  mockLo:3.98, mockYrHi:4.81, mockYrLo:3.61 },
+  { id:'NATURAL_GAS',   name:'Erdgas',       unit:'$/MMBtu', icon:'🔥', mockPx:2.84,   mockChg:-0.82,mockVol:0.045, mockHi:2.97,  mockLo:2.71, mockYrHi:3.92, mockYrLo:1.52 },
+  { id:'SILVER',        name:'Silber',       unit:'$/oz',    icon:'🪙', mockPx:31.20,  mockChg:0.38, mockVol:0.018, mockHi:31.90, mockLo:30.55,mockYrHi:34.87,mockYrLo:22.28 },
+  { id:'TIN',           name:'Zinn',         unit:'$/t',     icon:'🔘', mockPx:32400,  mockChg:2.15, mockVol:0.020, mockHi:33200, mockLo:31800,mockYrHi:36500,mockYrLo:24200 },
+  { id:'ALUMINUM',      name:'Aluminium',    unit:'$/t',     icon:'🔲', mockPx:2645,   mockChg:-0.55,mockVol:0.017, mockHi:2710,  mockLo:2590, mockYrHi:2980, mockYrLo:2150 },
+  { id:'CRUDE_OIL_WTI', name:'Rohöl (WTI)', unit:'$/bbl',   icon:'🛢️', mockPx:78.50,  mockChg:-1.10,mockVol:0.025, mockHi:80.40, mockLo:77.20,mockYrHi:94.80,mockYrLo:66.40 },
+];
+
+const COMMODITY_DESC = {
+  COPPER:       'Kritisch für Serververkabelung, Rechenzentren und Energietransport',
+  NATURAL_GAS:  'Hauptenergieträger für Polysilizium-Smelter (Siemens-Prozess)',
+  SILVER:       'Silberpaste für Solarwafer-Kontakte und Leiterbahnen',
+  TIN:          'Zinn-Plasma für EUV-Lichtquellen (ASML) und PCB-Lötzinn',
+  ALUMINUM:     'Server-Chassis, Kühlkörper und Rechenzentrumsstrukturen',
+  CRUDE_OIL_WTI:'Logistikkosten, Backup-Generatoren, globaler Warentransport',
+};
+
+const IV_STOCKS = [
+  { symbol:'TSM',  name:'TSMC',       flag:'🇹🇼', phases:['04','06'], mockPx:185.40, mockHV:32.1, mockIVhi:48.2, mockIVlo:18.5 },
+  { symbol:'ASML', name:'ASML',       flag:'🇳🇱', phases:['05'],      mockPx:791.20, mockHV:33.8, mockIVhi:52.1, mockIVlo:20.3 },
+  { symbol:'NVDA', name:'NVIDIA',     flag:'🇺🇸', phases:['07'],      mockPx:879.50, mockHV:48.2, mockIVhi:74.8, mockIVlo:28.9 },
+  { symbol:'AMD',  name:'AMD',        flag:'🇺🇸', phases:['07'],      mockPx:162.30, mockHV:44.5, mockIVhi:68.4, mockIVlo:25.1 },
+  { symbol:'SMCI', name:'Super Micro',flag:'🇺🇸', phases:['08'],      mockPx:798.00, mockHV:72.3, mockIVhi:118.5,mockIVlo:42.7 },
+  { symbol:'DQ',   name:'Daqo Energy',flag:'🇨🇳', phases:['03'],      mockPx:19.85,  mockHV:64.8, mockIVhi:98.4, mockIVlo:38.2 },
+  { symbol:'AMZN', name:'Amazon',     flag:'🇺🇸', phases:['09'],      mockPx:194.50, mockHV:24.6, mockIVhi:38.5, mockIVlo:15.8 },
+  { symbol:'NEE',  name:'NextEra',    flag:'🇺🇸', phases:['10'],      mockPx:74.20,  mockHV:19.2, mockIVhi:30.1, mockIVlo:11.4 },
+];
+
+/* ════════════════════════════════════════════════════
+   HELPERS
+════════════════════════════════════════════════════ */
+function getFmpKey() { try { return localStorage.getItem('supplytwin_fmp_key') || ''; } catch { return ''; } }
+function fmt(n, d = 2) { return Number(n).toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+function fmtChg(n) { return (n >= 0 ? '+' : '') + n.toFixed(2) + '%'; }
+
+function chgClass(n) { return n > 0.1 ? 'up' : n < -0.1 ? 'dn' : 'flat'; }
+function chgArrow(n) { return n > 0.1 ? '▲' : n < -0.1 ? '▼' : '●'; }
+
+// Seeded-ish deterministic jitter for consistent mock data per session
+const SESSION_SEED = Math.floor(Date.now() / 3600000); // changes hourly
+function seededRand(str, offset = 0) {
+  const s = str.split('').reduce((a,c,i) => a + c.charCodeAt(0) * (i+1), SESSION_SEED + offset);
+  return ((s * 9301 + 49297) % 233280) / 233280;
+}
+
+/* ════════════════════════════════════════════════════
+   SPARKLINE CANVAS
+════════════════════════════════════════════════════ */
+function syntheticHistory(c, days = 30) {
+  const r = () => (Math.random() - 0.5) * 2 * c.mockVol;
+  const prices = [c.mockPx];
+  for (let i = 1; i < days; i++) {
+    prices.unshift(prices[0] / (1 + r()));
+  }
+  return prices;
+}
+
+function drawSparkline(canvas, prices, chg) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || canvas.width;
+  const H = canvas.height;
+  canvas.width = W;
+  ctx.clearRect(0, 0, W, H);
+  if (!prices || prices.length < 2) return;
+
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const range = max - min || 1;
+  const pad = 4;
+
+  const toX = i => (i / (prices.length - 1)) * W;
+  const toY = p => H - pad - ((p - min) / range) * (H - pad * 2);
+
+  const up = chg >= 0;
+  const clr = up ? '#22c55e' : '#ef4444';
+
+  // Fill
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, clr + '35');
+  grad.addColorStop(1, clr + '00');
+  ctx.beginPath();
+  ctx.moveTo(0, H);
+  prices.forEach((p, i) => ctx.lineTo(toX(i), toY(p)));
+  ctx.lineTo(toX(prices.length - 1), H);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  prices.forEach((p, i) => i === 0 ? ctx.moveTo(toX(i), toY(p)) : ctx.lineTo(toX(i), toY(p)));
+  ctx.strokeStyle = clr;
+  ctx.lineWidth = 1.5;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // Last dot
+  const lx = toX(prices.length - 1);
+  const ly = toY(prices[prices.length - 1]);
+  ctx.beginPath();
+  ctx.arc(lx, ly, 2.5, 0, Math.PI * 2);
+  ctx.fillStyle = clr;
+  ctx.fill();
+}
+
+/* ════════════════════════════════════════════════════
+   SPIKE DETECTION
+════════════════════════════════════════════════════ */
+function detectSpike(history, currentChgPct) {
+  if (Math.abs(currentChgPct) >= 3.0) return 'crit';
+  if (Math.abs(currentChgPct) >= 2.0) return 'warn';
+
+  if (history && history.length >= 10) {
+    const prices = history.slice(-20);
+    const mean = prices.reduce((a, b) => a + b, 0) / prices.length;
+    const std  = Math.sqrt(prices.reduce((a, b) => a + (b - mean) ** 2, 0) / prices.length);
+    const current = prices[prices.length - 1];
+    const zScore = Math.abs((current - mean) / (std || 1));
+    if (zScore >= 2.5) return 'crit';
+    if (zScore >= 1.8) return 'warn';
+  }
+  return null;
+}
+
+/* ════════════════════════════════════════════════════
+   FMP DATA FETCHING
+════════════════════════════════════════════════════ */
+async function fetchCommodityQuotes(key) {
+  const res = await fetch(`${FMP_BASE}/v3/quotes/commodity?apikey=${key}`, { signal: AbortSignal.timeout(6000) });
+  if (!res.ok) throw new Error('commodity quotes failed');
+  return res.json();
+}
+
+async function fetchHistorical(symbol, key, days = 35) {
+  const res = await fetch(`${FMP_BASE}/v3/historical-price-full/${symbol}?timeseries=${days}&apikey=${key}`, { signal: AbortSignal.timeout(6000) });
+  if (!res.ok) throw new Error(`history failed: ${symbol}`);
+  const data = await res.json();
+  return (data.historical || []).reverse().map(d => d.close);
+}
+
+async function fetchStockQuotes(symbols, key) {
+  const res = await fetch(`${FMP_BASE}/v3/quote/${symbols.join(',')}?apikey=${key}`, { signal: AbortSignal.timeout(6000) });
+  if (!res.ok) throw new Error('stock quotes failed');
+  return res.json();
+}
+
+async function fetchOptionsIV(symbol, key) {
+  // FMP v3 options chain — returns option contracts with impliedVolatility
+  try {
+    const res = await fetch(`${FMP_BASE}/v3/options/chain?symbol=${symbol}&apikey=${key}`, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const contracts = data?.data || data || [];
+    if (!contracts.length) return null;
+
+    // Sort by expiration, take nearest expiry (>= 14 days out)
+    const now = Date.now();
+    const near = contracts
+      .filter(o => {
+        const exp = new Date(o.expiration || o.expirationDate).getTime();
+        return exp - now > 14 * 86400e3 && exp - now < 90 * 86400e3;
+      })
+      .sort((a, b) => new Date(a.expiration || a.expirationDate) - new Date(b.expiration || b.expirationDate));
+
+    if (!near.length) return null;
+
+    // Find ATM options (within 5% of current price)
+    const price = data.stockPrice || near[0]?.strike;
+    if (!price) return null;
+    const atm = near.filter(o => Math.abs((o.strike - price) / price) < 0.05);
+    if (!atm.length) return null;
+
+    const avgIV = atm.reduce((s, o) => s + (o.impliedVolatility || 0), 0) / atm.length;
+    return Math.round(avgIV * 100 * 10) / 10; // convert decimal to %
+  } catch {
+    return null;
+  }
+}
+
+/* ════════════════════════════════════════════════════
+   MOCK IV DATA
+════════════════════════════════════════════════════ */
+function mockIVData(stock) {
+  const j = seededRand(stock.symbol);
+  const iv = stock.mockHV * (1.08 + j * 0.38);
+  const ivLo = stock.mockIVlo;
+  const ivHi = stock.mockIVhi;
+  const ivr  = Math.round(Math.max(0, Math.min(100, (iv - ivLo) / (ivHi - ivLo) * 100)));
+  return { iv: Math.round(iv * 10) / 10, ivr };
+}
+
+/* ════════════════════════════════════════════════════
+   RENDER COMMODITY CARD
+════════════════════════════════════════════════════ */
+function renderCommodityCard(c, history) {
+  const spike = detectSpike(history, c.chg);
+  const isUp  = c.chg >= 0;
+  const cc = chgClass(c.chg);
+  const exposure = EXPOSURE[c.id] || {};
+  const phases = Object.keys(exposure);
+
+  const spikeBadge = spike === 'crit'
+    ? `<span class="cc-spike-badge">⚠️ Starker Spike +${Math.abs(c.chg).toFixed(2)}%</span>`
+    : spike === 'warn'
+    ? `<span class="cc-spike-badge warn">⚡ Erhöhte Bewegung</span>`
+    : '';
+
+  const yearRange = c.yrHi && c.yrLo
+    ? `52W: ${fmt(c.yrLo, 0)}–${fmt(c.yrHi, 0)}`
+    : '';
+
+  const phasePills = phases.map(pid => {
+    const pm = PHASE_META[pid];
+    const lvl = exposure[pid];
+    const opacity = lvl === 'high' ? '1' : lvl === 'medium' ? '0.65' : '0.35';
+    return `<span class="cc-phase-pill" style="color:${pm.color};border-color:${pm.color};opacity:${opacity}">${pm.icon} ${pid}</span>`;
+  }).join('');
+
+  return `
+    <div class="commodity-card${spike === 'crit' ? ' spike' : spike === 'warn' ? ' spike-warn' : ''}" id="cc-${c.id}">
+      <div class="cc-header">
+        <span class="cc-icon">${c.icon}</span>
+        <span class="cc-name">${c.name}</span>
+        <span class="cc-unit">${c.unit}</span>
+      </div>
+      <div class="cc-price-row">
+        <span class="cc-price">${fmtPrice(c.px, c.id)}</span>
+        <span class="cc-change ${cc}">${chgArrow(c.chg)} ${fmtChg(c.chg)}</span>
+        ${yearRange ? `<span class="cc-range">${yearRange}</span>` : ''}
+      </div>
+      <canvas class="cc-sparkline" id="spark-${c.id}" height="44"></canvas>
+      ${spikeBadge}
+      <div class="cc-phases">${phasePills}</div>
+      <div class="cc-desc">${COMMODITY_DESC[c.id] || ''}</div>
+    </div>`;
+}
+
+function fmtPrice(px, id) {
+  if (px >= 10000) return fmt(px, 0);
+  if (px >= 100)   return fmt(px, 2);
+  return fmt(px, 2);
+}
+
+/* ════════════════════════════════════════════════════
+   RENDER MATRIX
+════════════════════════════════════════════════════ */
+function renderMatrix(commodityData) {
+  const comIds = COMMODITIES.map(c => c.id);
+  const phaseIds = Object.keys(PHASE_META);
+
+  const headerCols = comIds.map(id => {
+    const c = COMMODITIES.find(x => x.id === id);
+    return `<th title="${c.name}">${c.icon}</th>`;
+  }).join('');
+
+  const rows = phaseIds.map(pid => {
+    const pm = PHASE_META[pid];
+    const cells = comIds.map(cid => {
+      const lvl = (EXPOSURE[cid] || {})[pid] || '';
+      const label = lvl === 'high' ? '●' : lvl === 'medium' ? '◐' : lvl === 'low' ? '○' : '';
+      return `<td><span class="matrix-cell ${lvl || 'none'}" title="${pm.name} × ${COMMODITIES.find(c=>c.id===cid).name}: ${lvl||'—'}">${label}</span></td>`;
+    }).join('');
+    return `<tr>
+      <td class="phase-label" style="color:${pm.color}">${pm.icon} ${pm.name}</td>
+      ${cells}
+    </tr>`;
+  }).join('');
+
+  return `<thead><tr><th class="phase-col">Phase</th>${headerCols}</tr></thead><tbody>${rows}</tbody>`;
+}
+
+/* ════════════════════════════════════════════════════
+   RENDER IV TABLE
+════════════════════════════════════════════════════ */
+function renderIVTable(ivData) {
+  const rows = ivData.map(d => {
+    const { stock, iv, ivr, price, chg } = d;
+    const status = ivr >= 80 ? 'crit' : ivr >= 60 ? 'warn' : 'ok';
+    const statusLabel = ivr >= 80 ? '🔴 Ungewöhnl.' : ivr >= 60 ? '🟡 Erhöht' : '🟢 Normal';
+    const barColor = ivr >= 80 ? '#ef4444' : ivr >= 60 ? '#f59e0b' : '#22c55e';
+    const phaseDots = stock.phases.map(pid =>
+      `<span class="iv-phase-dot" style="background:${PHASE_META[pid]?.color}" title="Phase ${pid}"></span>`
+    ).join('');
+    const priceStr = price ? `$${fmt(price, 2)}` : '—';
+    const chgStr   = chg   ? `<span style="color:${chg>=0?'#22c55e':'#ef4444'}">${fmtChg(chg)}</span>` : '';
+
+    return `<div class="iv-row iv-stock-row" onclick="window.open('https://finance.yahoo.com/quote/${stock.symbol}/options','_blank')">
+      <div>
+        <div class="iv-sym">${stock.flag} ${stock.symbol}</div>
+        <div class="iv-name">${stock.name}</div>
+        <div class="iv-phases" style="margin-top:.2rem">${phaseDots}</div>
+      </div>
+      <div class="iv-pct" style="color:${barColor}">${iv}%</div>
+      <div>
+        <div class="iv-rank-bar"><div class="iv-rank-fill" style="width:${ivr}%;background:${barColor}"></div></div>
+        <div class="iv-rank-lbl">IVR ${ivr}</div>
+      </div>
+      <div class="iv-rank-wrap">
+        <div style="font-size:.65rem;color:var(--muted2)">${priceStr} ${chgStr}</div>
+      </div>
+      <div><span class="iv-status ${status}">${statusLabel}</span></div>
+    </div>`;
+  }).join('');
+
+  return rows;
+}
+
+/* ════════════════════════════════════════════════════
+   RENDER ALERT FEED
+════════════════════════════════════════════════════ */
+function buildAlerts(commodityData, ivData) {
+  const alerts = [];
+  const now = new Date().toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' });
+
+  // Commodity spike alerts
+  commodityData.forEach(c => {
+    const spike = detectSpike(c.history, c.chg);
+    if (!spike) return;
+    const exp = EXPOSURE[c.id] || {};
+    const phaseList = Object.keys(exp).filter(p => exp[p] === 'high' || exp[p] === 'medium')
+      .map(p => `<span style="color:${PHASE_META[p].color}">${PHASE_META[p].icon} ${p}</span>`).join(' ');
+    alerts.push({
+      sev: spike,
+      icon: c.chg > 0 ? '📈' : '📉',
+      headline: `${c.name} ${spike==='crit'?'Starker Spike':'Ungewöhnliche Bewegung'}: ${fmtChg(c.chg)}`,
+      detail: `Auswirkung auf Phasen: ${phaseList || '—'}. Tages-Range: ${fmtPrice(c.dayLo||0, c.id)}–${fmtPrice(c.dayHi||0, c.id)} ${c.unit}`,
+      time: now,
+    });
+  });
+
+  // IV alerts
+  ivData.forEach(d => {
+    if (d.ivr < 70) return;
+    const sev = d.ivr >= 85 ? 'crit' : 'warn';
+    const phaseList = d.stock.phases.map(p =>
+      `<span style="color:${PHASE_META[p]?.color}">${PHASE_META[p]?.icon} ${p}</span>`
+    ).join(' ');
+    alerts.push({
+      sev,
+      icon: '⚠️',
+      headline: `${d.stock.symbol} IV ungewöhnlich hoch: ${d.iv}% (IVR ${d.ivr})`,
+      detail: `Optionsmarkt preist erhöhtes Ereignisrisiko ein. Phase: ${phaseList}. Historische Vola: ${d.stock.mockHV.toFixed(1)}%`,
+      time: now,
+    });
+  });
+
+  // SSE events from API
+  if (!alerts.length) {
+    alerts.push({
+      sev: 'info',
+      icon: '✅',
+      headline: 'Keine ungewöhnlichen Marktbewegungen erkannt',
+      detail: 'Alle überwachten Rohstoffe und Volatilitätswerte im Normalbereich',
+      time: now,
+    });
+  }
+
+  return alerts;
+}
+
+function renderAlerts(alerts) {
+  return alerts.map(a => `
+    <div class="alert-item">
+      <div class="alert-sev ${a.sev}"></div>
+      <div class="alert-icon">${a.icon}</div>
+      <div class="alert-body">
+        <div class="alert-headline">${a.headline}</div>
+        <div class="alert-detail">${a.detail}</div>
+      </div>
+      <div class="alert-time">${a.time}</div>
+    </div>`).join('');
+}
+
+/* ════════════════════════════════════════════════════
+   TICKER STRIP
+════════════════════════════════════════════════════ */
+function buildTicker(commodityData, stockData) {
+  const items = [
+    ...commodityData.map(c => ({
+      sym: c.id.replace('_', ' ').replace('CRUDE OIL WTI', 'WTI'),
+      icon: c.icon, px: fmtPrice(c.px, c.id) + ' ' + c.unit, chg: c.chg
+    })),
+    ...stockData.map(s => ({
+      sym: s.symbol, icon: s.flag, px: '$' + fmt(s.price || s.mockPx, 2), chg: s.changesPercentage ?? 0
+    })),
+  ];
+  // Duplicate for seamless scroll
+  const html = [...items, ...items].map(t => `
+    <div class="ticker-item">
+      <span>${t.icon}</span>
+      <span class="ticker-sym">${t.sym}</span>
+      <span class="ticker-px">${t.px}</span>
+      <span class="ticker-chg ${chgClass(t.chg)}">${chgArrow(t.chg)} ${Math.abs(t.chg).toFixed(2)}%</span>
+    </div>`).join('');
+  document.getElementById('ticker-inner').innerHTML = html;
+}
+
+/* ════════════════════════════════════════════════════
+   MAIN BOOT
+════════════════════════════════════════════════════ */
+async function boot() {
+  const key = getFmpKey();
+  let commodityData = [];
+  let ivData = [];
+  let stockData = [];
+  let usedRealData = false;
+
+  setLoading('Rohstoffpreise werden abgerufen…');
+
+  if (key) {
+    try {
+      // 1. Fetch commodity quotes
+      const quotes = await fetchCommodityQuotes(key);
+      const quoteMap = {};
+      quotes.forEach(q => { quoteMap[q.symbol] = q; });
+
+      // 2. Build commodity data with real quotes + synthetic history fallback
+      for (const c of COMMODITIES) {
+        const q = quoteMap[c.id];
+        const hist = await fetchHistorical(c.id, key, 35).catch(() => null);
+        commodityData.push({
+          ...c,
+          px:    q ? q.price : c.mockPx,
+          chg:   q ? (q.changesPercentage ?? c.mockChg) : c.mockChg,
+          dayHi: q ? q.dayHigh : c.mockHi,
+          dayLo: q ? q.dayLow  : c.mockLo,
+          yrHi:  q ? q.yearHigh : c.mockYrHi,
+          yrLo:  q ? q.yearLow  : c.mockYrLo,
+          history: hist || syntheticHistory(c),
+        });
+      }
+
+      setLoading('Aktien-Kurse werden abgerufen…');
+
+      // 3. Fetch stock quotes for IV stocks
+      const stockSyms = IV_STOCKS.map(s => s.symbol);
+      const sQuotes = await fetchStockQuotes(stockSyms, key).catch(() => []);
+      const sMap = {};
+      sQuotes.forEach(q => { sMap[q.symbol] = q; });
+      stockData = IV_STOCKS.map(s => ({ ...s, ...(sMap[s.symbol] || {}) }));
+
+      setLoading('Options-Volatilität wird berechnet…');
+
+      // 4. Try to fetch real IV; fall back to mock
+      for (const stock of IV_STOCKS) {
+        const realIV = await fetchOptionsIV(stock.symbol, key);
+        if (realIV !== null) {
+          const ivHist = await fetchHistorical(stock.symbol, key, 90).catch(() => null);
+          const hv = computeHV(ivHist || [], 20);
+          const ivLo = stock.mockIVlo;
+          const ivHi = stock.mockIVhi;
+          const ivr  = Math.round(Math.max(0, Math.min(100, (realIV - ivLo) / (ivHi - ivLo) * 100)));
+          ivData.push({ stock, iv: realIV, ivr, price: sMap[stock.symbol]?.price, chg: sMap[stock.symbol]?.changesPercentage });
+        } else {
+          const mock = mockIVData(stock);
+          ivData.push({ stock, ...mock, price: sMap[stock.symbol]?.price, chg: sMap[stock.symbol]?.changesPercentage });
+        }
+      }
+
+      usedRealData = true;
+      document.getElementById('iv-note').textContent = '* IV aus FMP-Optionskette (ATM near-term). Zustimmung zu FMP-Nutzungsbedingungen erforderlich.';
+
+    } catch (err) {
+      console.warn('FMP fetch failed, using mock data:', err);
+      commodityData = buildMockCommodityData();
+      ivData        = buildMockIVData();
+      stockData     = IV_STOCKS;
+    }
+  } else {
+    commodityData = buildMockCommodityData();
+    ivData        = buildMockIVData();
+    stockData     = IV_STOCKS;
+  }
+
+  // Try local API for risk enrichment
+  try {
+    const apiResp = await fetch(`${API_BASE}/graph`, { signal: AbortSignal.timeout(2000) });
+    if (apiResp.ok) {
+      const badge = document.getElementById('api-badge');
+      if (badge) { badge.classList.add('live'); document.getElementById('api-badge-text').textContent = 'API live'; }
+      connectSSETicker(commodityData);
+    }
+  } catch {}
+
+  render(commodityData, ivData, stockData, usedRealData);
+}
+
+function buildMockCommodityData() {
+  return COMMODITIES.map(c => ({
+    ...c,
+    px: c.mockPx * (1 + (seededRand(c.id) - 0.5) * 0.04),
+    chg: c.mockChg + (seededRand(c.id, 1) - 0.5) * 0.5,
+    dayHi: c.mockHi, dayLo: c.mockLo, yrHi: c.mockYrHi, yrLo: c.mockYrLo,
+    history: syntheticHistory(c),
+  }));
+}
+
+function buildMockIVData() {
+  return IV_STOCKS.map(stock => {
+    const mock = mockIVData(stock);
+    return { stock, ...mock, price: null, chg: null };
+  });
+}
+
+function computeHV(closes, days = 20) {
+  if (closes.length < 2) return null;
+  const slice = closes.slice(-days - 1);
+  const rets = [];
+  for (let i = 1; i < slice.length; i++) rets.push(Math.log(slice[i] / slice[i-1]));
+  const mean = rets.reduce((a,b) => a+b, 0) / rets.length;
+  const variance = rets.reduce((a,b) => a + (b-mean)**2, 0) / (rets.length - 1);
+  return Math.sqrt(variance * 252) * 100;
+}
+
+/* ════════════════════════════════════════════════════
+   RENDER PAGE
+════════════════════════════════════════════════════ */
+function render(commodityData, ivData, stockData, usedReal) {
+  // Stats
+  const spikes = commodityData.filter(c => detectSpike(c.history, c.chg)).length;
+  const ivAlerts = ivData.filter(d => d.ivr >= 70).length;
+  document.getElementById('stat-spikes').textContent = spikes || '0';
+  document.getElementById('stat-iv-alerts').textContent = ivAlerts || '0';
+  document.getElementById('stat-source').textContent = usedReal ? 'FMP Live' : 'Mock';
+  document.getElementById('stat-source').style.color = usedReal ? '#22c55e' : '#f59e0b';
+  document.getElementById('stat-source-sub').textContent = usedReal ? 'Echtzeit-Daten' : 'Simulierte Daten';
+
+  // Commodity cards
+  document.getElementById('commodity-grid').innerHTML =
+    commodityData.map(c => renderCommodityCard(c, c.history)).join('');
+
+  // Draw sparklines after DOM update
+  requestAnimationFrame(() => {
+    commodityData.forEach(c => {
+      const canvas = document.getElementById(`spark-${c.id}`);
+      if (canvas) drawSparkline(canvas, c.history, c.chg >= 0);
+    });
+  });
+
+  // Matrix
+  document.getElementById('matrix-table').innerHTML = renderMatrix(commodityData);
+
+  // Alerts
+  const alerts = buildAlerts(commodityData, ivData);
+  document.getElementById('alert-list').innerHTML = renderAlerts(alerts);
+
+  // IV table
+  document.getElementById('iv-table').innerHTML = renderIVTable(ivData);
+
+  // Ticker
+  buildTicker(commodityData, stockData);
+
+  // Hide loading
+  document.getElementById('loading-overlay').style.display = 'none';
+}
+
+/* ════════════════════════════════════════════════════
+   SSE TICKER (from local API)
+════════════════════════════════════════════════════ */
+function connectSSETicker(commodityData) {
+  try {
+    const es = new EventSource(`${API_BASE}/events?types=inventory.updated,risk.alert,disruption.detected,price.spike`);
+    es.addEventListener('price.spike', e => {
+      try {
+        const d = JSON.parse(e.data);
+        const alert = {
+          sev: 'warn', icon: '📡',
+          headline: `API: Preis-Spike erkannt — ${d.commodity || d.phase || 'Unbekannt'}`,
+          detail: `${d.message || ''} (Live-API-Ereignis)`,
+          time: new Date().toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' }),
+        };
+        const list = document.getElementById('alert-list');
+        if (list) list.insertAdjacentHTML('afterbegin', renderAlerts([alert]));
+      } catch {}
+    });
+  } catch {}
+}
+
+function setLoading(msg) {
+  const el = document.getElementById('loading-text');
+  if (el) el.textContent = msg;
+}
+
+/* ════════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════════ */
+boot().catch(err => {
+  console.error('boot failed:', err);
+  const commodityData = buildMockCommodityData();
+  const ivData = buildMockIVData();
+  render(commodityData, ivData, IV_STOCKS, false);
+});
+
+// Redraw sparklines on resize
+window.addEventListener('resize', () => {
+  const commodityData = buildMockCommodityData();
+  commodityData.forEach(c => {
+    const canvas = document.getElementById(`spark-${c.id}`);
+    if (canvas) drawSparkline(canvas, c.history, c.chg >= 0);
+  });
+});
+</script>
+</body>
+</html>
